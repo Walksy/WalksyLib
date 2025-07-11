@@ -1,5 +1,7 @@
 package walksy.lib.core.config.impl;
 
+import walksy.lib.core.config.impl.options.groups.OptionGroup;
+import walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import walksy.lib.core.gui.widgets.BooleanWidget;
 import walksy.lib.core.gui.widgets.OptionWidget;
 
@@ -11,43 +13,53 @@ public class Option<T> {
     private final Supplier<T> getter;
     private final Consumer<T> setter;
     private final Class<T> type;
-    private final String description;
     private final T min;
     private final T max;
     private final T increment;
+    private OptionDescription description;
 
-    public Option(String name, Supplier<T> getter, Consumer<T> setter, Class<T> type) {
-        this(name, getter, setter, type, null, null, null, null);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Class<T> type) {
+        this(name, description, getter, setter, type, null, null, null);
     }
 
-    public Option(String name, Supplier<T> getter, Consumer<T> setter, Class<T> type, String description) {
-        this(name, getter, setter, type, description, null, null, null);
-    }
-
-    public Option(String name, Supplier<T> getter, Consumer<T> setter, Class<T> type, String description, T min, T max, T increment) {
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Class<T> type, T min, T max, T increment) {
         this.name = name;
+        this.description = description;
         this.getter = getter;
         this.setter = setter;
         this.type = type;
-        this.description = description;
         this.min = min;
         this.max = max;
         this.increment = increment;
     }
 
-
     public String getName() { return name; }
     public Supplier<T> getGetter() { return getter; }
     public Consumer<T> getSetter() { return setter; }
     public Class<T> getType() { return type; }
-    public String getDescription() { return description; }
     public T getMin() { return min; }
     public T getMax() { return max; }
     public T getIncrement() { return increment; }
 
-    public OptionWidget createWidget(int x, int y, int width, int height) {
+    public OptionDescription getDescription() { return description; }
+
+    public T getValue()
+    {
+        return getter.get();
+    }
+
+    public void setValue(T value) {
+        setter.accept(value);
+    }
+
+    public Option<T> description(OptionDescription description) {
+        this.description = description;
+        return this;
+    }
+
+    public OptionWidget createWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height) {
         if (type == Boolean.class) {
-            return new BooleanWidget(x, y, width, height, (Option<Boolean>) this);
+            return new BooleanWidget(parent, screen, x, y, width, height, (Option<Boolean>) this);
         } else if (type == Integer.class) {
             // return new IntegerWidget(x, y, width, height, (Option<Integer>) this);
         } else {

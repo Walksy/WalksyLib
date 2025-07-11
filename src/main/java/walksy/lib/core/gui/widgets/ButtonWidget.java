@@ -6,7 +6,8 @@ import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
-import walksy.lib.core.utils.RenderUtils;
+import walksy.lib.core.utils.MainColors;
+import walksy.lib.core.utils.Renderer;
 
 import java.awt.*;
 
@@ -21,25 +22,29 @@ public class ButtonWidget extends ClickableWidget {
         this.background = background;
     }
 
+
     @Override
     protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
         if (background) {
-            ctx.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), new Color(0, 0, 0, 100).getRGB());
+            ctx.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(),
+                    this.active ? new Color(0, 0, 0, 100).getRGB() : new Color(50, 50, 50, 100).getRGB());
         }
-        RenderUtils.fillRoundedRectOutline(ctx, getX(), getY(), width, height, 2, 1, new Color(255, 255, 255, hovered ? 100 : 51).getRGB());
-        RenderUtils.fillRoundedRectOutline(ctx, getX() - 1, getY() - 1, width + 2, height + 2, 2, 1, new Color(0, 0, 0, 191).getRGB());
 
-        String textString = getMessage().getString();
-        int textWidth = MinecraftClient.getInstance().textRenderer.getWidth(textString);
-        int textHeight = MinecraftClient.getInstance().textRenderer.fontHeight;
+        Renderer.fillRoundedRectOutline(ctx, getX(), getY(), width, height, 2, 1,
+                this.active ? new Color(255, 255, 255, hovered ? MainColors.OUTLINE_WHITE_HOVERED.getAlpha() : MainColors.OUTLINE_WHITE.getAlpha()).getRGB() : new Color(180, 180, 180, 50).getRGB());
 
-        //why must I add one to each variable here??
-        int textX = getX() + ((width - textWidth) / 2) + 1;
-        int textY = getY() + ((height - textHeight) / 2) + 1;
+        Renderer.fillRoundedRectOutline(ctx, getX() - 1, getY() - 1, width + 2, height + 2, 2, 1,
+                this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
 
-        int color = hovered ? 0xFFCCCCCC : 0xFF888888;
-        ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, textString, textX, textY, color);
+        String text = getMessage().getString();
+        int textX = getX() + ((width - MinecraftClient.getInstance().textRenderer.getWidth(text)) / 2) + 1;
+        int textY = getY() + ((height - MinecraftClient.getInstance().textRenderer.fontHeight) / 2) + 1;
+
+        ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, text, textX, textY,
+                this.active ? (hovered ? 0xFFCCCCCC : 0xFF888888) : 0xFF555555);
+
     }
+
 
     @Override
     protected void appendClickableNarrations(NarrationMessageBuilder builder) {}
@@ -50,5 +55,10 @@ public class ButtonWidget extends ClickableWidget {
         if (hovered && action != null) {
             action.run();
         }
+    }
+
+    public void setEnabled(boolean bl)
+    {
+        this.active = bl;
     }
 }

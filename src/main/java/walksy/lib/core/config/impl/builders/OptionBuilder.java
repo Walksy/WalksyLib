@@ -1,6 +1,7 @@
 package walksy.lib.core.config.impl.builders;
 
 import walksy.lib.core.config.impl.Option;
+import walksy.lib.core.config.impl.OptionDescription;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -10,7 +11,7 @@ public abstract class OptionBuilder<T, SELF extends OptionBuilder<T, SELF>> {
     protected final String name;
     protected final Supplier<T> getter;
     protected final Consumer<T> setter;
-    protected String description;
+    protected OptionDescription description;
 
     public OptionBuilder(String name, Supplier<T> getter, Consumer<T> setter) {
         this.name = name;
@@ -19,7 +20,7 @@ public abstract class OptionBuilder<T, SELF extends OptionBuilder<T, SELF>> {
     }
 
     @SuppressWarnings("unchecked")
-    public SELF description(String description) {
+    public SELF description(OptionDescription description) {
         this.description = description;
         return (SELF) this;
     }

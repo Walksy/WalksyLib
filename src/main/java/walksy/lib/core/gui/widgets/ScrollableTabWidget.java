@@ -15,14 +15,15 @@ import net.minecraft.util.math.MathHelper;
 import walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import walksy.lib.core.gui.utils.CategoryTab;
 import walksy.lib.core.gui.utils.TabLocation;
+import walksy.lib.core.mixin.ScreenAccessor;
 import walksy.lib.core.utils.MainColors;
 
 import java.awt.*;
 import java.util.List;
 
-public class ScrollableTabWidget extends ClickableWidget {
+public class ScrollableTabWidget extends AbstractWidget {
 
-    private final List<CategoryTab> tabs;
+    private List<CategoryTab> tabs;
     private final TabManager tabManager;
     private final TabLocation location;
     private final WalksyLibConfigScreen parent;
@@ -50,8 +51,8 @@ public class ScrollableTabWidget extends ClickableWidget {
         currentScrollOffset = MathHelper.lerp(0.2f, currentScrollOffset, targetScrollOffset);
 
         if (location == TabLocation.TOP || location == TabLocation.BOTTOM) {
+            if (tabs.isEmpty()) return;
             ctx.enableScissor(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height);
-
 
             final int tabCount = tabs.size();
             final int totalWidth = tabCount * (TAB_WIDTH + 4) - 4;
@@ -114,7 +115,6 @@ public class ScrollableTabWidget extends ClickableWidget {
             //LEFT vertical lines
             ctx.drawVerticalLine(startX - 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, leftAlpha).getRGB()); //this
             ctx.drawVerticalLine(startX - 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
-            System.out.println((tabCount - 1) * TAB_WIDTH + " " + parent.width);
             if ((tabCount - 1) * TAB_WIDTH <= parent.width) {
                 ctx.drawHorizontalLine(0, startX - 3, 27, new Color(0, 0, 0, 191).getRGB());
             }
@@ -160,7 +160,7 @@ public class ScrollableTabWidget extends ClickableWidget {
             ctx.getMatrices().scale(2.0F, 2.0F, 1.0F);
             ctx.getMatrices().translate(1.0, 1.0, 0);
 
-            ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, Identifier.of("walksylib", "arrow.png"),
+            ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, Identifier.of("walksylib", "gui/arrow.png"),
                 -1, -1, 0.0F, 0.0F, 8, 8, 8, 16, new Color(255, 255, 255, fadeAlpha).getRGB());
 
             ctx.getMatrices().pop();
@@ -172,7 +172,7 @@ public class ScrollableTabWidget extends ClickableWidget {
             ctx.getMatrices().scale(2.0F, 2.0F, 1.0F);
             ctx.getMatrices().translate(-9.0, 1.0, 0);
 
-            ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, Identifier.of("walksylib", "arrow.png"),
+            ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, Identifier.of("walksylib", "gui/arrow.png"),
                 1, -1, 0.0F, 8F, 8, 8, 8, 16, new Color(255, 255, 255, fadeAlpha).getRGB());
 
             ctx.getMatrices().pop();
@@ -239,7 +239,7 @@ public class ScrollableTabWidget extends ClickableWidget {
 
                 if (mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT) {
                     if (tabManager.getCurrentTab() != tabs.get(i)) {
-                        selectTab(i);
+                        selectTab(i, true);
                         //MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                     }
                     return true;
@@ -247,6 +247,26 @@ public class ScrollableTabWidget extends ClickableWidget {
             }
         }
         return false;
+    }
+
+    public void updateVisibleWidgetsForTab(CategoryTab tab) {
+        parent.children().removeIf(w -> w instanceof OptionGroupWidget || w instanceof OptionWidget);
+        ((ScreenAccessor)parent).getDrawables().removeIf(w -> w instanceof OptionGroupWidget || w instanceof OptionWidget);
+
+
+        for (OptionGroupWidget groupWidget : tab.getOptionGroupWidgets()) {
+            parent.addWidget(groupWidget);
+
+            for (OptionWidget optionWidget : groupWidget.getChildren()) {
+                parent.addWidget(optionWidget);
+            }
+        }
+        parent.layoutGroupWidgets();
+    }
+
+    public void setTabs(List<CategoryTab> tabs) {
+        this.tabs.clear();
+        this.tabs = tabs;
     }
 
 
@@ -264,10 +284,13 @@ public class ScrollableTabWidget extends ClickableWidget {
         return MaxOffset.MID;
     }
 
-    public void selectTab(int index) {
+    public void selectTab(int index, boolean bl) {
         if (index >= 0 && index < tabs.size()) {
-            tabManager.setCurrentTab(tabs.get(index), false);
-            parent.showWidgetsForCategory(tabs.get(index).getCategory());
+            tabManager.setCurrentTab(tabs.get(index), true);
+            if (bl) {
+                parent.showWidgetsForCategory(tabs.get(index).getCategory());
+            }
+            parent.setFocusedOption(null);
         }
     }
 

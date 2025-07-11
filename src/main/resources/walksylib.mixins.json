@@ -3,7 +3,8 @@
 	"package": "walksy.lib.core.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-    "TextFieldWidgetAccessor"
+		"TextFieldWidgetAccessor",
+		"ScreenAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

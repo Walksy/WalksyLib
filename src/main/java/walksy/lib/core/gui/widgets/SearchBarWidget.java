@@ -10,39 +10,37 @@ import net.minecraft.util.math.MathHelper;
 import walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import walksy.lib.core.mixin.TextFieldWidgetAccessor;
 import walksy.lib.core.utils.MainColors;
-import walksy.lib.core.utils.RenderUtils;
+import walksy.lib.core.utils.Renderer;
 
 import java.awt.*;
-import java.util.Objects;
+import java.util.function.Consumer;
 
 public class SearchBarWidget extends TextFieldWidget {
 
     private final WalksyLibConfigScreen parent;
+    private final Consumer<String> searchQuery;
 
-    public SearchBarWidget(int x, int y, int width, int height, Text text, WalksyLibConfigScreen parent) {
+    public SearchBarWidget(Text text, WalksyLibConfigScreen parent, int x, int y, int width, int height, Consumer<String> searchQuery) {
         super(MinecraftClient.getInstance().textRenderer, x, y, width, height, text);
         this.parent = parent;
+        this.searchQuery = searchQuery;
         this.setMaxLength((width - 8) / 6);
     }
 
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         if (this.isVisible()) {
-            context.fill(getX() + 2, getY() + 2, getX() + getWidth() - 2, getY() + getHeight() - 2, MainColors.OUTLINE_BLACK.getRGB());
+            //context.fill(getX() + 2, getY() + 2, getX() + getWidth() - 2, getY() + getHeight() - 2, MainColors.OUTLINE_BLACK.getRGB());
 
-            //fuckass fix for my shitty filledroundedrec code
             //TOP AND BOTTOM
-            context.fill(getX() + 3, getY() + 1, getX() + getWidth() - 3, getY() + 2, MainColors.OUTLINE_BLACK.getRGB());
-            context.fill(getX() + 3, getY() + getHeight() - 2, getX() + getWidth() - 3, getY() + getHeight() - 1, MainColors.OUTLINE_BLACK.getRGB());
-            //LEFT AND RIGHT
-            context.fill(getX() + 1, getY() + 3, getX() + 2, getY() + getHeight() - 3, MainColors.OUTLINE_BLACK.getRGB());
-            context.fill(getX() + getWidth() - 1, getY() + 3, getX() + getWidth() - 2, getY() + getHeight() - 3, MainColors.OUTLINE_BLACK.getRGB());
+            Renderer.fillRoundedRect(context, getX() + 1, getY() + 1, getWidth() - 2, getHeight() - 2, 2, MainColors.OUTLINE_BLACK.getRGB());
+
 
             int color = hovered ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
             if (this.isFocused()) {
                 color = Color.WHITE.getRGB();
             }
-            RenderUtils.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, color);
+            Renderer.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, color);
 
             if (this.getText().isEmpty() && !this.isFocused()) {
                 context.drawTextWithShadow(
@@ -100,8 +98,16 @@ public class SearchBarWidget extends TextFieldWidget {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        boolean result = super.keyPressed(keyCode, scanCode, modifiers);
+        searchQuery.accept(this.getText().toLowerCase());
+        return result;
+    }
 
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        boolean result = super.charTyped(chr, modifiers);
+        searchQuery.accept(this.getText().toLowerCase());
+        return result;
     }
 
     private void drawSelectionHighlight(DrawContext context, int x1, int y1, int x2, int y2) {

@@ -18,6 +18,6 @@ public class BooleanOption extends OptionBuilder<Boolean, BooleanOption> {
 
     @Override
     public Option<Boolean> build() {
-        return new Option<>(name, getter, setter, Boolean.class, description);
+        return new Option<>(name, description, getter, setter, Boolean.class);
     }
 }

@@ -20,7 +20,7 @@ public class NumericalOption<T extends Number> extends OptionBuilder<T, Numerica
         return new NumericalOption<>(name, getter, setter);
     }
 
-    public NumericalOption<T> properties(T min, T max, T increment) {
+    public NumericalOption<T> values(T min, T max, T increment) {
         this.min = min;
         this.max = max;
         this.increment = increment;
@@ -29,6 +29,6 @@ public class NumericalOption<T extends Number> extends OptionBuilder<T, Numerica
 
     @Override
     public Option<T> build() {
-        return new Option<>(name, getter, setter, (Class<T>) getter.get().getClass(), description, min, max, increment);
+        return new Option<>(name, description, getter, setter, (Class<T>) getter.get().getClass(), min, max, increment);
     }
 }
