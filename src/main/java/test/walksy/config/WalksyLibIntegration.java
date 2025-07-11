@@ -1,8 +1,8 @@
 package test.walksy.config;
 
 import net.minecraft.client.gui.screen.Screen;
-import walksy.lib.api.WalksyLibApi;
-import walksy.lib.core.gui.WalksyLibScreenManager;
+import main.walksy.lib.api.WalksyLibApi;
+import main.walksy.lib.core.gui.WalksyLibScreenManager;
 
 import java.util.function.UnaryOperator;
 

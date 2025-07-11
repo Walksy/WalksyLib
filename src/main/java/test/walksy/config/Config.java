@@ -1,13 +1,13 @@
 package test.walksy.config;
 
-import walksy.lib.core.config.ConfigClass;
-import walksy.lib.core.config.WalksyLibConfig;
-import walksy.lib.core.config.impl.Category;
-import walksy.lib.core.config.impl.Option;
-import walksy.lib.core.config.impl.builders.ConfigClassBuilder;
-import walksy.lib.core.config.impl.options.BooleanOption;
-import walksy.lib.core.config.impl.options.groups.OptionGroup;
-import walksy.lib.core.utils.PathUtils;
+import main.walksy.lib.core.config.ConfigClass;
+import main.walksy.lib.core.config.WalksyLibConfig;
+import main.walksy.lib.core.config.impl.Category;
+import main.walksy.lib.core.config.impl.Option;
+import main.walksy.lib.core.config.impl.builders.ConfigClassBuilder;
+import main.walksy.lib.core.config.impl.options.BooleanOption;
+import main.walksy.lib.core.config.impl.options.groups.OptionGroup;
+import main.walksy.lib.core.utils.PathUtils;
 
 public class Config implements WalksyLibConfig {
 

@@ -5,7 +5,7 @@
 	"name": "Walksy Lib",
 	"description": "Empty.",
 	"authors": [
-    "Walksy"
+		"Walksy"
 	],
 	"contact": {
 
@@ -15,17 +15,17 @@
 	"environment": "client",
 	"entrypoints": {
 		"main": [
-      "test.walksy.WalksyLibTest"
+			"test.walksy.WalksyLibTest"
 		],
-    "modmenu": [
-      "walksy.lib.core.integration.ModMenuIntegration"
-    ],
-    "walksylib": [
-      "test.walksy.config.WalksyLibIntegration"
-    ]
+		"modmenu": [
+			"main.walksy.lib.core.integration.ModMenuIntegration"
+		],
+		"walksylib": [
+			"test.walksy.config.WalksyLibIntegration"
+		]
 	},
 	"mixins": [
-    "walksylib.mixins.json"
+		"walksylib.mixins.json"
 	],
 	"depends": {
 		"fabricloader": "*",
