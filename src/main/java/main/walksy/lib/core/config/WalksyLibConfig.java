@@ -1,6 +1,7 @@
 package main.walksy.lib.core.config;
 
-public interface WalksyLibConfig {
+import main.walksy.lib.core.config.impl.LocalConfig;
 
-    ConfigClass define();
+public interface WalksyLibConfig {
+    LocalConfig define();
 }

@@ -1,7 +1,7 @@
-package main.walksy.lib.core.config.impl;
+package main.walksy.lib.core.config.local;
 
-import main.walksy.lib.core.config.impl.builders.CategoryBuilder;
-import main.walksy.lib.core.config.impl.options.groups.OptionGroup;
+import main.walksy.lib.core.config.local.builders.CategoryBuilder;
+import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 
 import java.util.List;
 import java.util.Objects;

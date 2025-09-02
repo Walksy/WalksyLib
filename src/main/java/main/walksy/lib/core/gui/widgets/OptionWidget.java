@@ -1,14 +1,16 @@
 package main.walksy.lib.core.gui.widgets;
 
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.text.Text;
-import main.walksy.lib.core.config.impl.Option;
-import main.walksy.lib.core.config.impl.options.groups.OptionGroup;
-import main.walksy.lib.core.gui.WalksyLibScreenManager;
+import main.walksy.lib.core.config.local.Option;
+import main.walksy.lib.core.config.local.options.groups.OptionGroup;
+import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Renderer;
 import main.walksy.lib.core.utils.SearchUtils;
+import net.minecraft.util.Identifier;
 
 import java.awt.*;
 
@@ -19,9 +21,11 @@ public abstract class OptionWidget extends AbstractWidget {
     private String searchQuery;
     private boolean isHovered;
 
-    private WalksyLibConfigScreen screen;
+    public WalksyLibConfigScreen screen;
+    public ButtonWidget resetButton;
 
     public boolean changesMade;
+    public int mouseX, mouseY;
 
     public OptionWidget(OptionGroup parent, WalksyLibConfigScreen screen, Option<?> option, int x, int y, int width, int height, String name) {
         super(x, y, width, height, Text.of(name));
@@ -32,16 +36,21 @@ public abstract class OptionWidget extends AbstractWidget {
         this.screen = screen;
         this.changesMade = false;
         this.isHovered = false;
+
+        int size = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+        resetButton = new ButtonWidget(getX() + getWidth() - size + 15, getY(), size + 2, size, false, Identifier.of("walksylib", "gui/widget/reset.png"), this::handleResetButtonClick);
+        resetButton.setEnabled(option.hasChanged());
     }
 
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         if (!isVisible()) return;
-
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
         int hoverLeft = getX();
 
-        isHovered = mouseX >= getX() && mouseX < (getX() + getWidth() - 6)
+        isHovered = mouseX >= getX() && mouseX < (getX() + getWidth())
                 && mouseY >= getY() && mouseY < (getY() + getHeight());
 
 
@@ -55,18 +64,31 @@ public abstract class OptionWidget extends AbstractWidget {
             renderHoverBackground(context, hoverLeft, getWidth());
         }
         renderBase(context);
-        renderResetButton(context);
-
+        //renderResetButton(context);
+        resetButton.render(context, mouseX, mouseY, delta);
+        resetButton.setEnabled(option.hasChanged());
         draw(context, mouseX, mouseY, delta);
         context.disableScissor();
     }
 
-    public abstract void onMouseClick(double mouseX, double mouseY, int button);
+    public void onMouseClick(double mouseX, double mouseY, int button) {}
+    public void onMouseRelease(double mouseX, double mouseY, int button) {}
+    public void onMouseDrag(double mouseX, double mouseY, int button, double deltaX, double deltaY) {}
+    public void onMouseMove(double mouseX, double mouseY) {}
+    public void onMouseScroll(double mouseX, double mouseY, double verticalAmount) {}
+    public void tick() {}
+    public void onWidgetUpdate(int x, int y)
+    {
+        this.resetButton.setPosition(x, y);
+        this.onWidgetUpdate();
+    }
+
+    public abstract void onWidgetUpdate();
 
     private void renderBase(DrawContext context)
     {
-        Renderer.fillRoundedRectOutline(context, getX(), getY(), getWidth() - 22, getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() - 20, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        Renderer.fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         renderName(context);
     }
 
@@ -79,25 +101,11 @@ public abstract class OptionWidget extends AbstractWidget {
                 -1);
     }
 
-    //TODO ICON
-    private void renderResetButton(DrawContext context) {
-        int size = getHeight();
-        int x = getWidth() - size - 4;
-        int y = getY();
 
-        Color outlineColor = changesMade ? new Color(255, 255, 255, 80) : new Color(180, 180, 180, 50);
-        Color shadowColor = changesMade ? new Color(0, 0, 0, 191) : new Color(30, 30, 30, 120);
-
-        int buttonX = x + 19;
-        int buttonY = y;
-        int centerX = buttonX + size / 2;
-        int centerY = buttonY + size / 2;
-
-        Renderer.fillRoundedRectOutline(context, buttonX, buttonY, size, size, 2, 1, outlineColor.getRGB());
-        Renderer.fillRoundedRectOutline(context, buttonX - 1, buttonY - 1, size + 2, size + 2, 2, 1, shadowColor.getRGB());
-        Renderer.renderCircleArrow(context, centerX, centerY, Renderer.ArrowDirection.UP, active ? 0xFFFFFFFF : 0xFFAAAAAA);
+    protected void handleResetButtonClick()
+    {
+        this.option.reset();
     }
-
 
     protected void renderHoverBackground(DrawContext context, int hoverLeft, int hoverRight) {
         if (isHovered()) {
@@ -108,12 +116,13 @@ public abstract class OptionWidget extends AbstractWidget {
 
     protected int getTextYCentered() {
         int textHeight = screen.getTextRenderer().fontHeight;
-        return getY() + (getHeight() - textHeight) / 2;
+        return getY() + (WalksyLibScreenManager.Globals.OPTION_HEIGHT - textHeight) / 2;
     }
 
     public boolean isHovered() {
         return isHovered && isVisible();
     }
+
 
     public abstract void draw(DrawContext context, int mouseX, int mouseY, float delta);
 
@@ -142,8 +151,25 @@ public abstract class OptionWidget extends AbstractWidget {
         return true;
     }
 
+    public boolean isInScissor(int scissorX, int scissorY, int scissorWidth, int scissorHeight) {
+        return getX() + getWidth() > scissorX &&
+                getX() < scissorX + scissorWidth &&
+                getY() + getHeight() - 2 > scissorY &&
+                getY() < scissorY + scissorHeight;
+    }
+
     public void updateSearchQuery(String searchQuery) {
         this.searchQuery = searchQuery;
+    }
+
+    public void update()
+    {
+        screen.layoutGroupWidgets();
+    }
+
+    public void onChange()
+    {
+        screen.onChangesMade(option);
     }
 
     public OptionGroup getParent() {
@@ -152,5 +178,10 @@ public abstract class OptionWidget extends AbstractWidget {
 
     public Option<?> getOption() {
         return option;
+    }
+
+    @Override
+    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+
     }
 }

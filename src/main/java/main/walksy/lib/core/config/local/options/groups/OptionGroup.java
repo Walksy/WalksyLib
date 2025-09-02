@@ -1,6 +1,6 @@
-package main.walksy.lib.core.config.impl.options.groups;
+package main.walksy.lib.core.config.local.options.groups;
 
-import main.walksy.lib.core.config.impl.Option;
+import main.walksy.lib.core.config.local.Option;
 
 import java.util.ArrayList;
 import java.util.List;

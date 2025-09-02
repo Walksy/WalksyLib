@@ -18,6 +18,7 @@ public class ModMenuIntegration implements ModMenuApi {
             .filter(e -> e.getConfigScreen() != null)
             .findFirst();
 
+
         return api.<ConfigScreenFactory<?>>map(walksyLibApi -> parent -> walksyLibApi.getConfigScreen().apply(parent))
             .orElse(null);
     }

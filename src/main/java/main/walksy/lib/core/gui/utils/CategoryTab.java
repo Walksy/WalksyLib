@@ -2,7 +2,7 @@ package main.walksy.lib.core.gui.utils;
 
 import net.minecraft.client.gui.tab.GridScreenTab;
 import net.minecraft.text.Text;
-import main.walksy.lib.core.config.impl.Category;
+import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.gui.widgets.OptionGroupWidget;
 
 import java.util.List;

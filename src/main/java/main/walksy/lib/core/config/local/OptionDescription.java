@@ -1,4 +1,4 @@
-package main.walksy.lib.core.config.impl;
+package main.walksy.lib.core.config.local;
 
 import net.minecraft.client.gui.DrawContext;
 
