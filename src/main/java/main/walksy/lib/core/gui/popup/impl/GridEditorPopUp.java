@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.popup.impl;
 
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
@@ -12,6 +13,7 @@ import net.minecraft.client.gui.DrawContext;
 import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
+
 public class GridEditorPopUp extends PopUp {
 
     private final PixelGrid currentGrid;
@@ -19,6 +21,8 @@ public class GridEditorPopUp extends PopUp {
     private final ButtonWidget undoAllButton;
     private final ButtonWidget doneButton;
     private final ButtonWidget clearButton;
+    private final ButtonWidget copyButton;
+    private final ButtonWidget pasteButton;
     private boolean isMouseDown = false;
     private boolean drawState = true;
     private final Set<Point> modifiedCells = new HashSet<>();
@@ -30,16 +34,18 @@ public class GridEditorPopUp extends PopUp {
 
     private final Scroller scroller;
     private final int index;
+
     public GridEditorPopUp(WalksyLibConfigScreen screen, PixelGrid grid, Consumer<PixelGrid> onDone, int currentIndex) {
         super(screen, "Grid Editor", 280, 320);
         this.currentGrid = grid.copy();
         this.index = currentIndex;
         this.scroller = new Scroller(0, 2);
+
         this.undoButton = new ButtonWidget(x + 5, y + height - 21, 40, 16, false, "Undo", null);
         this.undoAllButton = new ButtonWidget(x + 50, y + height - 21, 60, 16, false, "Undo All", null);
         this.doneButton = new ButtonWidget(x + width - 51, y + height - 21, 40, 16, false, "Done", () -> {
             if (onDone != null) {
-                onDone.accept(currentGrid); //TODO ALT Z
+                onDone.accept(currentGrid);
             }
             screen.popUp = null;
         });
@@ -54,6 +60,27 @@ public class GridEditorPopUp extends PopUp {
             modifiedCells.clear();
         });
 
+        this.copyButton = new ButtonWidget(x + width - 44, y + 5, 18, 12, false, "C", () -> {
+            WalksyLib.getInstance().getScreenManager().gridClipboard = currentGrid.copy();
+        });
+
+        this.pasteButton = new ButtonWidget(x + width - 22, y + 5, 18, 12, false, "P", () -> {
+            PixelGrid clipboard = WalksyLib.getInstance().getScreenManager().gridClipboard;
+            if (clipboard != null && clipboard.getWidth() == currentGrid.getWidth() && clipboard.getHeight() == currentGrid.getHeight()) {
+                for (int py = 0; py < clipboard.getHeight(); py++) {
+                    for (int px = 0; px < clipboard.getWidth(); px++) {
+                        boolean previous = currentGrid.getPixel(px, py);
+                        boolean newVal = clipboard.getPixel(px, py);
+                        if (previous != newVal) {
+                            undoStack.push(new UndoAction(new Point(px, py), previous));
+                            currentGrid.setPixel(px, py, newVal);
+                        }
+                    }
+                }
+                modifiedCells.clear();
+            }
+        });
+
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
                 fullBackup.put(new Point(x, y), grid.getPixel(x, y));
@@ -66,8 +93,7 @@ public class GridEditorPopUp extends PopUp {
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, "Editing Frame: " + index, (parent.width) / 2, y + 8, -1);
         context.enableScissor(x, y + 20, x + width, y + height - 25);
-        if (this.renderGridOutline(context, this.currentGrid, x + 6, (int) (y + 21 - scroller.getValue()), 16, 2, MainColors.OUTLINE_WHITE.getRGB(), true, mouseX, mouseY))
-        {
+        if (this.renderGridOutline(context, this.currentGrid, x + 6, (int) (y + 21 - scroller.getValue()), 16, 2, MainColors.OUTLINE_WHITE.getRGB(), true, mouseX, mouseY)) {
             scroller.active = false;
         }
         context.disableScissor();
@@ -77,10 +103,21 @@ public class GridEditorPopUp extends PopUp {
         undoButton.render(context, (int) mouseX, (int) mouseY, delta);
         undoAllButton.render(context, (int) mouseX, (int) mouseY, delta);
         clearButton.render(context, (int) mouseX, (int) mouseY, delta);
+        copyButton.render(context, (int) mouseX, (int) mouseY, delta);
+        pasteButton.render(context, (int) mouseX, (int) mouseY, delta);
+        pasteButton.setEnabled(WalksyLib.getInstance().getScreenManager().gridClipboard != null);
     }
 
     @Override
     public void onClick(double mouseX, double mouseY, int button) {
+        if (copyButton.isHovered()) {
+            copyButton.onClick(mouseX, mouseY);
+            return;
+        }
+        if (pasteButton.isHovered()) {
+            pasteButton.onClick(mouseX, mouseY);
+            return;
+        }
         if (undoButton.isHovered()) {
             if (!undoStack.isEmpty()) {
                 UndoAction action = undoStack.pop();
@@ -88,7 +125,6 @@ public class GridEditorPopUp extends PopUp {
             }
             return;
         }
-
         if (undoAllButton.isHovered()) {
             for (Map.Entry<Point, Boolean> entry : fullBackup.entrySet()) {
                 currentGrid.setPixel(entry.getKey().x, entry.getKey().y, entry.getValue());
@@ -107,7 +143,8 @@ public class GridEditorPopUp extends PopUp {
             for (int px = 0; px < currentGrid.getWidth(); px++) {
                 int cellX = x + 6 + px * (pixelSize + gapSize);
                 int cellY = (int) ((y + 21 - scroller.getValue()) + py * (pixelSize + gapSize));
-                if ((mouseX >= cellX && mouseX < cellX + pixelSize && mouseY >= cellY && mouseY < cellY + pixelSize) && !doneButton.isHovered() && !clearButton.isHovered() && !undoButton.isHovered() && !undoAllButton.isHovered()) {
+                if ((mouseX >= cellX && mouseX < cellX + pixelSize && mouseY >= cellY && mouseY < cellY + pixelSize)
+                        && !doneButton.isHovered() && !clearButton.isHovered() && !undoButton.isHovered() && !undoAllButton.isHovered()) {
                     boolean current = currentGrid.getPixel(px, py);
                     drawState = !current;
 
@@ -143,6 +180,8 @@ public class GridEditorPopUp extends PopUp {
             this.undoAllButton.setPosition(x + 50, y + height - 21);
             this.doneButton.setPosition(x + width - 51, y + height - 21);
             this.clearButton.setPosition(x + 115, y + height - 21);
+            this.copyButton.setPosition(x + width - 44, y + 5);
+            this.pasteButton.setPosition(x + width - 22, y + 5);
         }
     }
 
@@ -180,7 +219,6 @@ public class GridEditorPopUp extends PopUp {
             int py = y1 + centerY * (pixelSize + gapSize);
 
             int centerColor = new Color(255, 100, 100, 100).getRGB();
-
             context.fill(px + 1, py + 1, px + pixelSize - 1, py + pixelSize - 1, centerColor);
         }
 
@@ -188,13 +226,12 @@ public class GridEditorPopUp extends PopUp {
             for (int x = 0; x < grid.getWidth(); x++) {
                 int px = x1 + x * (pixelSize + gapSize);
                 int py = y1 + y * (pixelSize + gapSize);
-                if (!context.scissorContains(px, py))
-                {
+                if (!context.scissorContains(px, py)) {
                     rtrn = false;
                 }
+
                 boolean on = grid.getPixel(x, y);
                 int fillColor = on ? Color.WHITE.getRGB() : new Color(0, 0, 0, 0).getRGB();
-
                 context.fill(px + 1, py + 1, px + pixelSize - 1, py + pixelSize - 1, fillColor);
 
                 boolean hovered = mouseX >= px && mouseX < px + pixelSize && mouseY >= py && mouseY < py + pixelSize;
@@ -209,4 +246,3 @@ public class GridEditorPopUp extends PopUp {
         return rtrn;
     }
 }
-
