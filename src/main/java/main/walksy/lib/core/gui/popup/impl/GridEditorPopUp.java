@@ -29,10 +29,11 @@ public class GridEditorPopUp extends PopUp {
     private final Map<Point, Boolean> fullBackup = new HashMap<>();
 
     private final Scroller scroller;
-
-    public GridEditorPopUp(WalksyLibConfigScreen screen, PixelGrid grid, Consumer<PixelGrid> onDone) {
+    private final int index;
+    public GridEditorPopUp(WalksyLibConfigScreen screen, PixelGrid grid, Consumer<PixelGrid> onDone, int currentIndex) {
         super(screen, "Grid Editor", 280, 320);
         this.currentGrid = grid.copy();
+        this.index = currentIndex;
         this.scroller = new Scroller(0, 2);
         this.undoButton = new ButtonWidget(x + 5, y + height - 21, 40, 16, false, "Undo", null);
         this.undoAllButton = new ButtonWidget(x + 50, y + height - 21, 60, 16, false, "Undo All", null);
@@ -63,7 +64,7 @@ public class GridEditorPopUp extends PopUp {
     @Override
     public void render(DrawContext context, double mouseX, double mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, "Editing Frame: " + "idk", (parent.width) / 2, y + 8, -1);
+        context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, "Editing Frame: " + index, (parent.width) / 2, y + 8, -1);
         context.enableScissor(x, y + 20, x + width, y + height - 25);
         if (this.renderGridOutline(context, this.currentGrid, x + 6, (int) (y + 21 - scroller.getValue()), 16, 2, MainColors.OUTLINE_WHITE.getRGB(), true, mouseX, mouseY))
         {

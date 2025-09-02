@@ -195,9 +195,9 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     private void handleEditFrameButtonClick() {
         if (viewingGrid == null) return;
         screen.popUp = new GridEditorPopUp(screen, viewingGrid.copy(), newGrid -> {
-            this.option.setValue(PixelGridAnimation.replace(this.option.getValue(), newGrid, frameToReplace)); //TODO, fix
+            this.option.setValue(PixelGridAnimation.replace(this.option.getValue(), newGrid, frameToReplace));
             this.viewingGrid = newGrid.copy();
-        });
+        }, this.frameToReplace);
     }
 
     private void handleViewFramesButtonClick() {
@@ -252,6 +252,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
 
     public void setupFrames(int hoverFrame) {
         buttonFrames.clear();
+        this.resetViewingGrid();
         List<PixelGrid> frames = option.getValue().getFrames();
 
         for (int i = 0; i < frames.size(); i++) {
@@ -294,6 +295,12 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     }
 
     public void reset() {
+        this.resetViewingGrid();
+        this.setupFrames(-1);
+    }
+
+    private void resetViewingGrid()
+    {
         if (this.frameToReplace > 0) {
             this.viewingGrid = this.option.getValue().getFrame(1).copy();
         }

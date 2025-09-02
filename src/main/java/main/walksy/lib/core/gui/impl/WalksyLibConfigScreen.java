@@ -647,7 +647,6 @@ public class WalksyLibConfigScreen extends BaseScreen {
         {
             if (widget instanceof PixelGridAnimationWidget widget1)
             {
-                widget1.setupFrames(-1);
                 widget1.reset();
             }
         }
@@ -660,7 +659,6 @@ public class WalksyLibConfigScreen extends BaseScreen {
         {
             if (widget instanceof PixelGridAnimationWidget widget1)
             {
-                widget1.setupFrames(-1);
                 widget1.reset();
             }
         }

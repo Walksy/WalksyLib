@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public class FrameManagerPopUp extends PopUp {
     private Option<PixelGridAnimation> option;
     private final CopyOnWriteArrayList<ButtonWidget> buttons = new CopyOnWriteArrayList<>();
-    private final Map<PixelGrid, Point> framePreviewPositions = new HashMap<>();
+    private final Map<Integer, Point> framePreviewPositions = new HashMap<>();
     private final List<List<PixelGrid>> undoStack = new ArrayList<>();
     private final ButtonWidget undoButton;
     private final ButtonWidget undoAllButton;
@@ -67,7 +67,7 @@ public class FrameManagerPopUp extends PopUp {
             frameBtn.overrideHover = true;
             buttons.add(frameBtn);
 
-            framePreviewPositions.put(frame, new Point(centerX + 110, frameY + 2));
+            framePreviewPositions.put(i, new Point(centerX + 110, frameY + 2));
         }
 
         int yAfterLast = startY + frames.size() * spacing;
@@ -96,8 +96,7 @@ public class FrameManagerPopUp extends PopUp {
         PixelGridAnimation animation = option.getValue();
         undoStack.add(deepCopyFrames(animation.getFrames()));
         animation.getFrames().remove(frame);
-        if (this.onGridRemoval != null)
-        {
+        if (this.onGridRemoval != null) {
             this.onGridRemoval.accept(frame);
         }
         updateFrameNumbers();
@@ -106,7 +105,7 @@ public class FrameManagerPopUp extends PopUp {
     }
 
     private void updateFrameNumbers() {
-
+        // Optional: update metadata if needed (like per-frame labels, durations, etc.)
     }
 
     private void undo() {
@@ -140,15 +139,20 @@ public class FrameManagerPopUp extends PopUp {
             btn.scrollY = (float) scroller.getValue();
             btn.render(context, (int) mouseX, (int) mouseY, delta);
         }
-        for (Map.Entry<PixelGrid, Point> entry : framePreviewPositions.entrySet()) {
-            PixelGrid grid = entry.getKey();
-            Point pos = entry.getValue();
-            WalksyLib.getInstance().get2DRenderer().renderGridTexture(
-                    context, grid,
-                    pos.x - 1,
-                    (int) (pos.y - 6 - scroller.getValue()),
-                    2, 0, -1
-            );
+
+        List<PixelGrid> frames = option.getValue().getFrames();
+        for (Map.Entry<Integer, Point> entry : framePreviewPositions.entrySet()) {
+            int index = entry.getKey();
+            if (index >= 0 && index < frames.size()) {
+                PixelGrid grid = frames.get(index);
+                Point pos = entry.getValue();
+                WalksyLib.getInstance().get2DRenderer().renderGridTexture(
+                        context, grid,
+                        pos.x - 1,
+                        (int) (pos.y - 6 - scroller.getValue()),
+                        2, 0, -1
+                );
+            }
         }
         context.disableScissor();
         context.drawHorizontalLine(x + 2, x + width - 3, y + height - 25, MainColors.OUTLINE_WHITE.getRGB());
