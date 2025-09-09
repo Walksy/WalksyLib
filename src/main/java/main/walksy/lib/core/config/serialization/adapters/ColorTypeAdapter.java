@@ -1,4 +1,4 @@
-package main.walksy.lib.core.config.serialization;
+package main.walksy.lib.core.config.serialization.adapters;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -7,8 +7,7 @@ import com.google.gson.stream.JsonWriter;
 import java.awt.Color;
 import java.io.IOException;
 
-public class ColorAdapter extends TypeAdapter<Color> {
-
+public class ColorTypeAdapter extends TypeAdapter<Color> {
     @Override
     public void write(JsonWriter out, Color color) throws IOException {
         if (color == null) {
@@ -38,7 +37,7 @@ public class ColorAdapter extends TypeAdapter<Color> {
             }
         }
         in.endObject();
-
         return new Color(r, g, b, a);
     }
 }
+

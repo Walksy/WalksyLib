@@ -39,7 +39,6 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         this.setupFrames(-1);
 
         List<PixelGrid> frames = option.getValue().getFrames();
-        System.out.println(frames.size());
         if (!frames.isEmpty()) {
             this.viewingGrid = frames.get(0).copy();
         }
@@ -69,7 +68,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             );
             context.drawCenteredTextWithShadow(
                     screen.getTextRenderer(),
-                    "Frame Grid",
+                    "Frame " + frameToReplace + " Grid",
                     getWidth() - 40,
                     getY() + 23,
                     -1
@@ -95,10 +94,10 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             this.drawScrollableFrameSelector(context, mouseX, mouseY, delta);
         }
 
-        if (viewingGrid != null) {
+        if (option.getValue().getCurrentFrame() != null) {
             WalksyLib.getInstance().get2DRenderer().renderGridTexture(
                     context,
-                    viewingGrid,
+                    option.getValue().getCurrentFrame(),
                     (getWidth() - 10),
                     getY() + 3,
                     1,

@@ -38,7 +38,7 @@ public abstract class OptionWidget extends AbstractWidget {
         this.isHovered = false;
 
         int size = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
-        resetButton = new ButtonWidget(getX() + getWidth() - size + 15, getY(), size + 2, size, false, Identifier.of("walksylib", "gui/widget/reset.png"), this::handleResetButtonClick);
+        resetButton = new ButtonWidget(getX() + getWidth() - size + 15, getY(), size, size, false, Identifier.of("walksylib", "gui/widget/reset.png"), this::handleResetButtonClick, -1, 0);
         resetButton.setEnabled(option.hasChanged());
     }
 

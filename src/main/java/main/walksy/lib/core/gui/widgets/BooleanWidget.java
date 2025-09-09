@@ -21,7 +21,6 @@ public class BooleanWidget extends OptionWidget {
     private final Option<Boolean> option;
     private final WarningPopUp warningPopUp;
 
-
     public BooleanWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<Boolean> option, BooleanOption.Warning warning) {
         super(parent, screen, option, x, y, width, height, option.getName());
         this.option = option;
@@ -55,7 +54,9 @@ public class BooleanWidget extends OptionWidget {
             renderDebug(context);
         }
 
+        Renderer.fillRoundedRect(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2,  new Color(255, 255, 255, 20).getRGB());
         Renderer.fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+
         int x = option.getValue() ? getWidth() - 6 : getWidth() - 15;
         int color = option.getValue() ? Color.WHITE.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
         Renderer.fillRoundedRect(context, x, getY() + 4, 14, getHeight() - 8, 2, color);

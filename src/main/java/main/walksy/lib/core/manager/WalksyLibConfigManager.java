@@ -1,7 +1,8 @@
 package main.walksy.lib.core.manager;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.*;
+import com.google.gson.JsonParseException;
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.Config;
 import main.walksy.lib.core.config.impl.APIConfig;
 import main.walksy.lib.core.config.impl.LocalConfig;
@@ -9,9 +10,7 @@ import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.serialization.*;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -21,131 +20,90 @@ import java.util.List;
 
 public class WalksyLibConfigManager {
 
-    public LocalConfig localConfig;
-    public APIConfig apiConfig;
-
-    private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(Color.class, new ColorAdapter())
-            .setPrettyPrinting()
-            .create();
+    private final LocalConfig localConfig;
+    private final APIConfig apiConfig;
 
     public WalksyLibConfigManager(LocalConfig localConfig) {
         this.localConfig = localConfig;
         this.apiConfig = new APIConfig();
     }
 
-    public void save(@Nullable Config config) {
-        if (config == null || config instanceof LocalConfig) {
-            saveLocal(this.localConfig);
-        }
+    public LocalConfig getLocal()
+    {
+        return localConfig;
     }
 
-    public void load(@Nullable Config config) {
-        if (config == null || config instanceof LocalConfig) {
-            loadLocal(this.localConfig);
-        }
+    public APIConfig getAPI()
+    {
+        return apiConfig;
     }
 
-    private void saveLocal(LocalConfig config) {
-        Path path = config.path();
-        List<Category> categories = config.getCategories();
-        List<SerializableCategory> serializable = new ArrayList<>();
+    public static SerializableCategory serializeCategory(Category category) {
+        SerializableCategory serialized = new SerializableCategory();
+        serialized.name = category.name();
+        serialized.options = new ArrayList<>();
+        serialized.groups = new ArrayList<>();
 
-        for (Category category : categories) {
-            SerializableCategory sc = new SerializableCategory();
-            sc.name = category.name();
-            sc.options = new ArrayList<>();
-            for (Option<?> opt : category.options()) {
-                sc.options.add(OptionConverter.fromOption(opt));
+        for (Option<?> option : category.options()) {
+            serialized.options.add(OptionConverter.fromOption(option));
+        }
+
+        for (OptionGroup group : category.optionGroups()) {
+            SerializableGroup serializedGroup = new SerializableGroup();
+            serializedGroup.name = group.getName();
+            serializedGroup.expanded = group.isExpanded();
+            serializedGroup.options = new ArrayList<>();
+
+            for (Option<?> option : group.getOptions()) {
+                serializedGroup.options.add(OptionConverter.fromOption(option));
             }
 
-            sc.groups = new ArrayList<>();
-            for (OptionGroup group : category.optionGroups()) {
-                SerializableGroup sg = new SerializableGroup();
-                sg.name = group.getName();
-                sg.expanded = group.isExpanded();
-                sg.options = new ArrayList<>();
-                for (Option<?> opt : group.getOptions()) {
-                    sg.options.add(OptionConverter.fromOption(opt));
-                }
-                sc.groups.add(sg);
-            }
-
-            serializable.add(sc);
+            serialized.groups.add(serializedGroup);
         }
 
-        try {
-            Files.createDirectories(path.getParent());
-            String json = gson.toJson(serializable);
-            Files.writeString(path, json);
-        } catch (IOException e) {
-            System.err.println("Failed to save config to " + path + ": " + e.getMessage());
-        }
+        return serialized;
     }
 
-    private void loadLocal(LocalConfig config) {
-        Path path = config.path();
-        if (!Files.exists(path)) {
-            saveLocal(config);
-            return;
+    public static void applyCategoryValues(Category category, SerializableCategory serializedCategory) {
+        for (Option<?> option : category.options()) {
+            serializedCategory.options.stream()
+                    .filter(serialized -> serialized.name.equals(option.getName()))
+                    .findFirst()
+                    .ifPresent(serialized -> applyOptionValues(option, serialized));
         }
 
-        List<SerializableCategory> loaded;
-        try {
-            String json = Files.readString(path);
-            Type type = new TypeToken<List<SerializableCategory>>() {}.getType();
-            loaded = gson.fromJson(json, type);
-        } catch (IOException | JsonParseException e) {
-            System.err.println("Failed to read or parse config from " + path + ": " + e.getMessage());
-            return;
-        }
+        for (OptionGroup group : category.optionGroups()) {
+            serializedCategory.groups.stream()
+                    .filter(serialized -> serialized.name.equals(group.getName()))
+                    .findFirst()
+                    .ifPresent(serializedGroup -> {
+                        group.setExpanded(serializedGroup.expanded);
 
-        for (Category existing : config.getCategories()) {
-            for (SerializableCategory sc : loaded) {
-                if (!existing.name().equals(sc.name)) continue;
-
-                for (Option<?> opt : existing.options()) {
-                    for (SerializableOption so : sc.options) {
-                        if (!opt.getName().equals(so.name)) continue;
-                        applyOptionValue(opt, so);
-                        break;
-                    }
-                }
-
-                for (OptionGroup group : existing.optionGroups()) {
-                    for (SerializableGroup sg : sc.groups) {
-                        if (!group.getName().equals(sg.name)) continue;
-
-                        group.setExpanded(sg.expanded);
-
-                        for (Option<?> opt : group.getOptions()) {
-                            for (SerializableOption so : sg.options) {
-                                if (!opt.getName().equals(so.name)) continue;
-                                applyOptionValue(opt, so);
-                                break;
-                            }
+                        for (Option<?> option : group.getOptions()) {
+                            serializedGroup.options.stream()
+                                    .filter(serialized -> serialized.name.equals(option.getName()))
+                                    .findFirst()
+                                    .ifPresent(serialized -> applyOptionValues(option, serialized));
                         }
-                    }
-                }
-            }
+                    });
         }
     }
 
-    private void applyOptionValue(Option<?> opt, SerializableOption so) {
+    public static void applyOptionValues(Option<?> option, SerializableOption serialized) {
         try {
-            OptionConverter.setOptionValue(opt, so.value);
+            OptionConverter.setOptionValue(option, serialized.value);
         } catch (Exception e) {
-            System.err.println("Failed to set value for option '" + opt.getName() + "': " + e.getMessage());
+            System.err.println("Failed to set value for option '" + option.getName() + "': " + e.getMessage());
             return;
         }
 
-        opt.setRainbow(so.rainbow);
-        opt.setHue(so.hue);
-        opt.setSaturation(so.saturation);
-        opt.setBrightness(so.brightness);
-        opt.setAlpha(so.alpha);
-        opt.setRainbowSpeed(so.rainbowSpeed);
-        opt.setPulseSpeed(so.pulseSpeed);
-        opt.setPulseValue(so.pulseValue);
+        option.setRainbow(serialized.rainbow);
+        option.setHue(serialized.hue);
+        option.setSaturation(serialized.saturation);
+        option.setBrightness(serialized.brightness);
+        option.setAlpha(serialized.alpha);
+        option.setRainbowSpeed(serialized.rainbowSpeed);
+        option.setPulseSpeed(serialized.pulseSpeed);
+        option.setPulse(serialized.pulse);
     }
 }

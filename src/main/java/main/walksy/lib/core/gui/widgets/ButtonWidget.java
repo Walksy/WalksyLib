@@ -26,6 +26,7 @@ public class ButtonWidget extends ClickableWidget {
     public float scrollY = 0;
     private int outlineColor = -1, hoveredColor = -1;
     private boolean h = false;
+    private int textureOffsetX = 1, textureOffsetY = 1;
 
     public ButtonWidget(int x, int y, int width, int height, boolean background, String name, @Nullable Runnable action) {
         super(x, y, width, height, Text.of(name));
@@ -41,6 +42,16 @@ public class ButtonWidget extends ClickableWidget {
         this.background = background;
         this.grid = null;
         this.texture = texture;
+    }
+
+    public ButtonWidget(int x, int y, int width, int height, boolean background, Identifier texture, @Nullable Runnable action, int offsetX, int offsetY) {
+        super(x, y, width, height, Text.of(texture.getPath()));
+        this.action = action;
+        this.background = background;
+        this.grid = null;
+        this.texture = texture;
+        this.textureOffsetX = offsetX;
+        this.textureOffsetY = offsetY;
     }
 
 
@@ -85,7 +96,7 @@ public class ButtonWidget extends ClickableWidget {
             ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, text, text.equals("-") ? textX - 1 : textX, textY,
                     this.active ? ((isHovered() || overrideHover) ? 0xFFCCCCCC : 0xFF888888) : 0xFF555555);
         } else if (grid == null) {
-            ctx.drawTexture(RenderLayer::getGuiTextured, texture, drawX + 3, drawY + 3, 0, 0, 16, 16, 16, 16, 16, 16, this.active ? -1 : Color.GRAY.getRGB());
+            ctx.drawTexture(RenderLayer::getGuiTextured, texture, drawX + 3 + this.textureOffsetX, drawY + 3 + this.textureOffsetY, 0, 0, 16, 16, 16, 16, 16, 16, this.active ? -1 : Color.GRAY.getRGB());
         }
 
         if (grid != null) {

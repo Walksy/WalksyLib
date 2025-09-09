@@ -52,7 +52,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     public WalksyLibConfigScreen(Screen parent) {
         super(parent.getTitle().getString(), parent);
-        this.config = WalksyLib.getInstance().getConfigManager().localConfig;
+        this.config = WalksyLib.getInstance().getConfigManager().getLocal();
         this.focusedOption = null;
     }
 
@@ -116,7 +116,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private void initTabs() {
         List<CategoryTab> tabList = new ArrayList<>();
 
-        for (Category category : config.getCategories()) {
+        for (Category category : config.categories()) {
             List<OptionGroupWidget> groupWidgets = new ArrayList<>();
             int yOffset = 60;
 
@@ -270,7 +270,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private void render(DrawContext context) {
         context.drawTexture(RenderLayer::getGuiTextured, FOOTER_SEPARATOR_TEXTURE, 0, 25, 0.0F, 0.0F, width, 2, 32, 2);
         context.drawTexture(RenderLayer::getGuiTextured, FOOTER_SEPARATOR_TEXTURE, 0, height - 28, 0.0F, 0.0F, width, 2, 32, 2);
-        context.drawCenteredTextWithShadow(textRenderer, config.getName(), width / 2, 12 - textRenderer.fontHeight / 2, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, config.name(), width / 2, 12 - textRenderer.fontHeight / 2, 0xFFFFFF);
 
         WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX = (int) (width * 0.75);
         WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY = 61;
@@ -608,12 +608,12 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     public void save()
     {
-        //this.config.save(); //TODO wtf, stack overflow?
+        this.config.save();
         this.defineOptions();
     }
 
     private boolean shouldResetOptions() {
-        for (Category category : this.config.getCategories()) {
+        for (Category category : this.config.categories()) {
             for (OptionGroup group : category.optionGroups()) {
                 for (Option<?> option : group.getOptions()) {
                     if (option.hasChanged()) {
@@ -627,7 +627,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
 
     private boolean shouldUndoOptions() {
-        for (Category category : this.config.getCategories()) {
+        for (Category category : this.config.categories()) {
             for (OptionGroup group : category.optionGroups()) {
                 for (Option<?> option : group.getOptions()) {
                     if (!option.screenInstanceCheck()) {
@@ -642,7 +642,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     public void undo()
     {
-        this.config.getCategories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::undo)));
+        this.config.categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::undo)));
         for (OptionWidget widget : allOptionWidgets)
         {
             if (widget instanceof PixelGridAnimationWidget widget1)
@@ -654,7 +654,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     public void resetOptions()
     {
-        this.config.getCategories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::reset)));
+        this.config.categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::reset)));
         for (OptionWidget widget : allOptionWidgets)
         {
             if (widget instanceof PixelGridAnimationWidget widget1)
@@ -666,7 +666,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     private void defineOptions()
     {
-        for (Category category : this.config.getCategories())
+        for (Category category : this.config.categories())
         {
             for (OptionGroup group : category.optionGroups())
             {

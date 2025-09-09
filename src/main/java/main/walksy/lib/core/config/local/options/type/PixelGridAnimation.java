@@ -1,99 +1,109 @@
 package main.walksy.lib.core.config.local.options.type;
 
+import main.walksy.lib.core.WalksyLib;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
+import test.walksy.config.Config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class PixelGridAnimation {
-    private List<PixelGrid> frames = new ArrayList<>();
-    public int currentFrame = 0;
+    private final List<PixelGrid> frames = new ArrayList<>();
+    private int currentFrame = 0;
 
-    public PixelGridAnimation(PixelGrid... grids)
-    {
+    private int ticksPerFrame = 10;
+    private int tickCounter = 0;
+
+    public PixelGridAnimation(PixelGrid... grids) {
         frames.addAll(Arrays.asList(grids));
     }
 
-    public PixelGridAnimation(List<PixelGrid> grids)
-    {
+    public PixelGridAnimation(List<PixelGrid> grids) {
         frames.addAll(grids);
     }
 
-    //this is stupid
-    public PixelGridAnimation(PixelGridAnimation original, PixelGrid addition, int index)
-    {
-        List<PixelGrid> newFrames = new ArrayList<>();
-        for (int x = 0; x < original.getFrames().size(); x++)
-        {
-            if (x == index - 1) {
-                newFrames.add(addition);
-            } else {
-                newFrames.add(original.getFrames().get(x));
-            }
+    public PixelGridAnimation(PixelGridAnimation original, PixelGrid replacement, int index) {
+        for (int i = 0; i < original.frames.size(); i++) {
+            frames.add(i == index - 1 ? replacement : original.frames.get(i));
         }
-        frames.addAll(newFrames);
     }
 
-    public static PixelGridAnimation replace(PixelGridAnimation original, PixelGrid gridReplace, int index) {
-        PixelGridAnimation result = new PixelGridAnimation(original, gridReplace, index);
+    public static PixelGridAnimation replace(PixelGridAnimation original, PixelGrid replacement, int index) {
+        PixelGridAnimation result = new PixelGridAnimation(original, replacement, index);
         result.setCurrentFrame(original.currentFrame);
+        result.setTicksPerFrame(original.ticksPerFrame);
         return result;
+    }
+
+    public void resetAnimation() {
+        currentFrame = 0;
+        tickCounter = 0;
+    }
+
+    public void render(DrawContext context, int x, int y) {
+        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this.getCurrentFrame(), x, y, 1, 0, 1);
+    }
+
+    public void tick() {
+        if (frames.isEmpty()) return;
+
+        tickCounter++;
+        if (tickCounter >= ticksPerFrame) {
+            tickCounter = 0;
+            currentFrame = (currentFrame + 1) % frames.size();
+        }
+    }
+
+    public void setTicksPerFrame(int ticks) {
+        this.ticksPerFrame = MathHelper.clamp(ticks, 1, 100);
     }
 
 
     public PixelGrid getCurrentFrame() {
-        if (frames.isEmpty()) return null;
-        return frames.get(currentFrame);
+        return frames.isEmpty() ? null : frames.get(currentFrame);
     }
 
-    public List<PixelGrid> getFrames()
-    {
-        return this.frames;
+    public List<PixelGrid> getFrames() {
+        return frames;
     }
 
-    public PixelGrid getFrame(int i)
-    {
-        return frames.get(i - 1);
+    public PixelGrid getFrame(int index) {
+        return frames.get(index - 1);
     }
 
-    public void setFrame(int i, PixelGrid grid)
-    {
-        frames.set(i - 1, grid);
-    }
-
-    public PixelGridAnimation copy() {
-        List<PixelGrid> newFrames = frames.stream().map(PixelGrid::copy).toList();
-        PixelGridAnimation copy = new PixelGridAnimation(newFrames);
-        copy.currentFrame = this.currentFrame;
-        return copy;
-    }
-
-    public void setCurrentFrame(int index) {
-        this.currentFrame = MathHelper.clamp(index, 0, frames.size() - 1);
+    public void setFrame(int index, PixelGrid grid) {
+        frames.set(index - 1, grid);
     }
 
     public void addFrame(PixelGrid grid) {
         frames.add(grid);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PixelGridAnimation other)) return false;
+    public void setCurrentFrame(int index) {
+        this.currentFrame = MathHelper.clamp(index, 0, frames.size() - 1);
+    }
 
-        if (this.currentFrame != other.currentFrame) return false;
+    public PixelGridAnimation copy() {
+        List<PixelGrid> copiedFrames = frames.stream().map(PixelGrid::copy).toList();
+        PixelGridAnimation copy = new PixelGridAnimation(copiedFrames);
+        copy.currentFrame = this.currentFrame;
+        //copy.speed = this.speed;
+        return copy;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof PixelGridAnimation other)) return false;
+
         if (this.frames.size() != other.frames.size()) return false;
 
         for (int i = 0; i < frames.size(); i++) {
-            PixelGrid thisGrid = this.frames.get(i);
-            PixelGrid otherGrid = other.frames.get(i);
-            if (!thisGrid.equals(otherGrid)) {
-                return false;
-            }
+            if (!this.frames.get(i).equals(other.frames.get(i))) return false;
         }
 
         return true;
     }
 }
-

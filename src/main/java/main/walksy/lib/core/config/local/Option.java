@@ -41,7 +41,7 @@ public class Option<T> {
     private boolean rainbow = false;
     private int rainbowSpeed = 5;
     private int pulseSpeed = 5;
-    private  PulseValue pulseValue;
+    private boolean pulse = false;
     public LoadedAdditions loadedAdditions = null;
 
 
@@ -148,14 +148,14 @@ public class Option<T> {
         this.pulseSpeed = pulseSpeed;
     }
 
-    public PulseValue getPulseValue()
+    public boolean isPulse()
     {
-        return pulseValue;
+        return pulse;
     }
 
-    public void setPulseValue(@Nullable PulseValue pulseValue)
+    public void setPulse(boolean pulse)
     {
-        this.pulseValue = pulseValue;
+        this.pulse = pulse;
     }
 
     public boolean screenInstanceCheck()
@@ -214,7 +214,7 @@ public class Option<T> {
 
     private void resetAdditions()
     {
-        this.pulseValue = null;
+        this.pulse = false;
         this.rainbow = false;
         this.rainbowSpeed = 5;
         this.pulseSpeed = 5;
@@ -246,7 +246,7 @@ public class Option<T> {
     private float pulseTime = 0;
 
     private void handlePulse() {
-        if (this.pulseValue == null || type != Color.class) return;
+        if (!this.pulse || type != Color.class) return;
 
         pulseTime += (float) this.pulseSpeed / 1000f;
         brightness = (float) ((Math.sin(pulseTime * 2 * Math.PI) + 1) / 2);
@@ -264,7 +264,7 @@ public class Option<T> {
             return value != defaultValue;
         }
 
-        if (type == Color.class) {
+        if (type == Color.class) { //TODO FIX
             Color valColor = (Color) value;
             Color defColor = (Color) defaultValue;
 
@@ -297,20 +297,14 @@ public class Option<T> {
         }
     }
 
-    public enum PulseValue
-    {
-        SINE,
-        SQUARE
-    }
-
-    public record LoadedAdditions(boolean rainbow, int rainbowSpeed, int pulseSpeed, PulseValue pulseValue)
+    public record LoadedAdditions(boolean rainbow, int rainbowSpeed, int pulseSpeed, boolean pulseValue)
     {
         public void reload(Option<?> option)
         {
             option.setRainbow(rainbow);
             option.setRainbowSpeed(rainbowSpeed);
             option.setPulseSpeed(pulseSpeed);
-            option.setPulseValue(pulseValue);
+            option.setPulse(pulseValue);
         }
     }
 }

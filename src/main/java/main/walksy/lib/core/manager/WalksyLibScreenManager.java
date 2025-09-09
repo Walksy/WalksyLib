@@ -5,6 +5,7 @@ import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
+import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import net.minecraft.client.gui.screen.Screen;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 
@@ -24,10 +25,10 @@ public class WalksyLibScreenManager {
     }
 
     public void tick() {
-        LocalConfig config = WalksyLib.getInstance().getConfigManager().localConfig;
+        LocalConfig config = WalksyLib.getInstance().getConfigManager().getLocal();
         if (config == null) return;
 
-        for (Category category : config.getCategories()) {
+        for (Category category : config.categories()) {
             for (Option<?> option : category.options()) {
                 if (Color.class.isAssignableFrom(option.getType())) {
                     option.tick();
@@ -38,6 +39,9 @@ public class WalksyLibScreenManager {
                 for (Option<?> option : group.getOptions()) {
                     if (Color.class.isAssignableFrom(option.getType())) {
                         option.tick();
+                    } else if (PixelGridAnimation.class.isAssignableFrom(option.getType()))
+                    {
+                        ((Option<PixelGridAnimation>)option).getValue().tick();
                     }
                 }
             }

@@ -7,7 +7,7 @@ public class PixelGrid {
     private final int height;
     private boolean[][] pixels;
 
-    private PixelGrid(int width, int height, boolean[][] pixels) {
+    public PixelGrid(int width, int height, boolean[][] pixels) {
         this.width = width;
         this.height = height;
         this.pixels = new boolean[height][width];

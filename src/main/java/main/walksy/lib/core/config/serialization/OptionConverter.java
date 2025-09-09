@@ -1,11 +1,14 @@
 package main.walksy.lib.core.config.serialization;
 
+import com.google.gson.JsonElement;
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 
 import java.awt.*;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 
 @SuppressWarnings("unchecked")
 public class OptionConverter {
@@ -14,10 +17,12 @@ public class OptionConverter {
         SerializableOption s = new SerializableOption();
         s.name = opt.getName();
         s.type = opt.getType().getSimpleName().toLowerCase();
-        s.value = opt.getValue();
-        s.min = opt.getMin();
-        s.max = opt.getMax();
-        s.increment = opt.getIncrement();
+
+        s.value = WalksyLib.GSON.toJsonTree(opt.getValue(), opt.getType());
+        s.min = WalksyLib.GSON.toJsonTree(opt.getMin());
+        s.max = WalksyLib.GSON.toJsonTree(opt.getMax());
+        s.increment = WalksyLib.GSON.toJsonTree(opt.getIncrement());
+
         s.rainbow = opt.isRainbow();
         s.hue = opt.getHue();
         s.saturation = opt.getSaturation();
@@ -25,9 +30,11 @@ public class OptionConverter {
         s.alpha = opt.getAlpha();
         s.rainbowSpeed = opt.getRainbowSpeed();
         s.pulseSpeed = opt.getPulseSpeed();
-        s.pulseValue = opt.getPulseValue();
+        s.pulse = opt.isPulse();
+
         return s;
     }
+
     /*
     public static Option<?> toOption(SerializableOption s, Consumer<Object> setter) {
         Class<?> clazz = switch (s.type) {
@@ -55,37 +62,18 @@ public class OptionConverter {
 
      */
 
-    @SuppressWarnings("unchecked")
-    public static void setOptionValue(Option<?> option, Object value) {
+    public static void setOptionValue(Option<?> option, JsonElement valueElement) {
         Class<?> type = option.getType();
 
-        if (type == Color.class) {
-            if (value instanceof Color color) {
-                option.setValue(color);
-                return;
+        Object value;
+        try {
+            value = WalksyLib.GSON.fromJson(valueElement, type);
+            if (value != null) {
+                ((Option<Object>) option).setValue(value);
             }
-
-            if (value instanceof Map<?, ?> map) {
-                try {
-                    int r = ((Number) map.get("r")).intValue();
-                    int g = ((Number) map.get("g")).intValue();
-                    int b = ((Number) map.get("b")).intValue();
-                    int a = map.containsKey("a") ? ((Number) map.get("a")).intValue() : 255;
-                    option.setValue(new Color(r, g, b, a));
-                    return;
-                } catch (Exception e) {
-                    System.err.println("Failed to convert map to Color: " + e.getMessage());
-                }
-            }
-
-            throw new IllegalArgumentException("Invalid color value: " + value);
-        }
-
-        if (type.isInstance(value)) {
-            option.setValue(value);
-        } else {
-            throw new IllegalArgumentException("Invalid value type: " + value.getClass().getName() +
-                    ", expected: " + type.getName());
+        } catch (Exception e) {
+            System.err.println("Failed to deserialize value for option " + option.getName() +
+                    " to type " + type.getSimpleName() + ": " + e.getMessage());
         }
     }
 
