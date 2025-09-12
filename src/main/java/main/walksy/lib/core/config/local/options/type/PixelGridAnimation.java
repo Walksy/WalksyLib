@@ -3,21 +3,22 @@ package main.walksy.lib.core.config.local.options.type;
 import main.walksy.lib.core.WalksyLib;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
-import test.walksy.config.Config;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class PixelGridAnimation {
     private final List<PixelGrid> frames = new ArrayList<>();
+    private Supplier<Point> position;
     private int currentFrame = 0;
-
-    private int ticksPerFrame = 10;
     private int tickCounter = 0;
+    private int animationSpeed = 10;
 
     public PixelGridAnimation(PixelGrid... grids) {
-        frames.addAll(Arrays.asList(grids));
+        this(Arrays.asList(grids));
     }
 
     public PixelGridAnimation(List<PixelGrid> grids) {
@@ -33,7 +34,7 @@ public class PixelGridAnimation {
     public static PixelGridAnimation replace(PixelGridAnimation original, PixelGrid replacement, int index) {
         PixelGridAnimation result = new PixelGridAnimation(original, replacement, index);
         result.setCurrentFrame(original.currentFrame);
-        result.setTicksPerFrame(original.ticksPerFrame);
+        result.setAnimationSpeed(original.animationSpeed);
         return result;
     }
 
@@ -42,24 +43,38 @@ public class PixelGridAnimation {
         tickCounter = 0;
     }
 
+    public void render(DrawContext context) {
+        if (this.position == null || (this.position.get().x == -1) && (this.position.get().y == -1))
+        {
+            //TODO LOG
+            return;
+        }
+        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this.getCurrentFrame(), this.position.get().x, this.position.get().y, 1, 0, 1);
+    }
+
     public void render(DrawContext context, int x, int y) {
         WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this.getCurrentFrame(), x, y, 1, 0, 1);
     }
 
     public void tick() {
-        if (frames.isEmpty()) return;
+        if (frames.isEmpty() || animationSpeed <= 0) return;
 
         tickCounter++;
-        if (tickCounter >= ticksPerFrame) {
+        int frameDelay = Math.max(1, 21 - animationSpeed);
+        if (tickCounter >= frameDelay) {
             tickCounter = 0;
             currentFrame = (currentFrame + 1) % frames.size();
         }
     }
 
-    public void setTicksPerFrame(int ticks) {
-        this.ticksPerFrame = MathHelper.clamp(ticks, 1, 100);
+
+    public void setAnimationSpeed(int speed) {
+        this.animationSpeed = MathHelper.clamp(speed, 1, 100);
     }
 
+    public int getAnimationSpeed() {
+        return this.animationSpeed;
+    }
 
     public PixelGrid getCurrentFrame() {
         return frames.isEmpty() ? null : frames.get(currentFrame);
@@ -85,11 +100,22 @@ public class PixelGridAnimation {
         this.currentFrame = MathHelper.clamp(index, 0, frames.size() - 1);
     }
 
+    public Point getPosition()
+    {
+        return this.position.get();
+    }
+
+    public void setPosition(Supplier<Point> position)
+    {
+        this.position = position;
+    }
+
     public PixelGridAnimation copy() {
         List<PixelGrid> copiedFrames = frames.stream().map(PixelGrid::copy).toList();
         PixelGridAnimation copy = new PixelGridAnimation(copiedFrames);
         copy.currentFrame = this.currentFrame;
-        //copy.speed = this.speed;
+        copy.animationSpeed = this.animationSpeed;
+        copy.setPosition(this.position);
         return copy;
     }
 
@@ -97,7 +123,8 @@ public class PixelGridAnimation {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof PixelGridAnimation other)) return false;
-
+        if (this.animationSpeed != other.animationSpeed) return false;
+        if (!this.position.equals(other.position)) return false;
         if (this.frames.size() != other.frames.size()) return false;
 
         for (int i = 0; i < frames.size(); i++) {

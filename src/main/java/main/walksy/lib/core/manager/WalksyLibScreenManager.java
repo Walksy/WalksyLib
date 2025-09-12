@@ -6,6 +6,7 @@ import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 
@@ -22,6 +23,11 @@ public class WalksyLibScreenManager {
     public void openAllMods()
     {
 
+    }
+
+    public void openHudEditorScreen(WalksyLibConfigScreen screen, Option<?> option)
+    {
+        //MinecraftClient.getInstance().setScreen(new HudEditorScreen(screen, option));
     }
 
     public void tick() {

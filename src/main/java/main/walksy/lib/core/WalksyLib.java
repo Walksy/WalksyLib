@@ -26,20 +26,26 @@ public class WalksyLib {
             .setPrettyPrinting()
             .create();
     private final WalksyLibScreenManager screenManager;
-    private final WalksyLibConfigManager configManager;
+    private WalksyLibConfigManager configManager;
+    private final WalksyLibConfig config;
     private final Render2D renderer2D;
 
     private WalksyLib(WalksyLibConfig config)
     {
         try {
             this.screenManager = new WalksyLibScreenManager();
-            this.configManager = new WalksyLibConfigManager(config.define());
-            //this.configManager.getAPI().load();
-            this.configManager.getLocal().load();
             this.renderer2D = new Render2D();
+            this.config = config;
         } finally {
             LOGGER.info("WalksyLib successfully initialized!");
         } //TODO catch
+    }
+
+    public void onInitFinished()
+    {
+        this.configManager = new WalksyLibConfigManager(config.define());
+        //this.configManager.getAPI().load();
+        this.configManager.getLocal().load();
     }
 
     public static void onInitialize(WalksyLibConfig config)

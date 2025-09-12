@@ -4,6 +4,7 @@ import com.google.gson.*;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 
+import java.awt.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +15,19 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
     public JsonElement serialize(PixelGridAnimation src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject obj = new JsonObject();
         JsonArray frames = new JsonArray();
+
         for (PixelGrid frame : src.getFrames()) {
             frames.add(context.serialize(frame));
         }
 
         obj.add("frames", frames);
+        obj.addProperty("animationSpeed", src.getAnimationSpeed());
+
+        JsonObject pos = new JsonObject();
+        pos.addProperty("x", src.getPosition().x);
+        pos.addProperty("y", src.getPosition().y);
+        obj.add("position", pos);
+
         return obj;
     }
 
@@ -32,7 +41,18 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
             frames.add(context.deserialize(elem, PixelGrid.class));
         }
 
-        return new PixelGridAnimation(frames);
+        JsonObject posObj = obj.getAsJsonObject("position");
+        int x = posObj.get("x").getAsInt();
+        int y = posObj.get("y").getAsInt();
+        Point position = new Point(x, y);
+
+        PixelGridAnimation animation = new PixelGridAnimation(frames);
+
+        if (obj.has("animationSpeed")) {
+            int speed = obj.get("animationSpeed").getAsInt();
+            animation.setAnimationSpeed(speed);
+        }
+
+        return animation;
     }
 }
-

@@ -3,6 +3,7 @@ package main.walksy.lib.core.config.local.options;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.builders.OptionBuilder;
 
+import java.awt.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -29,6 +30,6 @@ public class NumericalOption<T extends Number> extends OptionBuilder<T, Numerica
 
     @Override
     public Option<T> build() {
-        return new Option<>(name, description, getter, setter, (Class<T>) getter.get().getClass(), min, max, increment, defaultValue, null);
+        return new Option<>(name, description, getter, setter, (Class<T>) getter.get().getClass(), min, max, increment, defaultValue, null, () -> new Point(-1, -1));
     }
 }

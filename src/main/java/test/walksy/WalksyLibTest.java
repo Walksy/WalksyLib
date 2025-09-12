@@ -4,6 +4,7 @@ import main.walksy.lib.core.WalksyLib;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.MinecraftClient;
 import test.walksy.config.Config;
 
 public class WalksyLibTest implements ModInitializer {
@@ -13,6 +14,6 @@ public class WalksyLibTest implements ModInitializer {
         WalksyLib.onInitialize(new Config());
 
         HudRenderCallback.EVENT.register((drawContext, tickCounter) ->
-                Config.testGrid.render(drawContext, drawContext.getScaledWindowWidth() / 2, drawContext.getScaledWindowHeight() / 2));
+                Config.testGrid.render(drawContext, MinecraftClient.getInstance().getWindow().getScaledWidth() / 2, MinecraftClient.getInstance().getWindow().getScaledHeight() / 2));
     }
 }

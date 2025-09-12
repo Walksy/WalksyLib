@@ -51,7 +51,6 @@ public class ColorWidget extends OpenableWidget {
         this.pulseButton = new ButtonWidget(x + 5, y + 45 + 10, 17, 17, false, PULSE_ICON, () -> this.option.setPulse(!this.option.isPulse()), -3, -3);
         this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, 100, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getRainbowSpeed()), this.option.getRainbowSpeed(), this.option::setRainbowSpeed, true);
         this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, 100, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getPulseSpeed()), this.option.getPulseSpeed(), this.option::setPulseSpeed, true);
-
     }
 
     @Override
@@ -279,6 +278,16 @@ public class ColorWidget extends OpenableWidget {
     public void onRelease(double mouseX, double mouseY) {
         this.chromaSpeedSlider.release();
         this.pulseSpeedSlider.release();
+    }
+
+    @Override
+    public void onWidgetUpdate() {
+        this.chromaSpeedSlider.setPos(new Point(getX() + 28, getY() + 23 + 10));
+        this.pulseSpeedSlider.setPos(new Point(getX() + 28, getY() + 49 + 10));
+        this.chromaButton.setX(getX() + 5);
+        this.chromaButton.setY(getY() + 29);
+        this.pulseButton.setX(getX() + 5);
+        this.pulseButton.setY(getY() + 55);
     }
 
     private void handleHueSliderClick(double mouseY) {

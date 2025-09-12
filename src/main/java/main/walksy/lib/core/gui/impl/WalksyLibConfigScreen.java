@@ -5,6 +5,7 @@ import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.popup.impl.WarningPopUp;
 import main.walksy.lib.core.gui.widgets.*;
+import main.walksy.lib.core.gui.widgets.sub.SubWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.PostEffectProcessor;
 import net.minecraft.client.gui.DrawContext;
@@ -44,11 +45,11 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private ButtonWidget backButton, allModsButton, saveButton, resetButton, undoButton;
     private SearchBarWidget searchBar;
     private Option<?> focusedOption;
+    private int maxScroll = 0;
+    public boolean scroll = true;
+    public int tickCount = 0;
     public PopUp popUp = null;
     public int scrollY = 0;
-    public boolean scroll = true;
-    private int maxScroll = 0;
-    public int tickCount = 0;
 
     public WalksyLibConfigScreen(Screen parent) {
         super(parent.getTitle().getString(), parent);

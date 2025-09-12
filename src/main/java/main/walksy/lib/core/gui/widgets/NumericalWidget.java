@@ -66,7 +66,7 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
 
     @Override
     public void onWidgetUpdate() {
-        this.slider.onWidgetUpdate();
+        this.slider.setPos(new Point(width - 100, getY() + 6));
     }
 
     @Override

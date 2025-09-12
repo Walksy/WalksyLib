@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Renderer;
@@ -10,25 +11,20 @@ import net.minecraft.util.math.MathHelper;
 import java.awt.*;
 import java.util.function.Consumer;
 
-public class SliderSubWidget<T> implements SubWidget {
-
-    private int x, y, width, height;
+public class SliderSubWidget<T> extends SubWidget {
     private float sliderPosition = 0.0f;
     private boolean dragging = false;
     public boolean isHovered = false;
     private final SliderAdapter<T> adapter;
     private T value;
     private final Consumer<T> onChange;
-    private boolean isRight;
+    private final boolean isRight;
 
     public SliderSubWidget(int x, int y, int width, int height, SliderAdapter<T> adapter, T initialValue, Consumer<T> onChange, boolean right) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        super(x, y, width, height);
         this.adapter = adapter;
-        this.onChange = onChange;
         this.isRight = right;
+        this.onChange = onChange;
         this.setValue(initialValue);
     }
 
@@ -73,11 +69,6 @@ public class SliderSubWidget<T> implements SubWidget {
         if (dragging) {
             onChange(mouseX);
         }
-    }
-
-    @Override
-    public void onWidgetUpdate() {
-
     }
 
     private void onChange(int mouseX) {
