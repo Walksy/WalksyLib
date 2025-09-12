@@ -14,6 +14,6 @@ public class WalksyLibTest implements ModInitializer {
         WalksyLib.onInitialize(new Config());
 
         HudRenderCallback.EVENT.register((drawContext, tickCounter) ->
-                Config.testGrid.render(drawContext, MinecraftClient.getInstance().getWindow().getScaledWidth() / 2, MinecraftClient.getInstance().getWindow().getScaledHeight() / 2));
+                Config.testGrid.render(drawContext));
     }
 }

@@ -1,6 +1,11 @@
 package main.walksy.lib.core.config.local.options.type;
 
+import main.walksy.lib.core.WalksyLib;
+import net.minecraft.client.gui.DrawContext;
+
+import java.awt.*;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 public class PixelGrid {
     private final int width;
@@ -17,6 +22,21 @@ public class PixelGrid {
                 this.pixels[y][x] = y < pixels.length && x < pixels[y].length && pixels[y][x];
             }
         }
+    }
+
+    public void render(DrawContext context, Supplier<Point> position)
+    {
+        if (position == null || (position.get().x == -1) && (position.get().y == -1))
+        {
+            //TODO LOG
+            return;
+        }
+        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, 1);
+    }
+
+    public void render(DrawContext context, int x, int y)
+    {
+        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this, x, y, 1, 0, 1);
     }
 
     public boolean getPixel(int x, int y) {

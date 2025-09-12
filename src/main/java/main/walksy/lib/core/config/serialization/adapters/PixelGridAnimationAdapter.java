@@ -24,8 +24,8 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
         obj.addProperty("animationSpeed", src.getAnimationSpeed());
 
         JsonObject pos = new JsonObject();
-        pos.addProperty("x", src.getPosition().x);
-        pos.addProperty("y", src.getPosition().y);
+        pos.addProperty("x", src.getRelativeX());
+        pos.addProperty("y", src.getRelativeY());
         obj.add("position", pos);
 
         return obj;
@@ -41,17 +41,17 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
             frames.add(context.deserialize(elem, PixelGrid.class));
         }
 
-        JsonObject posObj = obj.getAsJsonObject("position");
-        int x = posObj.get("x").getAsInt();
-        int y = posObj.get("y").getAsInt();
-        Point position = new Point(x, y);
-
         PixelGridAnimation animation = new PixelGridAnimation(frames);
 
         if (obj.has("animationSpeed")) {
             int speed = obj.get("animationSpeed").getAsInt();
             animation.setAnimationSpeed(speed);
         }
+
+        JsonObject posObj = obj.getAsJsonObject("position");
+        float x = posObj.get("x").getAsFloat();
+        float y = posObj.get("y").getAsFloat();
+        animation.setRelativePosition(x, y);
 
         return animation;
     }

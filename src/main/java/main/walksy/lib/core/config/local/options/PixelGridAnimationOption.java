@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 
 public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, PixelGridAnimationOption> {
 
-    private Supplier<Point> positionSupplier = () -> new Point(-1, -1);
+    private Point point = new Point(-1, -1);
 
     public PixelGridAnimationOption(String name, Supplier<PixelGridAnimation> getter, PixelGridAnimation defaultValue, Consumer<PixelGridAnimation> setter) {
         super(name, getter, defaultValue, setter);
@@ -22,13 +22,13 @@ public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, 
         return new PixelGridAnimationOption(name, getter, defaultValue, setter);
     }
 
-    public PixelGridAnimationOption position(Supplier<Point> supplier) {
-        this.positionSupplier = supplier;
+    public PixelGridAnimationOption position(Point point) {
+        this.point = point;
         return this;
     }
 
     @Override
     public Option<PixelGridAnimation> build() {
-        return new Option<>(name, description, getter, setter, PixelGridAnimation.class, null, null, null, defaultValue, null, positionSupplier);
+        return new Option<>(name, description, getter, setter, PixelGridAnimation.class, null, null, null, defaultValue, null, point);
     }
 }

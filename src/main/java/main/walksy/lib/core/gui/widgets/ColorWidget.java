@@ -47,10 +47,11 @@ public class ColorWidget extends OpenableWidget {
         option.setSaturation(hsb[1]);
         option.setBrightness(hsb[2]);
         option.setAlpha(initial.getAlpha());
+        COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
         this.chromaButton = new ButtonWidget(x + 5, y + 19 + 10, 17, 17, false, RAINBOW_ICON, () -> this.option.setRainbow(!this.option.isRainbow()), -3, -3);
         this.pulseButton = new ButtonWidget(x + 5, y + 45 + 10, 17, 17, false, PULSE_ICON, () -> this.option.setPulse(!this.option.isPulse()), -3, -3);
-        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, 100, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getRainbowSpeed()), this.option.getRainbowSpeed(), this.option::setRainbowSpeed, true);
-        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, 100, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getPulseSpeed()), this.option.getPulseSpeed(), this.option::setPulseSpeed, true);
+        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getRainbowSpeed()), this.option.getRainbowSpeed(), this.option::setRainbowSpeed, true);
+        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getPulseSpeed()), this.option.getPulseSpeed(), this.option::setPulseSpeed, true);
     }
 
     @Override
@@ -288,6 +289,10 @@ public class ColorWidget extends OpenableWidget {
         this.chromaButton.setY(getY() + 29);
         this.pulseButton.setX(getX() + 5);
         this.pulseButton.setY(getY() + 55);
+
+        int width = ((getX() + getWidth()) / 2) -  32 - 60;
+        this.chromaSpeedSlider.setWidth(width);
+        this.pulseSpeedSlider.setWidth(width);
     }
 
     private void handleHueSliderClick(double mouseY) {

@@ -28,6 +28,25 @@ public class Render2D {
         }
     }
 
+    public void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
+        int gridWidthPixels = grid.getWidth() * pixelSize + (grid.getWidth() - 1) * gapSize;
+        int gridHeightPixels = grid.getHeight() * pixelSize + (grid.getHeight() - 1) * gapSize;
+
+        int x2 = x1 + gridWidthPixels;
+        int y2 = y1 + gridHeightPixels;
+
+        int blue = new Color(0, 100, 255).getRGB();
+
+        context.fill(x1 - 1, y1 - 1, x2 + 1, y1, blue);
+        context.fill(x1 - 1, y2, x2 + 1, y2 + 1, blue);
+        context.fill(x1 - 1, y1, x1, y2, blue);
+        context.fill(x2, y1, x2 + 1, y2, blue);
+    }
+
+
+
+
+
     public void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, int outlineColor, boolean markCenter) {
         if (markCenter) {
             int centerX = grid.getWidth() / 2;

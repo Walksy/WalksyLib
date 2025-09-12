@@ -44,19 +44,18 @@ public class Option<T> {
     private boolean pulse = false;
     public LoadedAdditions loadedAdditions = null;
 
-    //Position Option
-    private Supplier<Point> positionSupplier;
+
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Class<T> type, T defaultValue, BooleanOption.Warning warning) {
-        this(name, description, getter, setter, type, null, null, null, defaultValue, warning, () -> new Point(-1, -1));
+        this(name, description, getter, setter, type, null, null, null, defaultValue, warning, null);
     }
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Class<T> type, T defaultValue) {
-        this(name, description, getter, setter, type, null, null, null, defaultValue, null, () -> new Point(-1, -1));
+        this(name, description, getter, setter, type, null, null, null, defaultValue, null, null);
     }
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter,
-                  Class<T> type, T min, T max, T increment, T defaultValue, BooleanOption.Warning warning, Supplier<Point> positionSupplier) {
+                  Class<T> type, T min, T max, T increment, T defaultValue, BooleanOption.Warning warning, Point point) {
         this.name = name;
         this.description = description;
         this.getter = getter;
@@ -71,8 +70,9 @@ public class Option<T> {
             this.defaultValue = defaultValue;
         }
         this.warning = warning;
-        this.positionSupplier = positionSupplier;
-        this.definePosition();
+        if (point != null) {
+            this.definePosition(point);
+        }
     }
 
     public String getName() { return name; }
@@ -177,13 +177,15 @@ public class Option<T> {
     }
 
     public boolean has2DPosition() {
-        Point pos = positionSupplier.get();
-        return pos.x != -1 && pos.y != -1;
+        if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
+            return true; //
+        }
+        return false;
     }
 
-    public void definePosition() {
+    public void definePosition(Point point) {
         if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            pixelGridAnimation.setPosition(positionSupplier);
+            pixelGridAnimation.setPosition(point.x, point.y);
         }
     }
 

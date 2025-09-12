@@ -1,6 +1,6 @@
 package main.walksy.lib.core.config.local.options.type;
 
-import main.walksy.lib.core.WalksyLib;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 
@@ -8,14 +8,15 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class PixelGridAnimation {
     private final List<PixelGrid> frames = new ArrayList<>();
-    private Supplier<Point> position;
     private int currentFrame = 0;
     private int tickCounter = 0;
     private int animationSpeed = 10;
+
+    private float relativeX = 0.5f;
+    private float relativeY = 0.5f;
 
     public PixelGridAnimation(PixelGrid... grids) {
         this(Arrays.asList(grids));
@@ -29,6 +30,8 @@ public class PixelGridAnimation {
         for (int i = 0; i < original.frames.size(); i++) {
             frames.add(i == index - 1 ? replacement : original.frames.get(i));
         }
+        this.relativeX = original.relativeX;
+        this.relativeY = original.relativeY;
     }
 
     public static PixelGridAnimation replace(PixelGridAnimation original, PixelGrid replacement, int index) {
@@ -44,16 +47,12 @@ public class PixelGridAnimation {
     }
 
     public void render(DrawContext context) {
-        if (this.position == null || (this.position.get().x == -1) && (this.position.get().y == -1))
-        {
-            //TODO LOG
-            return;
-        }
-        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this.getCurrentFrame(), this.position.get().x, this.position.get().y, 1, 0, 1);
+        Point pos = getAbsolutePosition();
+        this.getCurrentFrame().render(context, pos.x, pos.y);
     }
 
     public void render(DrawContext context, int x, int y) {
-        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this.getCurrentFrame(), x, y, 1, 0, 1);
+        this.getCurrentFrame().render(context, x, y);
     }
 
     public void tick() {
@@ -66,7 +65,6 @@ public class PixelGridAnimation {
             currentFrame = (currentFrame + 1) % frames.size();
         }
     }
-
 
     public void setAnimationSpeed(int speed) {
         this.animationSpeed = MathHelper.clamp(speed, 1, 100);
@@ -100,14 +98,41 @@ public class PixelGridAnimation {
         this.currentFrame = MathHelper.clamp(index, 0, frames.size() - 1);
     }
 
-    public Point getPosition()
-    {
-        return this.position.get();
+    public Point getAbsolutePosition() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        int screenWidth = client.getWindow().getScaledWidth();
+        int screenHeight = client.getWindow().getScaledHeight();
+
+        int x = Math.round(screenWidth * relativeX);
+        int y = Math.round(screenHeight * relativeY);
+        return new Point(x, y);
     }
 
-    public void setPosition(Supplier<Point> position)
+    public void setPosition(int absoluteX, int absoluteY) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        int screenWidth = client.getWindow().getScaledWidth();
+        int screenHeight = client.getWindow().getScaledHeight();
+
+        if (screenWidth == 0 || screenHeight == 0) return;
+
+        this.relativeX = MathHelper.clamp((float) absoluteX / screenWidth, 0.0f, 1.0f);
+        this.relativeY = MathHelper.clamp((float) absoluteY / screenHeight, 0.0f, 1.0f);
+    }
+
+    public void setRelativePosition(float x, float y)
     {
-        this.position = position;
+        this.relativeX = x;
+        this.relativeY = y;
+    }
+
+    public float getRelativeX()
+    {
+        return this.relativeX;
+    }
+
+    public float getRelativeY()
+    {
+        return this.relativeY;
     }
 
     public PixelGridAnimation copy() {
@@ -115,7 +140,8 @@ public class PixelGridAnimation {
         PixelGridAnimation copy = new PixelGridAnimation(copiedFrames);
         copy.currentFrame = this.currentFrame;
         copy.animationSpeed = this.animationSpeed;
-        copy.setPosition(this.position);
+        copy.relativeX = this.relativeX;
+        copy.relativeY = this.relativeY;
         return copy;
     }
 
@@ -124,7 +150,7 @@ public class PixelGridAnimation {
         if (this == obj) return true;
         if (!(obj instanceof PixelGridAnimation other)) return false;
         if (this.animationSpeed != other.animationSpeed) return false;
-        if (!this.position.equals(other.position)) return false;
+        if (this.relativeX != other.relativeX || this.relativeY != other.relativeY) return false;
         if (this.frames.size() != other.frames.size()) return false;
 
         for (int i = 0; i < frames.size(); i++) {

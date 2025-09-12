@@ -36,7 +36,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         super(parent, screen, option, x, y, width, height, option.getName(), (WalksyLibScreenManager.Globals.OPTION_HEIGHT * 6));
         this.option = option;
         this.scroller = new Scroller(0, 2);
-        this.editHudButton = new ButtonWidget(getWidth() - 82, getY() + 3, 50, 14, false, "Edit Hud", this::handleEditHudButtonClick);
+        this.editHudButton = new ButtonWidget(getWidth() - 82, getY() + 3, 50, 14, false, "Edit Hud", () -> this.handleEditHudButtonClick(screen));
         this.editFrameButton = new ButtonWidget(getWidth() - 142, getY() + 101, 60, 14, false, "Edit Frame", this::handleEditFrameButtonClick);
         this.viewFrames = new ButtonWidget(getX() + 70, getY() + 101, 77, 14, false, "View Frames", this::handleViewFramesButtonClick);
         this.setupFrames(-1);
@@ -205,8 +205,8 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         this.animationSpeedSlider.setPos(new Point(getX() + 75, getY() + 38));
     }
 
-    private void handleEditHudButtonClick() {
-        WalksyLib.getInstance().getScreenManager().openAllMods();
+    private void handleEditHudButtonClick(WalksyLibConfigScreen parent) {
+        WalksyLib.getInstance().getScreenManager().openHudEditorScreen(parent, this.option);
     }
 
     private void handleEditFrameButtonClick() {

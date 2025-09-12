@@ -58,7 +58,7 @@ public class Config implements WalksyLibConfig {
 
         Option<PixelGridAnimation> gridOption = PixelGridAnimationOption
                 .createBuilder("Test 4", () -> testGrid, testGrid, val -> testGrid = val)
-                .position(() -> new Point(MinecraftClient.getInstance().getWindow().getScaledWidth() / 2, MinecraftClient.getInstance().getWindow().getScaledHeight() / 2)) //TODO Make this a runnable or a consumer to that it dynamically changes the position of the icon, instead of just setting it once
+                .position(new Point(MinecraftClient.getInstance().getWindow().getScaledWidth() / 2, MinecraftClient.getInstance().getWindow().getScaledHeight() / 2)) //TODO Make this a runnable or a consumer to that it dynamically changes the position of the icon, instead of just setting it once
                 .build();
 
         OptionGroup primaryGroup = OptionGroup.createBuilder("Group Test")

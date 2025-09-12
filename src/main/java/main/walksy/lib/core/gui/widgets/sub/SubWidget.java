@@ -26,4 +26,8 @@ public abstract class SubWidget {
         this.x = pos.x;
         this.y = pos.y;
     }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
 }
