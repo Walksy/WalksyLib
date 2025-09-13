@@ -1,10 +1,10 @@
 package main.walksy.lib.core.gui.widgets;
 
+import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
@@ -18,7 +18,7 @@ import net.minecraft.util.math.MathHelper;
 import java.awt.*;
 
 public class ColorWidget extends OpenableWidget {
-    private final Option<Color> option;
+    private final Option<WalksyLibColor> option;
 
     public int COLOR_PICKER_STARTX;
     private final Identifier TRANSPARENT_BACKGROUND = Identifier.of("walksylib", "gui/widget/transparent.png");
@@ -38,25 +38,28 @@ public class ColorWidget extends OpenableWidget {
 
     private DragTarget activeDrag = DragTarget.NONE;
 
-    public ColorWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<Color> option) {
+    public ColorWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<WalksyLibColor> option) {
         super(parent, screen, option, x, y, width, height, option.getName(), WalksyLibScreenManager.Globals.OPTION_HEIGHT * 5);
         this.option = option;
-        Color initial = option.getValue();
-        float[] hsb = Color.RGBtoHSB(initial.getRed(), initial.getGreen(), initial.getBlue(), null);
-        option.setHue(hsb[0]);
-        option.setSaturation(hsb[1]);
-        option.setBrightness(hsb[2]);
-        option.setAlpha(initial.getAlpha());
+        WalksyLibColor initial = option.getValue();
+        float[] hsb = WalksyLibColor.RGBtoHSB(initial.getRed(), initial.getGreen(), initial.getBlue(), null);
+        option.getValue().setHue(hsb[0]);
+        option.getValue().setSaturation(hsb[1]);
+        option.getValue().setBrightness(hsb[2]);
+        option.getValue().setAlpha(initial.getAlpha());
         COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
-        this.chromaButton = new ButtonWidget(x + 5, y + 19 + 10, 17, 17, false, RAINBOW_ICON, () -> this.option.setRainbow(!this.option.isRainbow()), -3, -3);
-        this.pulseButton = new ButtonWidget(x + 5, y + 45 + 10, 17, 17, false, PULSE_ICON, () -> this.option.setPulse(!this.option.isPulse()), -3, -3);
-        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getRainbowSpeed()), this.option.getRainbowSpeed(), this.option::setRainbowSpeed, true);
-        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getPulseSpeed()), this.option.getPulseSpeed(), this.option::setPulseSpeed, true);
+        this.chromaButton = new ButtonWidget(x + 5, y + 19 + 10, 17, 17, false, RAINBOW_ICON, () -> this.option.getValue().setRainbow(!this.option.getValue().isRainbow()), -3, -3);
+        this.pulseButton = new ButtonWidget(x + 5, y + 45 + 10, 17, 17, false, PULSE_ICON, () -> this.option.getValue().setPulse(!this.option.getValue().isPulse()), -3, -3);
+        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getRainbowSpeed()), this.option.getValue().getRainbowSpeed(), this.option.getValue()::setRainbowSpeed, true);
+        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getPulseSpeed()), this.option.getValue().getPulseSpeed(), this.option.getValue()::setPulseSpeed, true);
     }
 
     @Override
     public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
         super.draw(context, mouseX, mouseY, delta);
+        //if the option value object changes (via a reset & object copying etc...), the slider's consumer will point to the wrong object
+        this.pulseSpeedSlider.setOnChange(this.option.getValue()::setPulseSpeed);
+        this.chromaSpeedSlider.setOnChange(this.option.getValue()::setRainbowSpeed);
         COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
         int baseHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
 
@@ -74,7 +77,7 @@ public class ColorWidget extends OpenableWidget {
                 ),
                 getX() + getWidth() - 98,
                 getTextYCentered() + 1,
-                Color.LIGHT_GRAY.getRGB()
+                java.awt.Color.LIGHT_GRAY.getRGB()
         );
 
         if (!open) {
@@ -83,8 +86,8 @@ public class ColorWidget extends OpenableWidget {
             drawHueSlider(context);
             drawSaturationBox(context);
             drawOpacitySlider(context);
-            this.chromaButton.overrideHover = this.option.isRainbow();
-            this.pulseButton.overrideHover = this.option.isPulse();
+            this.chromaButton.overrideHover = this.option.getValue().isRainbow();
+            this.pulseButton.overrideHover = this.option.getValue().isPulse();
             this.chromaButton.render(context, mouseX, mouseY, delta);
             this.pulseButton.render(context, mouseX, mouseY, delta);
             this.chromaSpeedSlider.render(context, mouseX, mouseY);
@@ -95,7 +98,7 @@ public class ColorWidget extends OpenableWidget {
                     "Rainbow Speed",
                     getX() + 32,
                     getY() + 23,
-                    Color.LIGHT_GRAY.getRGB()
+                    java.awt.Color.LIGHT_GRAY.getRGB()
             );
 
             context.drawTextWithShadow(
@@ -103,20 +106,20 @@ public class ColorWidget extends OpenableWidget {
                     "Pulse Speed",
                     getX() + 32,
                     getY() + 49,
-                    Color.LIGHT_GRAY.getRGB()
+                    java.awt.Color.LIGHT_GRAY.getRGB()
             );
         }
     }
 
     public void drawSatThumb(DrawContext context, int x, int y)
     {
-        Renderer.fillRoundedRectOutline(context, x, y, 6, 6, 1, 1, Color.BLACK.getRGB());
+        Renderer.fillRoundedRectOutline(context, x, y, 6, 6, 1, 1, java.awt.Color.BLACK.getRGB());
         Renderer.fillRoundedRectOutline(context, x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
     }
 
     public void drawSliderThumb(DrawContext context, int x, int y)
     {
-        Renderer.fillRoundedRectOutline(context, x, y, 9, 3, 1, 1, Color.BLACK.getRGB());
+        Renderer.fillRoundedRectOutline(context, x, y, 9, 3, 1, 1, java.awt.Color.BLACK.getRGB());
     }
 
     public void drawOpacitySlider(DrawContext  context)
@@ -125,15 +128,15 @@ public class ColorWidget extends OpenableWidget {
         Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 34, getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 33, getY() + 20, 13, opacityHeight - 2, 2, 1, isHoveringOpacitySlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
         Renderer.drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
-        Color color = new Color(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 255);
-        Color colorG = new Color(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 0);
+        WalksyLibColor color = new WalksyLibColor(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 255);
+        WalksyLibColor colorG = new WalksyLibColor(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 0);
         Renderer.fillRoundedRectGradient(context, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
 
         int opacitySliderX = COLOR_PICKER_STARTX - 34;
         int opacitySliderY = getY() + 21;
         int opacitySliderHeight = opacityHeight - 4;
 
-        int rawOpacityThumbY = opacitySliderY + (int) ((1f - (option.getAlpha() / 255f)) * opacitySliderHeight) - 2;
+        int rawOpacityThumbY = opacitySliderY + (int) ((1f - (option.getValue().getAlpha() / 255f)) * opacitySliderHeight) - 2;
         int opacityThumbY = Math.max(opacitySliderY, Math.min(rawOpacityThumbY - 1, opacitySliderY + opacitySliderHeight - 2));
 
         drawSliderThumb(context, opacitySliderX + 3, opacityThumbY);
@@ -150,7 +153,7 @@ public class ColorWidget extends OpenableWidget {
         int hueSliderY = getY() + 21;
         int hueSliderHeight = hueHeight - 4;
 
-        int rawHueThumbY = hueSliderY + (int) ((1f - option.getHue()) * hueSliderHeight) - 2;
+        int rawHueThumbY = hueSliderY + (int) ((1f - option.getValue().getHue()) * hueSliderHeight) - 2;
         int hueThumbY = Math.max(hueSliderY, Math.min(rawHueThumbY - 1, hueSliderY + hueSliderHeight - 2));
 
         drawSliderThumb(context, hueSliderX + 3, hueThumbY);
@@ -160,15 +163,14 @@ public class ColorWidget extends OpenableWidget {
     {
         Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX, getY() + 19, getWidth() - COLOR_PICKER_STARTX + 9, getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX + 1, getY() + 20, getWidth() - COLOR_PICKER_STARTX + 7, getHeight() - 28 + 6 - 2, 2, 1, isHoveringSaturationValueBox(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.drawHueSaturationValueBox(context, COLOR_PICKER_STARTX + 2, getY() + 21, getWidth() - COLOR_PICKER_STARTX + 5, getHeight() - 28 + 6 - 4, 2, option.getHue());
+        Renderer.drawHueSaturationValueBox(context, COLOR_PICKER_STARTX + 2, getY() + 21, getWidth() - COLOR_PICKER_STARTX + 5, getHeight() - 28 + 6 - 4, 2, option.getValue().getHue());
 
         int boxX = COLOR_PICKER_STARTX;
         int boxY = getY() + 21;
         int boxWidth = getWidth() - COLOR_PICKER_STARTX + 9;
         int boxHeight = getHeight() - 28 + 6 - 4;
-
-        int rawThumbX = boxX + (int) (option.getSaturation() * boxWidth) + 3;
-        int rawThumbY = boxY + (int) ((1f - option.getBrightness()) * boxHeight) + 1;
+        int rawThumbX = boxX + (int) (option.getValue().getSaturation() * boxWidth) + 3;
+        int rawThumbY = boxY + (int) ((1f - option.getValue().getBrightness()) * boxHeight) + 1;
 
         int thumbX = Math.max(boxX + 1, Math.min(rawThumbX - 6, boxX + boxWidth - 8));
         int thumbY = Math.max(boxY, Math.min(rawThumbY - 4, boxY + boxHeight - 6));
@@ -295,9 +297,16 @@ public class ColorWidget extends OpenableWidget {
         this.pulseSpeedSlider.setWidth(width);
     }
 
+    @Override
+    public <V> void onThirdPartyChange(V value) {
+        super.onThirdPartyChange(value);
+        this.pulseSpeedSlider.setValue(this.option.getValue().getPulseSpeed());
+        this.chromaSpeedSlider.setValue(this.option.getValue().getRainbowSpeed());
+    }
+
     private void handleHueSliderClick(double mouseY) {
         float newHue = 1f - (float) ((mouseY - (getY() + 20)) / (getHeight() - 30 + 6));
-        option.setHue(MathHelper.clamp(newHue, 0f, 1f));
+        option.getValue().setHue(MathHelper.clamp(newHue, 0f, 1f));
         updateColor();
     }
 
@@ -316,18 +325,18 @@ public class ColorWidget extends OpenableWidget {
         float newBrightness = 1f - (float) ((mouseY - boxY) / (double) boxHeight);
 
         if(mouseX < boxX) {
-            option.setSaturation(0f);
+            option.getValue().setSaturation(0f);
         } else if (mouseX > boxX + boxWidth) {
-            option.setSaturation(1f);
+            option.getValue().setSaturation(1f);
         } else {
-            option.setSaturation(MathHelper.clamp(newSaturation, 0f, 1f));
+            option.getValue().setSaturation(MathHelper.clamp(newSaturation, 0f, 1f));
         }
         if(mouseY < boxY) {
-            option.setBrightness(1f);
+            option.getValue().setBrightness(1f);
         } else if (mouseY > boxY + boxHeight) {
-            option.setBrightness(0f);
+            option.getValue().setBrightness(0f);
         } else {
-            option.setBrightness(MathHelper.clamp(newBrightness, 0f, 1f));
+            option.getValue().setBrightness(MathHelper.clamp(newBrightness, 0f, 1f));
         }
 
         updateColor();
@@ -342,7 +351,7 @@ public class ColorWidget extends OpenableWidget {
         int sliderHeight = getHeight() - 30 + 6;
 
         float newOpacity = 1f - (float) ((mouseY - sliderY) / (double) sliderHeight);
-        option.setAlpha((int) (MathHelper.clamp(newOpacity, 0f, 1f) * 255));
+        option.getValue().setAlpha((int) (MathHelper.clamp(newOpacity, 0f, 1f) * 255));
 
         updateColor();
     }
@@ -351,15 +360,15 @@ public class ColorWidget extends OpenableWidget {
         handleOpacitySliderClick(mouseY);
     }
 
-
     private void updateColor() {
-        int rgb = Color.HSBtoRGB(option.getHue(), option.getSaturation(), option.getBrightness());
-        Color updated = new Color(
+        int rgb = WalksyLibColor.HSBtoRGB(option.getValue().getHue(), option.getValue().getSaturation(), option.getValue().getBrightness());
+        WalksyLibColor updated = new WalksyLibColor(
                 (rgb >> 16) & 0xFF,
                 (rgb >> 8) & 0xFF,
                 rgb & 0xFF,
-                option.getAlpha()
+                option.getValue().getAlpha()
         );
+        updated.setAdditions(this.option.getValue().getAdditions());
         option.setValue(updated);
     }
 }

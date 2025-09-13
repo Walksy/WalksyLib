@@ -69,8 +69,15 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
         this.slider.setPos(new Point(width - 100, getY() + 6));
     }
 
+
     @Override
     public boolean isHovered() {
         return super.isHovered() && this.slider.isHovered;
+    }
+
+    @Override
+    public <V> void onThirdPartyChange(V value) {
+        super.onThirdPartyChange(value);
+        this.slider.setValue(this.option.getValue());
     }
 }

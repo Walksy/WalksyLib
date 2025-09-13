@@ -105,6 +105,7 @@ public abstract class OptionWidget extends AbstractWidget {
     protected void handleResetButtonClick()
     {
         this.option.reset();
+        this.onThirdPartyChange(this.option.getDefaultValue());
     }
 
     protected void renderHoverBackground(DrawContext context, int hoverLeft, int hoverRight) {
@@ -170,6 +171,10 @@ public abstract class OptionWidget extends AbstractWidget {
     public void onChange()
     {
         screen.onChangesMade(option);
+    }
+
+    public <V> void onThirdPartyChange(V value)
+    {
     }
 
     public OptionGroup getParent() {

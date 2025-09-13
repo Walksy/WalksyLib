@@ -51,6 +51,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     @Override
     public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
         super.draw(context, mouseX, mouseY, delta);
+        this.animationSpeedSlider.setOnChange(option.getValue()::setAnimationSpeed);
         if (this.option.has2DPosition()) {
             this.editHudButton.render(context, mouseX, mouseY, delta);
         }
@@ -219,7 +220,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
 
     private void handleViewFramesButtonClick() {
         screen.popUp = new FrameManagerPopUp(screen, option, () -> this.setupFrames(this.frameToReplace), grid -> {
-
+            this.option.getValue().setCurrentFrame(0);
         });
     }
 
@@ -309,6 +310,12 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     protected void handleResetButtonClick() {
         super.handleResetButtonClick();
         this.reset();
+    }
+
+    @Override
+    public <V> void onThirdPartyChange(V value) {
+        super.onThirdPartyChange(value);
+        this.animationSpeedSlider.setValue(this.option.getValue().getAnimationSpeed());
     }
 
     public void reset() {

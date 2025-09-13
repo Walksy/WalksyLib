@@ -5,10 +5,14 @@ import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.util.Identifier;
 
 import java.awt.*;
 
 public class HudEditorScreen extends BaseScreen {
+
+    private static final Identifier CROSSHAIR_TEXTURE = Identifier.ofVanilla("hud/crosshair");
 
     private final Option<?> hudOption;
     private boolean dragging = false;
@@ -22,11 +26,19 @@ public class HudEditorScreen extends BaseScreen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-
+        context.drawCenteredTextWithShadow(this.textRenderer, "Currently Editing: " + this.hudOption.getName(), this.width / 2, 10, -1);
+        context.drawCenteredTextWithShadow(this.textRenderer, "(ESC to leave)", this.width / 2, 20, Color.GRAY.getRGB());
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
             Point pos = pixelGridAnimation.getAbsolutePosition();
             int x = pos.x;
             int y = pos.y;
+
+            context.fill(0, 0, width, height, Color.BLACK.getRGB());
+
+            if (this.client.world == null)
+            {
+                context.drawGuiTexture(RenderLayer::getCrosshair, CROSSHAIR_TEXTURE, (context.getScaledWindowWidth() - 15) / 2, (context.getScaledWindowHeight() - 15) / 2, 15, 15);
+            }
 
             pixelGridAnimation.render(context);
             if (!dragging) {
@@ -82,7 +94,6 @@ public class HudEditorScreen extends BaseScreen {
                 int newY = (int) mouseY - dragOffsetY;
                 pixelGridAnimation.setPosition(newX, newY);
 
-                // Save updated state
                 hudOption.setValue(pixelGridAnimation);
             }
         }
@@ -102,7 +113,7 @@ public class HudEditorScreen extends BaseScreen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         if (this.client.world == null) {
-            this.renderPanoramaBackground(context, delta);
+            //this.renderPanoramaBackground(context, delta);
         }
     }
 }

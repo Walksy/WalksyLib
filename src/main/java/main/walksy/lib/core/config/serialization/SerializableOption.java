@@ -11,13 +11,4 @@ public class SerializableOption {
     public JsonElement min;
     public JsonElement max;
     public JsonElement increment;
-
-    public boolean rainbow;
-    public float hue;
-    public float saturation;
-    public float brightness;
-    public int alpha;
-    public int rainbowSpeed;
-    public int pulseSpeed;
-    public boolean pulse;
 }

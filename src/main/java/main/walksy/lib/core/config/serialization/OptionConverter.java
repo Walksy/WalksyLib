@@ -4,11 +4,6 @@ import com.google.gson.JsonElement;
 import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 
-import java.awt.*;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 
 @SuppressWarnings("unchecked")
 public class OptionConverter {
@@ -22,15 +17,6 @@ public class OptionConverter {
         s.min = WalksyLib.GSON.toJsonTree(opt.getMin());
         s.max = WalksyLib.GSON.toJsonTree(opt.getMax());
         s.increment = WalksyLib.GSON.toJsonTree(opt.getIncrement());
-
-        s.rainbow = opt.isRainbow();
-        s.hue = opt.getHue();
-        s.saturation = opt.getSaturation();
-        s.brightness = opt.getBrightness();
-        s.alpha = opt.getAlpha();
-        s.rainbowSpeed = opt.getRainbowSpeed();
-        s.pulseSpeed = opt.getPulseSpeed();
-        s.pulse = opt.isPulse();
 
         return s;
     }

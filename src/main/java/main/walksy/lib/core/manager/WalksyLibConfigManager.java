@@ -97,6 +97,7 @@ public class WalksyLibConfigManager {
             return;
         }
 
+        /*
         option.setRainbow(serialized.rainbow);
         option.setHue(serialized.hue);
         option.setSaturation(serialized.saturation);
@@ -105,5 +106,7 @@ public class WalksyLibConfigManager {
         option.setRainbowSpeed(serialized.rainbowSpeed);
         option.setPulseSpeed(serialized.pulseSpeed);
         option.setPulse(serialized.pulse);
+        
+         */
     }
 }

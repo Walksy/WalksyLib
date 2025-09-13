@@ -37,19 +37,12 @@ public class WalksyLibScreenManager {
 
         for (Category category : config.categories()) {
             for (Option<?> option : category.options()) {
-                if (Color.class.isAssignableFrom(option.getType())) {
-                    option.tick();
-                }
+                option.tick();
             }
 
             for (var group : category.optionGroups()) {
                 for (Option<?> option : group.getOptions()) {
-                    if (Color.class.isAssignableFrom(option.getType())) {
-                        option.tick();
-                    } else if (PixelGridAnimation.class.isAssignableFrom(option.getType()))
-                    {
-                        ((Option<PixelGridAnimation>)option).getValue().tick();
-                    }
+                    option.tick();
                 }
             }
         }

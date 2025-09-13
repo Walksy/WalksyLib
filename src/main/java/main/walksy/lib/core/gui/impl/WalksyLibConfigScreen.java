@@ -646,6 +646,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         this.config.categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::undo)));
         for (OptionWidget widget : allOptionWidgets)
         {
+            widget.onThirdPartyChange(widget.getOption().screenInstanceValue);
             if (widget instanceof PixelGridAnimationWidget widget1)
             {
                 widget1.reset();
@@ -658,6 +659,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         this.config.categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::reset)));
         for (OptionWidget widget : allOptionWidgets)
         {
+            widget.onThirdPartyChange(widget.getOption().getDefaultValue());
             if (widget instanceof PixelGridAnimationWidget widget1)
             {
                 widget1.reset();

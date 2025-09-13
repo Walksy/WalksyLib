@@ -93,6 +93,7 @@ public class FrameManagerPopUp extends PopUp {
     }
 
     private void removeFrame(PixelGrid frame) {
+        if (option.getValue().getFrames().size() == 1) return;
         PixelGridAnimation animation = option.getValue();
         undoStack.add(deepCopyFrames(animation.getFrames()));
         animation.getFrames().remove(frame);
@@ -137,6 +138,10 @@ public class FrameManagerPopUp extends PopUp {
         context.enableScissor(x, y + 2, x + width, y + height - 25);
         for (ButtonWidget btn : buttons) {
             btn.scrollY = (float) scroller.getValue();
+            if (btn.getMessage().getString().equals("-"))
+            {
+                btn.setEnabled(option.getValue().getFrames().size() != 1);
+            }
             btn.render(context, (int) mouseX, (int) mouseY, delta);
         }
 

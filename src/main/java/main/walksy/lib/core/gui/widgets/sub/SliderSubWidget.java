@@ -17,7 +17,7 @@ public class SliderSubWidget<T> extends SubWidget {
     public boolean isHovered = false;
     private final SliderAdapter<T> adapter;
     private T value;
-    private final Consumer<T> onChange;
+    private Consumer<T> onChange;
     private final boolean isRight;
 
     public SliderSubWidget(int x, int y, int width, int height, SliderAdapter<T> adapter, T initialValue, Consumer<T> onChange, boolean right) {
@@ -88,6 +88,11 @@ public class SliderSubWidget<T> extends SubWidget {
 
     public void release() {
         dragging = false;
+    }
+
+    public void setOnChange(Consumer<T> onChange)
+    {
+        this.onChange = onChange;
     }
 }
 

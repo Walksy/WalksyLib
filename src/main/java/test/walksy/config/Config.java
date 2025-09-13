@@ -9,6 +9,7 @@ import main.walksy.lib.core.config.local.options.*;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
+import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.utils.PathUtils;
 import net.minecraft.client.MinecraftClient;
 
@@ -18,7 +19,7 @@ public class Config implements WalksyLibConfig {
 
     public static boolean modEnabled = false;
     public static double featureDouble = 0;
-    public static Color color = new Color(255, 0, 0, 200);
+    public static WalksyLibColor color = new WalksyLibColor(255, 0, 0, 200);
     public static boolean experimentalFeatureEnabled = false;
     public static PixelGridAnimation testGrid = new PixelGridAnimation(PixelGrid.create(15, 15)
             .set(1, 4).set(1, 5).set(1, 6).set(1, 7)
@@ -53,7 +54,7 @@ public class Config implements WalksyLibConfig {
         Option<Double> featureToggle = NumericalOption.createBuilder("Test 2", () -> featureDouble, featureDouble, val -> featureDouble = val)
                 .values(0.0, 10.0, 0.1)
                 .build();
-        Option<Color> debugToggle = ColorOption.createBuilder("Test 3", () -> color, color, val -> color = val).build();
+        Option<WalksyLibColor> debugToggle = ColorOption.createBuilder("Test 3", () -> color, color, val -> color = val).build();
         Option<Boolean> experimentalToggle = BooleanOption.createBuilder("Test 4", () -> experimentalFeatureEnabled, experimentalFeatureEnabled, val -> experimentalFeatureEnabled = val).build();
 
         Option<PixelGridAnimation> gridOption = PixelGridAnimationOption
