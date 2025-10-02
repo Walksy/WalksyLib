@@ -1,5 +1,7 @@
 package main.walksy.lib.core.gui.widgets;
 
+import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.renderer.Renderer2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -9,7 +11,6 @@ import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.utils.Renderer;
 import main.walksy.lib.core.utils.SearchUtils;
 
 import java.util.ArrayList;
@@ -41,7 +42,6 @@ public class OptionGroupWidget extends AbstractWidget {
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         context.enableScissor(0, 49, parent.width, parent.height - 28);
         MinecraftClient client = MinecraftClient.getInstance();
-        //System.out.println(group.isExpanded() + " " + isHovered);
         TextRenderer textRenderer = client.textRenderer;
 
         String text = group.getName();
@@ -75,24 +75,24 @@ public class OptionGroupWidget extends AbstractWidget {
         //LEFT
         context.drawHorizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
         context.drawHorizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
-        Renderer.renderMiniArrow(
+        WalksyLib.get2DRenderer().renderMiniArrow(
                 context,
                 textStartX - 50 - 5,
                 midY - (group.isExpanded() ? 1 : 0),
                 1F,
-                group.isExpanded() ? Renderer.ArrowDirection.DOWN : Renderer.ArrowDirection.RIGHT,
+                group.isExpanded() ? Renderer2D.ArrowDirection.DOWN : Renderer2D.ArrowDirection.RIGHT,
                 bgColor
         );
 
         //RIGHT
         context.drawHorizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
         context.drawHorizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
-        Renderer.renderMiniArrow(
+        WalksyLib.get2DRenderer().renderMiniArrow(
                 context,
                 textEndX + 50 + 6,
                 midY - (group.isExpanded() ? 1 : 0),
                 1F,
-                group.isExpanded() ? Renderer.ArrowDirection.DOWN : Renderer.ArrowDirection.LEFT,
+                group.isExpanded() ? Renderer2D.ArrowDirection.DOWN : Renderer2D.ArrowDirection.LEFT,
                 bgColor
         );
 
@@ -119,7 +119,6 @@ public class OptionGroupWidget extends AbstractWidget {
     public void onMouseClick(double mouseX, double mouseY, int button)
     {
         if (isHovered && button == 0) {
-            //TODO probably move this to it's own method in the parent class, a lot of important stuff here
             group.toggleExpanded();
             parent.layoutGroupWidgets();
             updateVisibility();

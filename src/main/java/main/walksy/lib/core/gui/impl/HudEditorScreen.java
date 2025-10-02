@@ -42,7 +42,7 @@ public class HudEditorScreen extends BaseScreen {
 
             pixelGridAnimation.render(context);
             if (!dragging) {
-                WalksyLib.getInstance().get2DRenderer().renderGridOutline(
+                WalksyLib.get2DRenderer().renderGridOutline(
                         context,
                         pixelGridAnimation.getCurrentFrame(),
                         x,

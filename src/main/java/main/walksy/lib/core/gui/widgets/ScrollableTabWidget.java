@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.widgets;
 
+import main.walksy.lib.core.utils.MarqueeUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -15,6 +16,7 @@ import main.walksy.lib.core.mixin.ScreenAccessor;
 import main.walksy.lib.core.utils.MainColors;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScrollableTabWidget extends AbstractWidget {
@@ -81,7 +83,7 @@ public class ScrollableTabWidget extends AbstractWidget {
                 if (tabX + TAB_WIDTH < this.getX() || tabX > this.getX() + this.width) continue;
 
                 String fullText = tabs.get(i).getTitle().getString();
-                String text = getAnimatedTabTitle(fullText, client.textRenderer, TAB_WIDTH - 10);
+                String text = MarqueeUtil.get(fullText, TAB_WIDTH - 10, 10);
 
                 int color = selectedTabs[i] ? 0xFFFFFFFF : hoveredTabs[i] ? 0xFFCCCCCC : 0xFF888888;
                 ctx.drawTextWithShadow(client.textRenderer, text,
@@ -180,35 +182,6 @@ public class ScrollableTabWidget extends AbstractWidget {
 
 
 
-    /**
-     * Returns the animated tab title with ellipsis and marquee effect if it exceeds maxWidth
-     */
-    private String getAnimatedTabTitle(String full, TextRenderer textRenderer, int maxWidth) {
-        if (textRenderer.getWidth(full) <= maxWidth) return full;
-
-        String ellipsis = "...";
-        int ellipsisWidth = textRenderer.getWidth(ellipsis);
-        int visibleWidth = maxWidth - ellipsisWidth;
-
-        int[] widths = new int[full.length() + 1];
-        for (int i = 0; i < full.length(); i++) widths[i + 1] = widths[i] + textRenderer.getWidth(full.substring(i, i + 1));
-
-        int maxChars = 0;
-        for (int i = 1; i <= full.length(); i++) {
-            if (widths[i] <= visibleWidth) maxChars = i;
-            else break;
-        }
-
-        int steps = full.length() - maxChars + 1;
-        int cycle = steps * 2 - 2;
-        int pos = (parent.tickCount / 10) % cycle;
-        if (pos >= steps) pos = cycle - pos;
-
-        String visiblePart = full.substring(pos, pos + maxChars);
-        return (pos == steps - 1) ? visiblePart : visiblePart + ellipsis;
-    }
-
-
     @Override
     protected void appendClickableNarrations(NarrationMessageBuilder builder) {}
 
@@ -261,10 +234,13 @@ public class ScrollableTabWidget extends AbstractWidget {
     }
 
     public void setTabs(List<CategoryTab> tabs) {
-        this.tabs.clear();
-        this.tabs = tabs;
+        this.tabs = new ArrayList<>(tabs);
     }
 
+    public int tabSize()
+    {
+        return this.tabs.size();
+    }
 
     public MaxOffset getMaxOffsetDirection() {
         int totalWidth = tabs.size() * (TAB_WIDTH + 4) - 4;

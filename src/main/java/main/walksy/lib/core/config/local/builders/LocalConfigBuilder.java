@@ -12,11 +12,9 @@ public class LocalConfigBuilder {
     private final String configName;
     private final List<Category> categories = new ArrayList<>();
     private Path path;
-    private Runnable save;
 
     public LocalConfigBuilder(String configName) {
         this.configName = configName;
-        //TODO Set default save func
     }
 
     public LocalConfigBuilder path(Path path) {

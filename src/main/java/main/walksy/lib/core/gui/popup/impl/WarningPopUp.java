@@ -49,6 +49,11 @@ public class WarningPopUp extends PopUp {
     }
 
     @Override
+    protected void onClose() {
+
+    }
+
+    @Override
     public void layout(int width, int height) {
         super.layout(width, height);
         if (yesButton != null && noButton != null) {

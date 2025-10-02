@@ -47,7 +47,7 @@ public class GridEditorPopUp extends PopUp {
             if (onDone != null) {
                 onDone.accept(currentGrid);
             }
-            screen.popUp = null;
+            screen.popUp.close();
         });
         this.clearButton = new ButtonWidget(x + 115, y + height - 21, 40, 16, false, "Clear", () -> {
             for (int py = 0; py < currentGrid.getHeight(); py++) {
@@ -170,6 +170,16 @@ public class GridEditorPopUp extends PopUp {
         super.onScroll(mouseX, mouseY, verticalAmount);
         scroller.onScroll(verticalAmount);
         scroller.setBounds(0, 74);
+    }
+
+    @Override
+    public boolean canClose() {
+        return false;
+    }
+
+    @Override
+    protected void onClose() {
+
     }
 
     @Override

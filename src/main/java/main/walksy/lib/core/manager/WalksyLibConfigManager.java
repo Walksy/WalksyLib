@@ -1,6 +1,8 @@
 package main.walksy.lib.core.manager;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.Config;
@@ -9,9 +11,24 @@ import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
+import main.walksy.lib.core.config.local.options.type.PixelGrid;
+import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
+import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.config.serialization.*;
+import main.walksy.lib.core.config.serialization.adapters.ColorTypeAdapter;
+import main.walksy.lib.core.config.serialization.adapters.IdentifierWrapperAdapter;
+import main.walksy.lib.core.config.serialization.adapters.PixelGridAdapter;
+import main.walksy.lib.core.config.serialization.adapters.PixelGridAnimationAdapter;
+import main.walksy.lib.core.utils.IdentifierWrapper;
+import main.walksy.lib.core.utils.PathUtils;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.util.Identifier;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +36,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WalksyLibConfigManager {
+
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(WalksyLibColor.class, new ColorTypeAdapter())
+            .registerTypeAdapter(PixelGrid.class, new PixelGridAdapter())
+            .registerTypeAdapter(PixelGridAnimation.class, new PixelGridAnimationAdapter())
+            .registerTypeAdapter(IdentifierWrapper.class, new IdentifierWrapperAdapter())
+            .setPrettyPrinting()
+            .create();
 
     private final LocalConfig localConfig;
     private final APIConfig apiConfig;
@@ -38,6 +63,53 @@ public class WalksyLibConfigManager {
         return apiConfig;
     }
 
+    public void cleanCache() {
+        Path cacheDir = getCachedImageDir();
+        if (!Files.exists(cacheDir)) return;
+
+        List<String> usedFiles = new ArrayList<>();
+
+        for (Category category : this.localConfig.categories()) {
+            for (Option<?> option : category.options()) {
+                Object value = option.getValue();
+                if (value instanceof IdentifierWrapper wrapper) {
+                    String fileName = wrapper.getFileName();
+                    if (fileName != null && !fileName.isEmpty()) {
+                        usedFiles.add(fileName);
+                    }
+                }
+            }
+
+            for (OptionGroup group : category.optionGroups()) {
+                for (Option<?> option : group.getOptions()) {
+                    Object value = option.getValue();
+                    if (value instanceof IdentifierWrapper wrapper) {
+                        String fileName = wrapper.getFileName();
+                        if (fileName != null && !fileName.isEmpty()) {
+                            usedFiles.add(fileName);
+                        }
+                    }
+                }
+            }
+        }
+
+        try {
+            Files.list(cacheDir).forEach(path -> {
+                String fileName = path.getFileName().toString();
+                if (!usedFiles.contains(fileName)) {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        WalksyLib.getLogger().err("Failed to delete unused cached image: " + fileName);
+                    }
+                }
+            });
+        } catch (IOException e) {
+            WalksyLib.getLogger().err("Failed to list cache directory: " + e.getMessage());
+        }
+    }
+
+
     public static SerializableCategory serializeCategory(Category category) {
         SerializableCategory serialized = new SerializableCategory();
         serialized.name = category.name();
@@ -45,6 +117,7 @@ public class WalksyLibConfigManager {
         serialized.groups = new ArrayList<>();
 
         for (Option<?> option : category.options()) {
+            if (option.getType() == Runnable.class) continue;
             serialized.options.add(OptionConverter.fromOption(option));
         }
 
@@ -55,6 +128,7 @@ public class WalksyLibConfigManager {
             serializedGroup.options = new ArrayList<>();
 
             for (Option<?> option : group.getOptions()) {
+                if (option.getType() == Runnable.class) continue;
                 serializedGroup.options.add(OptionConverter.fromOption(option));
             }
 
@@ -64,12 +138,25 @@ public class WalksyLibConfigManager {
         return serialized;
     }
 
+
     public static void applyCategoryValues(Category category, SerializableCategory serializedCategory) {
         for (Option<?> option : category.options()) {
             serializedCategory.options.stream()
                     .filter(serialized -> serialized.name.equals(option.getName()))
                     .findFirst()
                     .ifPresent(serialized -> applyOptionValues(option, serialized));
+
+            Object value = option.getValue();
+
+            if (value instanceof IdentifierWrapper wrapper) {
+                String fileName = wrapper.getFileName();
+                if (fileName != null && !fileName.isEmpty()) {
+                    Identifier identifier = WalksyLibConfigManager.loadTextureFromCache(fileName);
+                    if (identifier != null) {
+                        wrapper.setIdentifier(identifier);
+                    }
+                }
+            }
         }
 
         for (OptionGroup group : category.optionGroups()) {
@@ -86,7 +173,23 @@ public class WalksyLibConfigManager {
                                     .ifPresent(serialized -> applyOptionValues(option, serialized));
                         }
                     });
+
+            group.getOptions().forEach(option -> {
+                Object value = option.getValue();
+
+                if (value instanceof IdentifierWrapper wrapper) {
+                    String fileName = wrapper.getFileName();
+                    if (fileName != null && !fileName.isEmpty()) {
+                        Identifier identifier = WalksyLibConfigManager.loadTextureFromCache(fileName);
+                        if (identifier != null) {
+                            wrapper.setIdentifier(identifier);
+                        }
+                    }
+                }
+            });
         }
+
+
     }
 
     public static void applyOptionValues(Option<?> option, SerializableOption serialized) {
@@ -106,7 +209,46 @@ public class WalksyLibConfigManager {
         option.setRainbowSpeed(serialized.rainbowSpeed);
         option.setPulseSpeed(serialized.pulseSpeed);
         option.setPulse(serialized.pulse);
-        
+
          */
     }
+
+    public static Path getCachedImageDir() {
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        Path destDir = configDir.resolve("WalksyLib").resolve("CachedImages");
+
+        try {
+            Files.createDirectories(destDir);
+        } catch (IOException e) {
+            System.err.println("Failed to create cached image directory: " + e.getMessage());
+        }
+
+        return destDir;
+    }
+
+    public static Identifier loadTextureFromCache(String fileName) {
+        Path imagePath = getCachedImageDir().resolve(fileName);
+        if (!Files.exists(imagePath)) return null;
+
+        try (InputStream stream = Files.newInputStream(imagePath)) {
+            NativeImage image = NativeImage.read(stream);
+            NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
+
+            String name = fileName;
+            int dotIndex = name.lastIndexOf('.');
+            if (dotIndex > 0) name = name.substring(0, dotIndex);
+
+            name = name.toLowerCase().replaceAll("[^a-z0-9._-]", "_");
+            String dynamicId = "dropped/" + name;
+            Identifier textureId = Identifier.of("walksylib", dynamicId);
+
+            MinecraftClient.getInstance().getTextureManager().registerTexture(textureId, texture);
+            return textureId;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 }

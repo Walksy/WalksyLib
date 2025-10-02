@@ -1,13 +1,22 @@
 package main.walksy.lib.core.config.local;
 
+import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.options.BooleanOption;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.*;
+import main.walksy.lib.core.utils.IdentifierWrapper;
+import main.walksy.lib.core.utils.MarqueeUtil;
+import main.walksy.lib.core.utils.SearchUtils;
+import main.walksy.lib.core.utils.log.ConfigLog;
+import net.minecraft.util.Identifier;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -22,6 +31,8 @@ public class Option<T> {
     private final T increment;
     private OptionDescription description;
     private final T defaultValue;
+    private final Supplier<Boolean> availability;
+    private T prevValue;
 
     //Screen
     public T screenInstanceValue = null;
@@ -29,21 +40,22 @@ public class Option<T> {
     //Boolean Option
     private BooleanOption.Warning warning;
 
+    private String searchQ = "";
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Class<T> type, T defaultValue, BooleanOption.Warning warning) {
-        this(name, description, getter, setter, type, null, null, null, defaultValue, warning, null);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, BooleanOption.Warning warning) {
+        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, warning, null);
     }
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Class<T> type, T defaultValue) {
-        this(name, description, getter, setter, type, null, null, null, defaultValue, null, null);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue) {
+        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, null, null);
     }
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter,
-                  Class<T> type, T min, T max, T increment, T defaultValue, BooleanOption.Warning warning, Point point) {
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T min, T max, T increment, T defaultValue, BooleanOption.Warning warning, Point point) {
         this.name = name;
         this.description = description;
         this.getter = getter;
         this.setter = setter;
+        this.availability = availability;
         this.type = type;
         this.min = min;
         this.max = max;
@@ -55,11 +67,15 @@ public class Option<T> {
         } else {
             this.defaultValue = defaultValue;
         }
+
+        this.prevValue = null;
+
         this.warning = warning;
         if (point != null) {
             this.definePosition(point);
         }
     }
+
 
     public String getName() { return name; }
     private Supplier<T> getGetter() { return getter; }
@@ -112,13 +128,16 @@ public class Option<T> {
 
     public void undo()
     {
+        if (this.setter == null) return;
         this.setter.accept(this.screenInstanceValue);
     }
 
     @SuppressWarnings("unchecked")
     public void setValue(Object value) {
         if (type.isInstance(value)) {
-            setter.accept((T) value);
+            if (setter != null) {
+                setter.accept((T) value);
+            }
         } else {
             throw new IllegalArgumentException("Invalid value type: " + value.getClass().getName());
         }
@@ -129,8 +148,83 @@ public class Option<T> {
         return this.getValue() != this.defaultValue;
     }
 
+    public boolean isAvailable()
+    {
+        return this.availability.get();
+    }
+
+    public void setPrev() {
+        if (Objects.equals(getValue(), screenInstanceValue)) return;
+
+        this.prevValue = screenInstanceValue;
+
+        Object oldVal = prevValue;
+        Object newVal = getValue();
+
+        if (oldVal instanceof WalksyLibColor oldColor && newVal instanceof WalksyLibColor newColor) {
+            if (oldColor.isRainbow() != newColor.isRainbow()) {
+                logField(this.getName() + "'s Rainbow", oldColor.isRainbow(), newColor.isRainbow());
+            }
+            if (oldColor.getRainbowSpeed() != newColor.getRainbowSpeed()) {
+                logField(this.getName() + "'s Rainbow Speed", oldColor.getRainbowSpeed(), newColor.getRainbowSpeed());
+            }
+            if (oldColor.isPulse() != newColor.isPulse()) {
+                logField(this.getName() + "'s Pulse", oldColor.isPulse(), newColor.isPulse());
+            }
+            if (oldColor.getPulseSpeed() != newColor.getPulseSpeed()) {
+                logField(this.getName() + "'s Pulse Speed", oldColor.getPulseSpeed(), newColor.getPulseSpeed());
+            }
+            if (Float.compare(oldColor.getSaturation(), newColor.getSaturation()) != 0) {
+                logField(this.getName() + "'s Saturation", oldColor.getSaturation(), newColor.getSaturation());
+            }
+            if (Float.compare(oldColor.getBrightness(), newColor.getBrightness()) != 0) {
+                logField(this.getName() + "'s Brightness", oldColor.getBrightness(), newColor.getBrightness());
+            }
+        } else if (oldVal instanceof PixelGridAnimation oldAnim && newVal instanceof PixelGridAnimation newAnim) {
+            if (oldAnim.getAnimationSpeed() != newAnim.getAnimationSpeed()) {
+                logField(this.getName() + "'s Speed", oldAnim.getAnimationSpeed(), newAnim.getAnimationSpeed());
+            }
+            if (Float.compare(oldAnim.getRelativeX(), newAnim.getRelativeX()) != 0) {
+                logField(this.getName() + "'s X Pos", oldAnim.getRelativeX(), newAnim.getRelativeX());
+            }
+            if (Float.compare(oldAnim.getRelativeY(), newAnim.getRelativeY()) != 0) {
+                logField(this.getName() + "'s Y Pos", oldAnim.getRelativeY(), newAnim.getRelativeY());
+            }
+        } else {
+            logField(getName(), oldVal, newVal);
+        }
+    }
+
+
+    private String formatValue(Object value) {
+        if (value == null) return "Not Set";
+
+        String str;
+        if (value instanceof Float f)
+            str = String.format("%.3f", f);
+        else if (value instanceof Double d)
+            str = String.format("%.3f", d);
+        else
+            str = value.toString();
+
+        return str;
+    }
+
+    private <V> void logField(String name, V oldVal, V newVal) {
+        WalksyLib.getLogger().log(new ConfigLog(
+                formatValue(WalksyLib.getInstance().getConfigManager().getLocal().name()),
+                formatValue(name),
+                formatValue(oldVal),
+                formatValue(newVal)
+        ));
+    }
+
+
+
+
     public void reset()
     {
+        if (this.getType() == Runnable.class) return;
         if (this.getValue() instanceof PixelGridAnimation) {
             this.setter.accept((T) ((PixelGridAnimation) this.defaultValue).copy());
         } else if (this.getValue() instanceof WalksyLibColor c) {
@@ -139,8 +233,6 @@ public class Option<T> {
             this.setter.accept(this.defaultValue);
         }
     }
-
-
 
     public Option<T> description(OptionDescription description) {
         this.description = description;
@@ -169,6 +261,36 @@ public class Option<T> {
         return !Objects.equals(value, defaultValue);
     }
 
+    public T getPrevValue()
+    {
+        return this.prevValue;
+    }
+
+    public boolean searched() {
+        if (searchQ.isEmpty()) return true;
+
+        String[] queryWords = searchQ.toLowerCase().trim().split("\\s+");
+        String[] nameWords = this.getName().toLowerCase().trim().split("\\s+");
+
+        outer:
+        for (String qWord : queryWords) {
+            for (String numWord : nameWords) {
+                if (numWord.contains(qWord) || numWord.startsWith(qWord)) {
+                    continue outer;
+                }
+                if (SearchUtils.levenshteinDistance(numWord, qWord) <= 2) {
+                    continue outer;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public void updateSearchQ(String searchQ)
+    {
+        this.searchQ = searchQ;
+    }
 
     @SuppressWarnings("unchecked")
     public OptionWidget createWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height) {
@@ -184,6 +306,14 @@ public class Option<T> {
             return new ColorWidget(parent, screen, x, y, width, height, (Option<WalksyLibColor>) this);
         } else if (type == PixelGridAnimation.class) {
             return new PixelGridAnimationWidget(parent, screen, x, y, width, height, (Option<PixelGridAnimation>) this);
+        } else if (type == List.class) {
+            return new StringListOptionWidget(parent, screen, x, y, width, height, (Option<List<String>>) this);
+        } else if (type == Runnable.class) {
+            return new ButtonOptionWidget(parent, screen, x, y, width, height, (Option<Runnable>) this);
+        } else if (type == IdentifierWrapper.class) {
+            return new SpriteOptionWidget(parent, screen, x, y, width, height, (Option<IdentifierWrapper>) this);
+        } else if (type == String.class) {
+            return new StringOptionWidget(parent, screen, x, y, width, height, (Option<String>) this);
         } else {
             throw new UnsupportedOperationException("Unsupported option type: " + type);
         }

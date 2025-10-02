@@ -1,75 +1,78 @@
 package main.walksy.lib.core;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import main.walksy.lib.api.WalksyLibApi;
+import main.walksy.lib.core.callback.DropCallback;
 import main.walksy.lib.core.config.WalksyLibConfig;
-import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
-import main.walksy.lib.core.config.local.options.type.PixelGrid;
-import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
-import main.walksy.lib.core.config.serialization.adapters.ColorTypeAdapter;
-import main.walksy.lib.core.config.serialization.adapters.PixelGridAdapter;
-import main.walksy.lib.core.config.serialization.adapters.PixelGridAnimationAdapter;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
-import main.walksy.lib.core.renderer.Render2D;
+import main.walksy.lib.core.mods.EntryPointList;
+import main.walksy.lib.core.mods.Mod;
+import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
+import net.fabricmc.loader.api.FabricLoader;
 
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
-public class WalksyLib {
-    //TODO Create own logger class to log to custom log page
+public final class WalksyLib {
     static WalksyLib instance;
-    static Logger LOGGER = Logger.getLogger("WalksyLib");
-    public static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(WalksyLibColor.class, new ColorTypeAdapter())
-            .registerTypeAdapter(PixelGrid.class, new PixelGridAdapter())
-            .registerTypeAdapter(PixelGridAnimation.class, new PixelGridAnimationAdapter())
-            .setPrettyPrinting()
-            .create();
+    private static final WalksyLibLogger LOGGER = new WalksyLibLogger();
+    private static final Renderer2D renderer2D = new Renderer2D();
+    private static final EntryPointList entryPointList = new EntryPointList();
+    private final DropCallback windowDropCallback;
     private final WalksyLibScreenManager screenManager;
-    private WalksyLibConfigManager configManager;
     private final WalksyLibConfig config;
-    private final Render2D renderer2D;
 
-    private WalksyLib(WalksyLibConfig config)
-    {
+    private WalksyLibConfigManager configManager;
+
+    private WalksyLib(WalksyLibConfig config) {
         try {
             this.screenManager = new WalksyLibScreenManager();
-            this.renderer2D = new Render2D();
             this.config = config;
+            this.windowDropCallback = new DropCallback();
         } finally {
-            LOGGER.info("WalksyLib successfully initialized!");
-        } //TODO catch
+            LOGGER.info("WalksyLib Initialized");
+        }
     }
 
-    public void onInitFinished()
-    {
-        this.configManager = new WalksyLibConfigManager(config.define());
-        //this.configManager.getAPI().load();
-        this.configManager.getLocal().load();
-    }
-
-    public static void onInitialize(WalksyLibConfig config)
-    {
+    public static void onInitialize(WalksyLibConfig config) {
         instance = new WalksyLib(config);
     }
 
-    public static WalksyLib getInstance()
-    {
-        return instance;
+    public void onInitFinished() {
+        this.configManager = new WalksyLibConfigManager(config.define());
+        this.configManager.getLocal().load();
+        this.configManager.getAPI().load();
+        this.configManager.cleanCache();
+        entryPointList.retrieve();
     }
 
-    public Render2D get2DRenderer()
-    {
-        return this.renderer2D;
-    }
-
-    public WalksyLibScreenManager getScreenManager()
-    {
+    public WalksyLibScreenManager getScreenManager() {
         return this.screenManager;
     }
 
-    public WalksyLibConfigManager getConfigManager()
-    {
+    public WalksyLibConfigManager getConfigManager() {
         return this.configManager;
+    }
+
+    public DropCallback getWindowDropCallback()
+    {
+        return this.windowDropCallback;
+    }
+
+    public static ArrayList<Mod> getEntryPointModList() {
+        return entryPointList.get();
+    }
+
+    public static WalksyLib getInstance() {
+        return instance;
+    }
+
+    public static Renderer2D get2DRenderer() {
+        return renderer2D;
+    }
+
+    public static WalksyLibLogger getLogger() {
+        return LOGGER;
     }
 }

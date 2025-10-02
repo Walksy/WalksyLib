@@ -11,7 +11,7 @@ import java.util.Optional;
 public class ModMenuIntegration implements ModMenuApi {
 
     @Override
-    public ConfigScreenFactory<?> getModConfigScreenFactory() { //TODO, this probably won't work with more than one mod using the lib
+    public ConfigScreenFactory<?> getModConfigScreenFactory() {
         Optional<WalksyLibApi> api = FabricLoader.getInstance()
             .getEntrypointContainers("walksylib", WalksyLibApi.class).stream()
             .map(EntrypointContainer::getEntrypoint)

@@ -40,7 +40,6 @@ public class WalksyLibColor {
         this.brightness = hsb[2];
     }
 
-
     public boolean isRainbow() {
         return rainbow;
     }
@@ -147,7 +146,7 @@ public class WalksyLibColor {
         WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), getAlpha());
         this.value = newColorAlpha.getRGB();
     }
-//TODO Do one for saturation too, and swap the icons lol
+
     public void handlePulse() {
         if (!this.pulse) return;
 

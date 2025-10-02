@@ -1,24 +1,23 @@
 package main.walksy.lib.core.gui.widgets;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import main.walksy.lib.core.WalksyLib;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.sound.SoundManager;
 import net.minecraft.text.Text;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.Renderer;
 import main.walksy.lib.core.utils.SearchUtils;
 import net.minecraft.util.Identifier;
-
-import java.awt.*;
 
 public abstract class OptionWidget extends AbstractWidget {
 
     private final OptionGroup parent;
     private final Option<?> option;
-    private String searchQuery;
     private boolean isHovered;
 
     public WalksyLibConfigScreen screen;
@@ -32,7 +31,6 @@ public abstract class OptionWidget extends AbstractWidget {
         this.setPosition(x, y);
         this.parent = parent;
         this.option = option;
-        this.searchQuery = "";
         this.screen = screen;
         this.changesMade = false;
         this.isHovered = false;
@@ -42,32 +40,37 @@ public abstract class OptionWidget extends AbstractWidget {
         resetButton.setEnabled(option.hasChanged());
     }
 
-
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         if (!isVisible()) return;
         this.mouseX = mouseX;
         this.mouseY = mouseY;
-        int hoverLeft = getX();
 
-        isHovered = mouseX >= getX() && mouseX < (getX() + getWidth())
-                && mouseY >= getY() && mouseY < (getY() + getHeight());
+        isHovered = (mouseX >= getX() && mouseX < (getX() + getWidth())
+                && mouseY >= getY() && mouseY < (getY() + getHeight()));
 
 
-        if (isHovered())
+        if (isHovered)
         {
             screen.setFocusedOption(option);
         }
 
         context.enableScissor(0, 49, screen.width, screen.height - 28);
-        if (WalksyLibScreenManager.Globals.DEBUG) {
-            renderHoverBackground(context, hoverLeft, getWidth());
+
+        if (!isAvailable()) {
+            RenderSystem.setShaderColor(0.3f, 0.3f, 0.3f, 1f);
         }
         renderBase(context);
-        //renderResetButton(context);
+
+
+        resetButton.setEnabled(option.hasChanged() && isAvailable());
         resetButton.render(context, mouseX, mouseY, delta);
-        resetButton.setEnabled(option.hasChanged());
-        draw(context, mouseX, mouseY, delta);
+        context.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight() - 1);
+        draw(context, isAvailable() ? mouseX : 0, isAvailable() ? mouseY : 0, delta);
+        context.disableScissor();
+
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+
         context.disableScissor();
     }
 
@@ -77,6 +80,8 @@ public abstract class OptionWidget extends AbstractWidget {
     public void onMouseMove(double mouseX, double mouseY) {}
     public void onMouseScroll(double mouseX, double mouseY, double verticalAmount) {}
     public void tick() {}
+    public void onKeyPress(int keyCode, int scanCode, int modifiers) {}
+    public void onCharTyped(char chr, int modifiers) {}
     public void onWidgetUpdate(int x, int y)
     {
         this.resetButton.setPosition(x, y);
@@ -87,9 +92,14 @@ public abstract class OptionWidget extends AbstractWidget {
 
     private void renderBase(DrawContext context)
     {
-        Renderer.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         renderName(context);
+    }
+
+    public boolean isAvailable()
+    {
+        return option.isAvailable();
     }
 
     protected void renderName(DrawContext context)
@@ -121,35 +131,14 @@ public abstract class OptionWidget extends AbstractWidget {
     }
 
     public boolean isHovered() {
-        return isHovered && isVisible();
+        return isAvailable() && isHovered && isVisible();
     }
 
 
     public abstract void draw(DrawContext context, int mouseX, int mouseY, float delta);
 
     public boolean isVisible() {
-        return parent.isExpanded() && searched();
-    }
-
-    public boolean searched() {
-        if (searchQuery.isEmpty()) return true;
-
-        String[] queryWords = searchQuery.toLowerCase().trim().split("\\s+");
-        String[] nameWords = option.getName().toLowerCase().trim().split("\\s+");
-
-        outer:
-        for (String qWord : queryWords) {
-            for (String numWord : nameWords) {
-                if (numWord.contains(qWord) || numWord.startsWith(qWord)) {
-                    continue outer;
-                }
-                if (SearchUtils.levenshteinDistance(numWord, qWord) <= 2) {
-                    continue outer;
-                }
-            }
-            return false;
-        }
-        return true;
+        return parent.isExpanded() && option.searched();
     }
 
     public boolean isInScissor(int scissorX, int scissorY, int scissorWidth, int scissorHeight) {
@@ -160,7 +149,7 @@ public abstract class OptionWidget extends AbstractWidget {
     }
 
     public void updateSearchQuery(String searchQuery) {
-        this.searchQuery = searchQuery;
+        this.option.updateSearchQ(searchQuery);
     }
 
     public void update()

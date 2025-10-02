@@ -30,6 +30,6 @@ public class NumericalOption<T extends Number> extends OptionBuilder<T, Numerica
 
     @Override
     public Option<T> build() {
-        return new Option<>(name, description, getter, setter, (Class<T>) getter.get().getClass(), min, max, increment, defaultValue, null, new Point(-1, -1));
+        return new Option<>(name, description, getter, setter, availability, (Class<T>) getter.get().getClass(), min, max, increment, defaultValue, null, new Point(-1, -1));
     }
 }

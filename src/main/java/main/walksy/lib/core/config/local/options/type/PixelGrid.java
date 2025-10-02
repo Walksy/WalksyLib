@@ -28,15 +28,14 @@ public class PixelGrid {
     {
         if (position == null || (position.get().x == -1) && (position.get().y == -1))
         {
-            //TODO LOG
             return;
         }
-        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, 1);
+        WalksyLib.get2DRenderer().renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, 1);
     }
 
     public void render(DrawContext context, int x, int y)
     {
-        WalksyLib.getInstance().get2DRenderer().renderGridTexture(context, this, x, y, 1, 0, 1);
+        WalksyLib.get2DRenderer().renderGridTexture(context, this, x, y, 1, 0, 1);
     }
 
     public boolean getPixel(int x, int y) {

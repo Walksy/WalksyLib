@@ -11,11 +11,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.Renderer;
 
 import java.awt.*;
 
-public class ButtonWidget extends ClickableWidget {
+public class ButtonWidget extends AbstractWidget {
 
     private Runnable action;
     private final Identifier texture;
@@ -72,20 +71,20 @@ public class ButtonWidget extends ClickableWidget {
         }
 
         if (this.outlineColor == -1) {
-            Renderer.fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
+            WalksyLib.get2DRenderer().fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
                     this.active
                             ? new Color(255, 255, 255, (isHovered() || overrideHover)
                             ? MainColors.OUTLINE_WHITE_HOVERED.getAlpha()
                             : MainColors.OUTLINE_WHITE.getAlpha()).getRGB()
                             : new Color(180, 180, 180, 50).getRGB());
         } else {
-            Renderer.fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
+            WalksyLib.get2DRenderer().fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
                     this.active
                             ? (isHovered() || overrideHover ? hoveredColor : outlineColor)
                             : new Color(180, 180, 180, 50).getRGB());
         }
 
-        Renderer.fillRoundedRectOutline(ctx, drawX - 1, drawY - 1, width + 2, height + 2, 2, 1,
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(ctx, drawX - 1, drawY - 1, width + 2, height + 2, 2, 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
 
         if (texture == null && grid == null) {
@@ -100,7 +99,7 @@ public class ButtonWidget extends ClickableWidget {
         }
 
         if (grid != null) {
-            WalksyLib.getInstance().get2DRenderer().renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1, 1);
+            WalksyLib.get2DRenderer().renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1, 1);
         }
     }
 
@@ -112,9 +111,13 @@ public class ButtonWidget extends ClickableWidget {
     @Override
     public void onClick(double mouseX, double mouseY) {
         super.onClick(mouseX, mouseY);
-        if (isHovered() && action != null) {
-            action.run();
+        if (isHovered()) {
+            if (action != null) {
+                action.run();
+            }
+            ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
         }
+
     }
 
     @Override

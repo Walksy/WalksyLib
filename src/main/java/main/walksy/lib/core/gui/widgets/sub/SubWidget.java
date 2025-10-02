@@ -17,9 +17,11 @@ public abstract class SubWidget {
         this.height = height;
     }
 
-    public abstract void render(DrawContext context, int mouseX, int mouseY);
+    public abstract void render(DrawContext context, int mouseX, int mouseY, float delta);
     public abstract void onClick(int mouseX, int mouseY, int button);
     public abstract void onDrag(int mouseX);
+    public void onKeyPress(int keyCode, int scanCode, int modifiers) {}
+    public void onCharTyped(char chr, int modifiers) {}
 
     public void setPos(Point pos)
     {
@@ -29,5 +31,14 @@ public abstract class SubWidget {
 
     public void setWidth(int width) {
         this.width = width;
+    }
+
+    public Point getPos()
+    {
+        return new Point(this.x, this.y);
+    }
+
+    public int getHeight() {
+        return this.height;
     }
 }

@@ -5,7 +5,6 @@ import main.walksy.lib.core.config.Config;
 import java.nio.file.Path;
 
 public class APIConfig implements Config {
-
     @Override
     public Path path() {
         return null;
@@ -16,8 +15,10 @@ public class APIConfig implements Config {
 
     }
 
+
     @Override
     public void save() {
 
     }
+
 }

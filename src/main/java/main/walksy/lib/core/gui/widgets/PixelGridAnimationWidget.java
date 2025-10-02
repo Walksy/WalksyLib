@@ -63,10 +63,10 @@ public class PixelGridAnimationWidget extends OpenableWidget {
                 isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
         );
 
-        if (open) {
+        if (!this.fullyClosed()) {
             this.viewFrames.render(context, mouseX, mouseY, delta);
             this.editFrameButton.render(context, mouseX, mouseY, delta);
-            this.animationSpeedSlider.render(context, mouseX, mouseY);
+            this.animationSpeedSlider.render(context, mouseX, mouseY, delta);
             screen.scroll = !isHoveredFrameSelector();
             context.drawHorizontalLine(
                     getX() + 1,
@@ -89,7 +89,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             context.getMatrices().scale(scale, scale, 1F);
 
             if (viewingGrid != null) {
-                WalksyLib.getInstance().get2DRenderer().renderGridOutline(
+                WalksyLib.get2DRenderer().renderGridOutline(
                         context,
                         viewingGrid,
                         (int) ((getWidth() - 78) / scale),
@@ -106,7 +106,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         }
 
         if (option.getValue().getCurrentFrame() != null) {
-            WalksyLib.getInstance().get2DRenderer().renderGridTexture(
+            WalksyLib.get2DRenderer().renderGridTexture(
                     context,
                     option.getValue().getCurrentFrame(),
                     (getWidth() - 10),

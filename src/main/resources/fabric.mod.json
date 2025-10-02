@@ -11,7 +11,7 @@
 
 	},
 	"license": "MIT",
-	"icon": "assets/walksy/icon.png",
+	"icon": "assets/walksylib/icon.png",
 	"environment": "client",
 	"entrypoints": {
 		"main": [

@@ -37,7 +37,7 @@ public class FrameManagerPopUp extends PopUp {
         this.undoAllButton = new ButtonWidget(x + 50, y + height - 21, 60, 16, false, "Undo All", this::undoAll);
         this.doneButton = new ButtonWidget(x + width - 51, y + height - 21, 40, 16, false, "Done", () -> {
             onDone.run();
-            screen.popUp = null;
+            screen.popUp.close();
         });
         rebuildButtons();
     }
@@ -106,7 +106,11 @@ public class FrameManagerPopUp extends PopUp {
     }
 
     private void updateFrameNumbers() {
-        // Optional: update metadata if needed (like per-frame labels, durations, etc.)
+    }
+
+    @Override
+    protected void onClose() {
+
     }
 
     private void undo() {
@@ -151,7 +155,7 @@ public class FrameManagerPopUp extends PopUp {
             if (index >= 0 && index < frames.size()) {
                 PixelGrid grid = frames.get(index);
                 Point pos = entry.getValue();
-                WalksyLib.getInstance().get2DRenderer().renderGridTexture(
+                WalksyLib.get2DRenderer().renderGridTexture(
                         context, grid,
                         pos.x - 1,
                         (int) (pos.y - 6 - scroller.getValue()),

@@ -7,24 +7,16 @@ import main.walksy.lib.core.gui.widgets.sub.adaptor.DoubleSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.FloatSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.Renderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.ClickableWidget;
 
 import java.awt.*;
 
 public class NumericalWidget<T extends Number> extends OptionWidget {
 
-    private final int SLIDER_WIDTH = 150;
-    private final int SLIDER_HEIGHT_PAD = 6;
-    private final int KNOB_WIDTH = 12;
-    private final int VALUE_BOX_WIDTH = 38;
-    private final int SLIDER_GAP = 5;
     private final SliderSubWidget<T> slider;
-
     private final Option<T> option;
 
     public NumericalWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<T> option) {
@@ -46,12 +38,13 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
 
     @Override
     public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.slider.render(context, mouseX, mouseY);
+        this.slider.render(context, mouseX, mouseY, delta);
     }
 
     @Override
     public void onMouseClick(double mouseX, double mouseY, int button) {
         this.slider.onClick((int) mouseX, (int) mouseY, button);
+        ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
     }
 
     @Override

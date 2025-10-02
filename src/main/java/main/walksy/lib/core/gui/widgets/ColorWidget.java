@@ -1,8 +1,10 @@
 package main.walksy.lib.core.gui.widgets;
 
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
+import main.walksy.lib.core.utils.Animation;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import main.walksy.lib.core.config.local.Option;
@@ -10,7 +12,6 @@ import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.Renderer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
@@ -28,6 +29,11 @@ public class ColorWidget extends OpenableWidget {
     private final ButtonWidget pulseButton;
     private final SliderSubWidget<Integer> chromaSpeedSlider;
     private final SliderSubWidget<Integer> pulseSpeedSlider;
+    private final Animation satThumbXAnim = new Animation(0, 0.5f);
+    private final Animation satThumbYAnim = new Animation(0, 0.5f);
+
+    private final Animation hueThumbYAnim = new Animation(0, 0.5f);
+    private final Animation opacityThumbYAnim = new Animation(0, 0.5f);
 
     private enum DragTarget {
         NONE,
@@ -50,8 +56,15 @@ public class ColorWidget extends OpenableWidget {
         COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
         this.chromaButton = new ButtonWidget(x + 5, y + 19 + 10, 17, 17, false, RAINBOW_ICON, () -> this.option.getValue().setRainbow(!this.option.getValue().isRainbow()), -3, -3);
         this.pulseButton = new ButtonWidget(x + 5, y + 45 + 10, 17, 17, false, PULSE_ICON, () -> this.option.getValue().setPulse(!this.option.getValue().isPulse()), -3, -3);
-        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getRainbowSpeed()), this.option.getValue().getRainbowSpeed(), this.option.getValue()::setRainbowSpeed, true);
-        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getPulseSpeed()), this.option.getValue().getPulseSpeed(), this.option.getValue()::setPulseSpeed, true);
+        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getRainbowSpeed()), this.option.getValue().getRainbowSpeed(), rainbowSpeed -> {
+            this.option.getValue().setRainbowSpeed(rainbowSpeed);
+            this.updateThumbTargets(false);
+        }, true);
+        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getPulseSpeed()), this.option.getValue().getPulseSpeed(), pulseSpeed ->
+        {
+            this.option.getValue().setPulseSpeed(pulseSpeed);
+            this.updateThumbTargets(false);
+        }, true);
     }
 
     @Override
@@ -62,10 +75,13 @@ public class ColorWidget extends OpenableWidget {
         this.chromaSpeedSlider.setOnChange(this.option.getValue()::setRainbowSpeed);
         COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
         int baseHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
-
-        Renderer.drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, 4, 4);
-        Renderer.fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        Renderer.fillRoundedRect(context, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, option.getValue().getRGB());
+        satThumbXAnim.update(delta);
+        satThumbYAnim.update(delta);
+        hueThumbYAnim.update(delta);
+        opacityThumbYAnim.update(delta);
+        WalksyLib.get2DRenderer().drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, 4, 4);
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRect(context, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, option.getValue().getRGB());
 
         context.drawTextWithShadow(
                 MinecraftClient.getInstance().textRenderer,
@@ -80,9 +96,9 @@ public class ColorWidget extends OpenableWidget {
                 java.awt.Color.LIGHT_GRAY.getRGB()
         );
 
-        if (!open) {
+        if (this.fullyClosed()) {
             context.drawVerticalLine(getX() + getWidth() - 38, getY(), getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        } else {
+        } else if (this.getCurrentHeight() > 34) { // Renderer2D::drawRoundedRec methods freak out if their given width and/or height is too low, therefore we stop rendering them early before the animation finishes
             drawHueSlider(context);
             drawSaturationBox(context);
             drawOpacitySlider(context);
@@ -90,8 +106,8 @@ public class ColorWidget extends OpenableWidget {
             this.pulseButton.overrideHover = this.option.getValue().isPulse();
             this.chromaButton.render(context, mouseX, mouseY, delta);
             this.pulseButton.render(context, mouseX, mouseY, delta);
-            this.chromaSpeedSlider.render(context, mouseX, mouseY);
-            this.pulseSpeedSlider.render(context, mouseX, mouseY);
+            this.chromaSpeedSlider.render(context, mouseX, mouseY, delta);
+            this.pulseSpeedSlider.render(context, mouseX, mouseY, delta);
 
             context.drawTextWithShadow(
                     MinecraftClient.getInstance().textRenderer,
@@ -113,69 +129,47 @@ public class ColorWidget extends OpenableWidget {
 
     public void drawSatThumb(DrawContext context, int x, int y)
     {
-        Renderer.fillRoundedRectOutline(context, x, y, 6, 6, 1, 1, java.awt.Color.BLACK.getRGB());
-        Renderer.fillRoundedRectOutline(context, x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x, y, 6, 6, 1, 1, java.awt.Color.BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
     }
 
     public void drawSliderThumb(DrawContext context, int x, int y)
     {
-        Renderer.fillRoundedRectOutline(context, x, y, 9, 3, 1, 1, java.awt.Color.BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x, y, 9, 3, 1, 1, java.awt.Color.BLACK.getRGB());
     }
 
     public void drawOpacitySlider(DrawContext  context)
     {
         int opacityHeight = getHeight() - 30 + 8;
-        Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 34, getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 33, getY() + 20, 13, opacityHeight - 2, 2, 1, isHoveringOpacitySlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 34, getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 33, getY() + 20, 13, opacityHeight - 2, 2, 1, isHoveringOpacitySlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        WalksyLib.get2DRenderer().drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
         WalksyLibColor color = new WalksyLibColor(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 255);
         WalksyLibColor colorG = new WalksyLibColor(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 0);
-        Renderer.fillRoundedRectGradient(context, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectGradient(context, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
 
         int opacitySliderX = COLOR_PICKER_STARTX - 34;
-        int opacitySliderY = getY() + 21;
-        int opacitySliderHeight = opacityHeight - 4;
-
-        int rawOpacityThumbY = opacitySliderY + (int) ((1f - (option.getValue().getAlpha() / 255f)) * opacitySliderHeight) - 2;
-        int opacityThumbY = Math.max(opacitySliderY, Math.min(rawOpacityThumbY - 1, opacitySliderY + opacitySliderHeight - 2));
-
-        drawSliderThumb(context, opacitySliderX + 3, opacityThumbY);
+        drawSliderThumb(context, opacitySliderX + 3, (int) opacityThumbYAnim.getCurrentValue() + 1);
     }
 
     public void drawHueSlider(DrawContext context)
     {
         int hueHeight = getHeight() - 30 + 8;
-        Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 17, getY() + 19, 15, hueHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 16, getY() + 20, 13, hueHeight - 2, 2, 1, isHoveringHueSlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.drawRoundedHueSlider(context, COLOR_PICKER_STARTX - 15, getY() + 21, 11, hueHeight - 4, 2);
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 17, getY() + 19, 15, hueHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 16, getY() + 20, 13, hueHeight - 2, 2, 1, isHoveringHueSlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        WalksyLib.get2DRenderer().drawRoundedHueSlider(context, COLOR_PICKER_STARTX - 15, getY() + 21, 11, hueHeight - 4, 2);
 
         int hueSliderX = COLOR_PICKER_STARTX - 17;
-        int hueSliderY = getY() + 21;
-        int hueSliderHeight = hueHeight - 4;
 
-        int rawHueThumbY = hueSliderY + (int) ((1f - option.getValue().getHue()) * hueSliderHeight) - 2;
-        int hueThumbY = Math.max(hueSliderY, Math.min(rawHueThumbY - 1, hueSliderY + hueSliderHeight - 2));
-
-        drawSliderThumb(context, hueSliderX + 3, hueThumbY);
+        drawSliderThumb(context, hueSliderX + 3, (int) hueThumbYAnim.getCurrentValue() + 1);
     }
 
     public void drawSaturationBox(DrawContext context)
     {
-        Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX, getY() + 19, getWidth() - COLOR_PICKER_STARTX + 9, getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        Renderer.fillRoundedRectOutline(context, COLOR_PICKER_STARTX + 1, getY() + 20, getWidth() - COLOR_PICKER_STARTX + 7, getHeight() - 28 + 6 - 2, 2, 1, isHoveringSaturationValueBox(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.drawHueSaturationValueBox(context, COLOR_PICKER_STARTX + 2, getY() + 21, getWidth() - COLOR_PICKER_STARTX + 5, getHeight() - 28 + 6 - 4, 2, option.getValue().getHue());
-
-        int boxX = COLOR_PICKER_STARTX;
-        int boxY = getY() + 21;
-        int boxWidth = getWidth() - COLOR_PICKER_STARTX + 9;
-        int boxHeight = getHeight() - 28 + 6 - 4;
-        int rawThumbX = boxX + (int) (option.getValue().getSaturation() * boxWidth) + 3;
-        int rawThumbY = boxY + (int) ((1f - option.getValue().getBrightness()) * boxHeight) + 1;
-
-        int thumbX = Math.max(boxX + 1, Math.min(rawThumbX - 6, boxX + boxWidth - 8));
-        int thumbY = Math.max(boxY, Math.min(rawThumbY - 4, boxY + boxHeight - 6));
-
-        drawSatThumb(context, thumbX, thumbY);
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX, getY() + 19, getWidth() - COLOR_PICKER_STARTX + 9, getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX + 1, getY() + 20, getWidth() - COLOR_PICKER_STARTX + 7, getHeight() - 28 + 6 - 2, 2, 1, isHoveringSaturationValueBox(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        WalksyLib.get2DRenderer().drawHueSaturationValueBox(context, COLOR_PICKER_STARTX + 2, getY() + 21, getWidth() - COLOR_PICKER_STARTX + 5, getHeight() - 28 + 6 - 4, 2, option.getValue().getHue());
+        drawSatThumb(context, (int) satThumbXAnim.getCurrentValue() + 1, (int) satThumbYAnim.getCurrentValue());
     }
 
     public boolean isHoveringHueSlider(double mouseX, double mouseY) {
@@ -251,7 +245,7 @@ public class ColorWidget extends OpenableWidget {
     @Override
     public boolean isHovered() {
         return mouseX >= getX() && mouseX < (getX() + getWidth() - 6)
-                && mouseY >= getY() && mouseY < (getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT) && isVisible();
+                && mouseY >= getY() && mouseY < (getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT) && isVisible() && isAvailable();
     }
 
     @Override
@@ -276,6 +270,11 @@ public class ColorWidget extends OpenableWidget {
         onChange();
     }
 
+    @Override
+    public void onChange() {
+        super.onChange();
+        this.updateThumbTargets(false);
+    }
 
     @Override
     public void onRelease(double mouseX, double mouseY) {
@@ -295,6 +294,7 @@ public class ColorWidget extends OpenableWidget {
         int width = ((getX() + getWidth()) / 2) -  32 - 60;
         this.chromaSpeedSlider.setWidth(width);
         this.pulseSpeedSlider.setWidth(width);
+        this.updateThumbTargets(true);
     }
 
     @Override
@@ -303,6 +303,36 @@ public class ColorWidget extends OpenableWidget {
         this.pulseSpeedSlider.setValue(this.option.getValue().getPulseSpeed());
         this.chromaSpeedSlider.setValue(this.option.getValue().getRainbowSpeed());
     }
+
+    private void updateThumbTargets(boolean jump) {
+        int hueSliderY = getY() + 21;
+        int hueSliderHeight = getHeight() - 30 + 8 - 4;
+        int rawHueThumbY = hueSliderY + (int) ((1f - option.getValue().getHue()) * hueSliderHeight) - 2;
+        int targetHueY = Math.max(hueSliderY, Math.min(rawHueThumbY - 1, hueSliderY + hueSliderHeight - 2));
+        int opacitySliderY = getY() + 21;
+        int opacitySliderHeight = getHeight() - 30 + 8 - 4;
+        int rawOpacityThumbY = opacitySliderY + (int) ((1f - (option.getValue().getAlpha() / 255f)) * opacitySliderHeight) - 2;
+        int targetOpacityY = Math.max(opacitySliderY, Math.min(rawOpacityThumbY - 1, opacitySliderY + opacitySliderHeight - 2));
+        int boxX = COLOR_PICKER_STARTX;
+        int boxY = getY() + 21;
+        int boxWidth = getWidth() - COLOR_PICKER_STARTX + 9;
+        int boxHeight = getHeight() - 28 + 6 - 4;
+        int rawThumbX = boxX + (int) (option.getValue().getSaturation() * boxWidth) + 3;
+        int rawThumbY = boxY + (int) ((1f - option.getValue().getBrightness()) * boxHeight) + 1;
+
+        if (jump) {
+            hueThumbYAnim.jumpTo(targetHueY);
+            satThumbXAnim.jumpTo(Math.max(boxX + 1, Math.min(rawThumbX - 6, boxX + boxWidth - 8)));
+            satThumbYAnim.jumpTo(Math.max(boxY, Math.min(rawThumbY - 4, boxY + boxHeight - 6)));
+            opacityThumbYAnim.jumpTo(targetOpacityY);
+        } else {
+            hueThumbYAnim.setTargetValue(targetHueY);
+            satThumbXAnim.setTargetValue(Math.max(boxX + 1, Math.min(rawThumbX - 6, boxX + boxWidth - 8)));
+            satThumbYAnim.setTargetValue(Math.max(boxY, Math.min(rawThumbY - 4, boxY + boxHeight - 6)));
+            opacityThumbYAnim.setTargetValue(targetOpacityY);
+        }
+    }
+
 
     private void handleHueSliderClick(double mouseY) {
         float newHue = 1f - (float) ((mouseY - (getY() + 20)) / (getHeight() - 30 + 6));

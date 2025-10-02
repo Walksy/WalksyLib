@@ -1,6 +1,7 @@
 package main.walksy.lib.core.gui.widgets;
 
 import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.sound.SoundManager;
 import net.minecraft.text.Text;
 
 public abstract class AbstractWidget extends ClickableWidget {
@@ -9,7 +10,7 @@ public abstract class AbstractWidget extends ClickableWidget {
         super(x, y, width, height, message);
     }
 
-    protected boolean isMouseOver(int x, int y, int width, int height, double mouseX, double mouseY) {
-        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    @Override
+    public void playDownSound(SoundManager soundManager) {
     }
 }

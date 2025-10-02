@@ -19,6 +19,6 @@ public class ColorOption extends OptionBuilder<WalksyLibColor, ColorOption> {
 
     @Override
     public Option<WalksyLibColor> build() {
-        return new Option<>(name, description, getter, setter, WalksyLibColor.class, defaultValue);
+        return new Option<>(name, description, getter, setter, availability, WalksyLibColor.class, defaultValue);
     }
 }

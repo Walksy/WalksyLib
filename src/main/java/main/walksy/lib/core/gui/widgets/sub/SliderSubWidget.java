@@ -1,9 +1,9 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
-import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
+import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.Renderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
@@ -20,6 +20,8 @@ public class SliderSubWidget<T> extends SubWidget {
     private Consumer<T> onChange;
     private final boolean isRight;
 
+    private final Animation sliderPositionAnimation= new Animation(sliderPosition, 0.5f);
+
     public SliderSubWidget(int x, int y, int width, int height, SliderAdapter<T> adapter, T initialValue, Consumer<T> onChange, boolean right) {
         super(x, y, width, height);
         this.adapter = adapter;
@@ -29,17 +31,20 @@ public class SliderSubWidget<T> extends SubWidget {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        sliderPositionAnimation.update(delta);
+        sliderPosition = sliderPositionAnimation.getCurrentValue();
+
         isHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
 
-        Renderer.fillRoundedRect(context, x, y, width, height, 1, new Color(255, 255, 255, 20).getRGB());
-        Renderer.fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRect(context, x, y, width, height, 1, new Color(255, 255, 255, 20).getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
 
         int v = isHovered ? 220 : 155;
-        Renderer.fillRoundedRect(
+        WalksyLib.get2DRenderer().fillRoundedRect(
                 context,
-                x + (int) (sliderPosition * (width - 10)),
-                y + (height - 10) / 2,
+                x + (sliderPosition * (width - 10)),
+                y + (float) (height - 10) / 2,
                 10, 10,
                 2,
                 new Color(v, v, v, 255).getRGB()
@@ -54,7 +59,6 @@ public class SliderSubWidget<T> extends SubWidget {
                 false
         );
     }
-
 
     @Override
     public void onClick(int mouseX, int mouseY, int button) {
@@ -72,14 +76,16 @@ public class SliderSubWidget<T> extends SubWidget {
     }
 
     private void onChange(int mouseX) {
-        sliderPosition = MathHelper.clamp((float) (mouseX - x) / width, 0.0f, 1.0f);
-        value = adapter.fromSliderPosition(sliderPosition);
+        float targetSliderPosition = MathHelper.clamp((float) (mouseX - x) / width, 0.0f, 1.0f);
+        sliderPositionAnimation.setTargetValue(targetSliderPosition);
+        value = adapter.fromSliderPosition(targetSliderPosition);
         this.onChange.accept(value);
     }
 
     public void setValue(T value) {
         this.value = adapter.clamp(value);
-        this.sliderPosition = MathHelper.clamp(adapter.toSliderPosition(this.value), 0.0f, 1.0f);
+        float targetSliderPosition = MathHelper.clamp(adapter.toSliderPosition(this.value), 0.0f, 1.0f);
+        sliderPositionAnimation.setTargetValue(targetSliderPosition);
     }
 
     public T getValue() {
@@ -90,9 +96,7 @@ public class SliderSubWidget<T> extends SubWidget {
         dragging = false;
     }
 
-    public void setOnChange(Consumer<T> onChange)
-    {
+    public void setOnChange(Consumer<T> onChange) {
         this.onChange = onChange;
     }
 }
-

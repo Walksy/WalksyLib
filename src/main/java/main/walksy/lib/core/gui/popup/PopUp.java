@@ -1,8 +1,8 @@
 package main.walksy.lib.core.gui.popup;
 
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.Renderer;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -18,6 +18,7 @@ public abstract class PopUp {
     public int y;
     public int width;
     public int height;
+    protected boolean canClose = true;
     protected boolean loaded = false;
 
     public PopUp(WalksyLibConfigScreen parent, String subText)
@@ -39,9 +40,9 @@ public abstract class PopUp {
 
     public void render(DrawContext context, double mouseX, double mouseY, float delta)
     {
-        Renderer.fillRoundedRectOutline(context,(parent.width / 2) - (this.width) / 2, (parent.height / 2) - (this.height) / 2, this.width, this.height, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        Renderer.fillRoundedRectOutline(context,(parent.width / 2) - (this.width / 2) + 1, (parent.height / 2) - (this.height / 2) + 1, this.width - 2, this.height - 2, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
-        Renderer.fillRoundedRect(context,(parent.width / 2) - (this.width / 2) + 2, (parent.height / 2) - (this.height / 2) + 2, this.width - 4, this.height - 4, 2, Color.BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context,(parent.width / 2) - (this.width) / 2, (parent.height / 2) - (this.height) / 2, this.width, this.height, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRectOutline(context,(parent.width / 2) - (this.width / 2) + 1, (parent.height / 2) - (this.height / 2) + 1, this.width - 2, this.height - 2, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
+        WalksyLib.get2DRenderer().fillRoundedRect(context,(parent.width / 2) - (this.width / 2) + 2, (parent.height / 2) - (this.height / 2) + 2, this.width - 4, this.height - 4, 2, Color.BLACK.getRGB());
     }
 
     public abstract void onClick(double mouseX, double mouseY, int button);
@@ -59,6 +60,18 @@ public abstract class PopUp {
         this.y = (parent.height / 2) - (this.height / 2);
     }
 
+    public void close()
+    {
+        this.parent.popUp = null;
+        onClose();
+    }
+
+    protected abstract void onClose();
+
+    public boolean canClose()
+    {
+        return this.canClose;
+    }
 
     public void setParentScreen(WalksyLibConfigScreen screen)
     {
