@@ -4,7 +4,15 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
 import main.walksy.lib.core.utils.MainColors;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.tooltip.TooltipComponent;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Text;
+
+import java.awt.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class WarningPopUp extends PopUp {
     private final String title;
@@ -29,14 +37,31 @@ public class WarningPopUp extends PopUp {
                 parent.getTextRenderer(),
                 title,
                 (int) ((parent.width / 2) / scale),
-                (int) ((parent.height / 2 - 40) / scale),
+                (int) ((y + 11) / scale),
                 0xFFFFFF
         );
         context.getMatrices().pop();
 
         context.drawHorizontalLine(x + 2, x + width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
-        context.drawCenteredTextWithShadow(parent.getTextRenderer(), subText, parent.width / 2 - (this.width / 2) + (this.width / 2), parent.height / 2 - (this.height / 2) + (this.height / 2) - 10, -1);
 
+        List<OrderedText> orderedTexts = parent.getTextRenderer().wrapLines(Text.of(subText), this.width - 20);
+        List<TooltipComponent> tooltipComponents = orderedTexts.stream().map(TooltipComponent::of).toList();
+        int totalTextHeight = tooltipComponents.stream()
+                .mapToInt(tc -> tc.getHeight(parent.getTextRenderer()))
+                .sum();
+        int yOffset = this.y + (this.height / 2) - (totalTextHeight / 2);
+
+        for (TooltipComponent tooltipComponent : tooltipComponents) {
+            int lineHeight = tooltipComponent.getHeight(parent.getTextRenderer());
+            tooltipComponent.drawText(
+                    parent.getTextRenderer(),
+                    (this.x + (this.width / 2)) - tooltipComponent.getWidth(parent.getTextRenderer()) / 2,
+                    yOffset,
+                    context.getMatrices().peek().getPositionMatrix(),
+                    MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers()
+            );
+            yOffset += lineHeight;
+        }
         yesButton.render(context, (int)mouseX, (int)mouseY, delta);
         noButton.render(context, (int)mouseX, (int)mouseY, delta);
     }
@@ -55,10 +80,22 @@ public class WarningPopUp extends PopUp {
 
     @Override
     public void layout(int width, int height) {
-        super.layout(width, height);
+        super.layout(width, getHeightOffset() + 90);
         if (yesButton != null && noButton != null) {
             yesButton.setPosition((x + width) - 60, (y + height) - 33);
             noButton.setPosition((x) + 10, (y + height) - 33);
         }
+    }
+
+    public int getHeightOffset()
+    {
+        List<OrderedText> orderedTexts = parent.getTextRenderer().wrapLines(Text.of(subText), this.width - 20);
+        List<TooltipComponent> tooltipComponents = orderedTexts.stream().map(TooltipComponent::of).toList();
+        int height = 0;
+        for (TooltipComponent tooltipComponent : tooltipComponents)
+        {
+            height+=tooltipComponent.getHeight(parent.getTextRenderer());
+        }
+        return height;
     }
 }
