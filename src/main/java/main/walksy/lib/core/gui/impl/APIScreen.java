@@ -8,11 +8,10 @@ import main.walksy.lib.core.gui.widgets.*;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.log.InternalLog;
-import main.walksy.lib.core.utils.log.ConfigLog;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tab.TabManager;
-import net.minecraft.client.render.RenderLayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +22,8 @@ public class APIScreen extends BaseScreen {
     private final List<ModWidget> modWidgets;
     private ButtonWidget backButton;
     private UniversalTabWidget tabWidget;
-    private LogTableWidget configLogWidget;
-    private LogTableWidget otherLogWidget;
+    private LogWidget logWidget;
+    private boolean wtf = false;
 
 
     public APIScreen(Screen parent) {
@@ -57,26 +56,22 @@ public class APIScreen extends BaseScreen {
         Category logCategory = new Category("Logs", null, null);
         tabList.add(new CategoryTab(modCategory, null));
         tabList.add(new CategoryTab(logCategory, null));
-        tabWidget = new UniversalTabWidget(0, 27, this.width, 24, tabList, tabManager, TabLocation.TOP, this);
-        addDrawableChild(tabWidget);
-        tabWidget.selectTab(0, true);
-
-        configLogWidget = new LogTableWidget("Config Logs", this, 40, 60, width - 80, height - 90);
-        configLogWidget.addEntryGroup("Revision", "Config", "Option", "Old Value", "New Value", "Time");
-
-        for (InternalLog log : WalksyLib.getLogger().getLogs()) {
-            if (log instanceof ConfigLog option) {
-                configLogWidget.addLogRow(
-                        String.valueOf(option.revision),
-                        option.configName,
-                        option.optionName,
-                        option.oldValue,
-                        option.newValue,
-                        option.time
-                );
-            }
+        if (!wtf) {
+            tabWidget = new UniversalTabWidget(0, 27, this.width, 24, tabList, tabManager, TabLocation.TOP, this);
+            tabWidget.selectTab(0, true);
         }
+        wtf = true;
+        addDrawableChild(tabWidget);
+        logWidget = new LogWidget("Logs", this, 40, 60, width - 80, height - 90);
+        this.refreshLogs(logWidget);
+    }
 
+    public void refreshLogs(LogWidget widget)
+    {
+        widget.clearLogs();
+        for (InternalLog log : WalksyLib.getLogger().getLogs()) {
+            widget.addLog(log);
+        }
     }
 
     @Override
@@ -94,7 +89,7 @@ public class APIScreen extends BaseScreen {
         context.drawCenteredTextWithShadow(textRenderer, "WalksyLib API Screen", width / 2, 12 - textRenderer.fontHeight / 2, 0xFFFFFF);
 
         if (!viewingMods()) {
-            configLogWidget.render(context, mouseX, mouseY, delta);
+            logWidget.render(context, mouseX, mouseY, delta);
         } else {
             for (ModWidget widget : this.modWidgets) {
                 widget.render(context, mouseX, mouseY, delta);
@@ -115,7 +110,7 @@ public class APIScreen extends BaseScreen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        this.configLogWidget.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        this.logWidget.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
@@ -133,8 +128,15 @@ public class APIScreen extends BaseScreen {
     @Override
     protected void refreshWidgetPositions() {
         super.refreshWidgetPositions();
-        this.configLogWidget.setPosition(20, 60);
-        this.configLogWidget.setWidth(width - 40);
-        this.configLogWidget.setHeight(height - 80);
+        if (tabWidget != null) {
+            tabWidget.setWidth(this.width);
+            tabWidget.setPosition(0, 27);
+            int i = tabWidget.getNavigationFocus().getBottom();
+            ScreenRect screenRect = new ScreenRect(0, i, width, height - 36 - i);
+            tabManager.setTabArea(screenRect);
+        }
+        this.logWidget.setPosition(20, 60);
+        this.logWidget.setWidth(width - 40);
+        this.logWidget.setHeight(height - 80);
     }
 }

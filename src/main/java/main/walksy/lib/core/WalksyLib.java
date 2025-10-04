@@ -9,10 +9,8 @@ import main.walksy.lib.core.mods.EntryPointList;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public final class WalksyLib {
     static WalksyLib instance;

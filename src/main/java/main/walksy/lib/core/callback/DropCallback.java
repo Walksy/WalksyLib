@@ -16,7 +16,7 @@ public class DropCallback {
             @Override
             public void invoke(long window, int count, long names) {
                 for (int i = 0; i < count; i++) {
-                    String path = getName(names, i);
+                    String path = this.getName(names, i);
                     onFileDrop(path);
                 }
             }

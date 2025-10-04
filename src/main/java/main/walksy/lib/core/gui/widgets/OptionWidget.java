@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import main.walksy.lib.core.WalksyLib;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.sound.SoundManager;
 import net.minecraft.text.Text;
 import main.walksy.lib.core.config.local.Option;

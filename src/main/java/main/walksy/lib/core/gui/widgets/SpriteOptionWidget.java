@@ -94,6 +94,11 @@ public class SpriteOptionWidget extends OptionWidget {
         this.reCalc();
     }
 
+    @Override
+    public boolean isHovered() {
+        return false;
+    }
+
     public boolean isHoveringImage(double mouseX, double mouseY) {
         if (image == null) return false;
 

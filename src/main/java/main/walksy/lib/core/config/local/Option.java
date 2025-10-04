@@ -1,7 +1,6 @@
 package main.walksy.lib.core.config.local;
 
 import main.walksy.lib.core.WalksyLib;
-import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.options.BooleanOption;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
@@ -9,13 +8,12 @@ import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.*;
 import main.walksy.lib.core.utils.IdentifierWrapper;
-import main.walksy.lib.core.utils.MarqueeUtil;
 import main.walksy.lib.core.utils.SearchUtils;
-import main.walksy.lib.core.utils.log.ConfigLog;
-import net.minecraft.util.Identifier;
+import main.walksy.lib.core.utils.log.InternalLog;
+import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.text.Text;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -115,7 +113,7 @@ public class Option<T> {
 
     public boolean has2DPosition() {
         if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            return true; //
+            return pixelGridAnimation.getRelativeX() != -1 && pixelGridAnimation.getRelativeY() != -1;
         }
         return false;
     }
@@ -211,15 +209,14 @@ public class Option<T> {
     }
 
     private <V> void logField(String name, V oldVal, V newVal) {
-        WalksyLib.getLogger().log(new ConfigLog(
-                formatValue(WalksyLib.getInstance().getConfigManager().getLocal().name()),
-                formatValue(name),
-                formatValue(oldVal),
-                formatValue(newVal)
-        ));
+        String configName = WalksyLib.getInstance().getConfigManager().getLocal().name();
+        InternalLog.ToolTip toolTip = null;
+        if (this.warning != null)
+        {
+            toolTip = new InternalLog.ToolTip(Tooltip.of(Text.of("Option has warning: " + this.warning.message)), Color.RED.getRGB());
+        }
+        WalksyLib.getLogger().log(InternalLog.of("Value altered in config: {" + configName + "} -> " + name + " changed from {" + formatValue(oldVal) + "} to {" + formatValue(newVal) + "}", toolTip));
     }
-
-
 
 
     public void reset()
@@ -314,7 +311,9 @@ public class Option<T> {
             return new SpriteOptionWidget(parent, screen, x, y, width, height, (Option<IdentifierWrapper>) this);
         } else if (type == String.class) {
             return new StringOptionWidget(parent, screen, x, y, width, height, (Option<String>) this);
-        } else {
+        } /* else if (type == Enum.class) {
+            //return new EnumOptionWidget(parent, screen, x, y, width, height, (Option<Enum>) this);
+        } */ else {
             throw new UnsupportedOperationException("Unsupported option type: " + type);
         }
     }

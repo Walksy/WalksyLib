@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 public class WalksyLibLogger {
     final Logger LOGGER = Logger.getLogger("WalksyLib");
     private final List<InternalLog> logs;
-    private int optionLogRevision = 0;
+    private int revision = 0;
 
     public WalksyLibLogger()
     {
@@ -18,10 +18,7 @@ public class WalksyLibLogger {
     public void log(InternalLog log)
     {
         this.logs.add(log);
-        if (log instanceof ConfigLog optionLog) {
-            optionLogRevision++;
-            optionLog.revision = optionLogRevision;
-        }
+        revision++;
     }
 
     public void info(Object message)
