@@ -18,6 +18,6 @@ public class ButtonOption extends OptionBuilder<Runnable, ButtonOption> {
 
     @Override
     public Option<Runnable> build() {
-        return new Option<>(name, description, getter, setter, availability, Runnable.class, defaultValue);
+        return new Option<>(name, description, getter, setter, availability, Runnable.class, defaultValue, onChange);
     }
 }

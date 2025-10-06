@@ -19,6 +19,6 @@ public class SpriteOption extends OptionBuilder<IdentifierWrapper, SpriteOption>
 
     @Override
     public Option<IdentifierWrapper> build() {
-        return new Option<>(name, description, getter, setter, availability, IdentifierWrapper.class, defaultValue);
+        return new Option<>(name, description, getter, setter, availability, IdentifierWrapper.class, defaultValue, onChange);
     }
 }

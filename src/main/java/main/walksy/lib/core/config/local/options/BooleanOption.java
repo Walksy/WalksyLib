@@ -14,8 +14,7 @@ public class BooleanOption extends OptionBuilder<Boolean, BooleanOption> {
         super(name, getter, defaultValue, setter);
     }
 
-    public BooleanOption addWarning(Warning warning)
-    {
+    public BooleanOption addWarning(Warning warning) {
         this.warning = warning;
         return this;
     }
@@ -26,7 +25,7 @@ public class BooleanOption extends OptionBuilder<Boolean, BooleanOption> {
 
     @Override
     public Option<Boolean> build() {
-        return new Option<>(name, description, getter, setter, availability, Boolean.class, defaultValue, warning);
+        return new Option<>(name, description, getter, setter, availability, Boolean.class, defaultValue, warning, onChange);
     }
 
     public static class Warning

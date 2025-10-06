@@ -12,6 +12,7 @@ public abstract class OptionBuilder<T, SELF extends OptionBuilder<T, SELF>> {
     protected final Supplier<T> getter;
     protected final Consumer<T> setter;
     protected final T defaultValue;
+    protected Runnable onChange;
     protected OptionDescription description;
     protected Supplier<Boolean> availability = () -> true;
 
@@ -25,6 +26,12 @@ public abstract class OptionBuilder<T, SELF extends OptionBuilder<T, SELF>> {
     @SuppressWarnings("unchecked")
     public SELF description(OptionDescription description) {
         this.description = description;
+        return (SELF) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public SELF onChange(Runnable onChange) {
+        this.onChange = onChange;
         return (SELF) this;
     }
 

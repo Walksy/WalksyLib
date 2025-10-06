@@ -12,6 +12,7 @@ public class LocalConfigBuilder {
     private final String configName;
     private final List<Category> categories = new ArrayList<>();
     private Path path;
+    private Runnable onSave;
 
     public LocalConfigBuilder(String configName) {
         this.configName = configName;
@@ -27,8 +28,13 @@ public class LocalConfigBuilder {
         return this;
     }
 
+    public LocalConfigBuilder onSave(Runnable onSave) {
+        this.onSave = onSave;
+        return this;
+    }
+
     public LocalConfig build() {
-        return new LocalConfig(configName, path, categories);
+        return new LocalConfig(configName, path, categories, onSave);
     }
 }
 

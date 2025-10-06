@@ -19,6 +19,6 @@ public class StringOption extends OptionBuilder<String, StringOption> {
 
     @Override
     public Option<String> build() {
-        return new Option<>(name, description, getter, setter, availability, String.class, defaultValue);
+        return new Option<>(name, description, getter, setter, availability, String.class, defaultValue, onChange);
     }
 }

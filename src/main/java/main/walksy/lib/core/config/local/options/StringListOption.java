@@ -20,6 +20,6 @@ public class StringListOption extends OptionBuilder<List<String>, StringListOpti
     @Override
     public Option<List<String>> build() {
         Class<List<String>> clazz = (Class<List<String>>) (Class<?>) List.class;
-        return new Option<>(name, description, getter, setter, availability, clazz, defaultValue);
+        return new Option<>(name, description, getter, setter, availability, clazz, defaultValue, onChange);
     }
 }

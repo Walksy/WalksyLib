@@ -14,6 +14,8 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.text.Text;
 
 import java.awt.*;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -31,24 +33,27 @@ public class Option<T> {
     private final T defaultValue;
     private final Supplier<Boolean> availability;
     private T prevValue;
+    private  Runnable onChange; //TODO
 
     //Screen
     public T screenInstanceValue = null;
 
     //Boolean Option
-    private BooleanOption.Warning warning;
+    private final BooleanOption.Warning warning;
 
     private String searchQ = "";
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, BooleanOption.Warning warning) {
-        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, warning, null);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, BooleanOption.Warning warning, Runnable onChange) {
+        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, warning, null, onChange);
     }
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue) {
-        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, null, null);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, Runnable onChange) {
+        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, null, null, onChange);
     }
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T min, T max, T increment, T defaultValue, BooleanOption.Warning warning, Point point) {
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter,
+                  Supplier<Boolean> availability, Class<T> type, T min, T max, T increment, T defaultValue,
+                  BooleanOption.Warning warning, Point point, Runnable onChange) {
         this.name = name;
         this.description = description;
         this.getter = getter;
@@ -67,7 +72,7 @@ public class Option<T> {
         }
 
         this.prevValue = null;
-
+        this.onChange = onChange;
         this.warning = warning;
         if (point != null) {
             this.definePosition(point);
@@ -135,6 +140,10 @@ public class Option<T> {
         if (type.isInstance(value)) {
             if (setter != null) {
                 setter.accept((T) value);
+                if (this.onChange != null)
+                {
+                    this.onChange.run();
+                }
             }
         } else {
             throw new IllegalArgumentException("Invalid value type: " + value.getClass().getName());
@@ -215,7 +224,8 @@ public class Option<T> {
         {
             toolTip = new InternalLog.ToolTip(Tooltip.of(Text.of("Option has warning: " + this.warning.message)), Color.RED.getRGB());
         }
-        WalksyLib.getLogger().log(InternalLog.of("Value altered in config: {" + configName + "} -> " + name + " changed from {" + formatValue(oldVal) + "} to {" + formatValue(newVal) + "}", toolTip));
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        WalksyLib.getLogger().log(InternalLog.of("[" + time + "]: " + "[" + configName + "] " + "-> " + "[" + name + "], " + "[" + oldVal + "] to " + "[" + newVal + "]", toolTip));
     }
 
 
@@ -287,6 +297,10 @@ public class Option<T> {
     public void updateSearchQ(String searchQ)
     {
         this.searchQ = searchQ;
+    }
+
+    public void runChange() {
+        this.onChange.run();
     }
 
     @SuppressWarnings("unchecked")

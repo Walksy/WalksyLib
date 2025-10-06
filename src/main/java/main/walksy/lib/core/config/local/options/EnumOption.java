@@ -19,6 +19,6 @@ public class EnumOption extends OptionBuilder<Enum<?>, EnumOption> {
     @Override
     public Option<Enum<?>> build() {
         Class<Enum<?>> clazz = (Class<Enum<?>>) (Class<?>) Enum.class;
-        return new Option<>(name, description, getter, setter, availability, clazz, defaultValue);
+        return new Option<>(name, description, getter, setter, availability, clazz, defaultValue, onChange);
     }
 }

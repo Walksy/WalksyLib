@@ -1,5 +1,6 @@
 package test.walksy.config;
 
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.WalksyLibConfig;
 import main.walksy.lib.core.config.local.Category;

@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public record LocalConfig(String name, Path path, List<Category> categories) implements Config {
+public record LocalConfig(String name, Path path, List<Category> categories, Runnable onSave) implements Config {
 
     @Override
     public void load() {
@@ -49,6 +49,9 @@ public record LocalConfig(String name, Path path, List<Category> categories) imp
 
     @Override
     public void save() {
+        if (this.onSave != null) {
+            this.onSave.run();
+        }
         Path path = this.path();
         List<SerializableCategory> serializedCategories = new ArrayList<>();
 
