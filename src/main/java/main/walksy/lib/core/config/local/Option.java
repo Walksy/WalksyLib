@@ -118,14 +118,14 @@ public class Option<T> {
 
     public boolean has2DPosition() {
         if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            return pixelGridAnimation.getRelativeX() != -1 && pixelGridAnimation.getRelativeY() != -1;
+            return pixelGridAnimation.getOffsetX() != -1 && pixelGridAnimation.getOffsetY() != -1;
         }
         return false;
     }
 
     public void definePosition(Point point) {
         if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            pixelGridAnimation.setPosition(point.x, point.y);
+            pixelGridAnimation.setOffset(point.x, point.y);
         }
     }
 
@@ -191,11 +191,11 @@ public class Option<T> {
             if (oldAnim.getAnimationSpeed() != newAnim.getAnimationSpeed()) {
                 logField(this.getName() + "'s Speed", oldAnim.getAnimationSpeed(), newAnim.getAnimationSpeed());
             }
-            if (Float.compare(oldAnim.getRelativeX(), newAnim.getRelativeX()) != 0) {
-                logField(this.getName() + "'s X Pos", oldAnim.getRelativeX(), newAnim.getRelativeX());
+            if (Float.compare(oldAnim.getOffsetX(), newAnim.getOffsetX()) != 0) {
+                logField(this.getName() + "'s X Pos", oldAnim.getOffsetX(), newAnim.getOffsetX());
             }
-            if (Float.compare(oldAnim.getRelativeY(), newAnim.getRelativeY()) != 0) {
-                logField(this.getName() + "'s Y Pos", oldAnim.getRelativeY(), newAnim.getRelativeY());
+            if (Float.compare(oldAnim.getOffsetY(), newAnim.getOffsetY()) != 0) {
+                logField(this.getName() + "'s Y Pos", oldAnim.getOffsetY(), newAnim.getOffsetY());
             }
         } else {
             logField(getName(), oldVal, newVal);
@@ -325,9 +325,15 @@ public class Option<T> {
             return new SpriteOptionWidget(parent, screen, x, y, width, height, (Option<IdentifierWrapper>) this);
         } else if (type == String.class) {
             return new StringOptionWidget(parent, screen, x, y, width, height, (Option<String>) this);
-        } /* else if (type == Enum.class) {
-            //return new EnumOptionWidget(parent, screen, x, y, width, height, (Option<Enum>) this);
-        } */ else {
+        }  else if (Enum.class.isAssignableFrom(type)) {
+            @SuppressWarnings("unchecked")
+            Option<? extends Enum<?>> enumOption = (Option<? extends Enum<?>>) this;
+
+            @SuppressWarnings("unchecked")
+            Class<? extends Enum<?>> enumClass = (Class<? extends Enum<?>>) type;
+
+            return new EnumOptionWidget(parent, screen, x, y, width, height, enumOption);
+        }  else {
             throw new UnsupportedOperationException("Unsupported option type: " + type);
         }
     }

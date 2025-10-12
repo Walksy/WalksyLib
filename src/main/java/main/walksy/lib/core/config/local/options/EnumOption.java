@@ -6,19 +6,21 @@ import main.walksy.lib.core.config.local.builders.OptionBuilder;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class EnumOption extends OptionBuilder<Enum<?>, EnumOption> {
+public class EnumOption<E extends Enum<E>> extends OptionBuilder<E, EnumOption<E>> {
 
-    public EnumOption(String name, Supplier<Enum<?>> getter, Enum<?> defaultValue, Consumer<Enum<?>> setter) {
+    private final Class<E> enumClass;
+
+    public EnumOption(String name, Supplier<E> getter, E defaultValue, Consumer<E> setter, Class<E> enumClass) {
         super(name, getter, defaultValue, setter);
+        this.enumClass = enumClass;
     }
 
-    public static EnumOption createBuilder(String name, Enum<?> action) {
-        return new EnumOption(name, () -> action, action, null);
+    public static <E extends Enum<E>> EnumOption<E> createBuilder(String name, Supplier<E> getter, E defaultValue, Consumer<E> setter, Class<E> enumClass) {
+        return new EnumOption<>(name, getter, defaultValue, setter, enumClass);
     }
 
     @Override
-    public Option<Enum<?>> build() {
-        Class<Enum<?>> clazz = (Class<Enum<?>>) (Class<?>) Enum.class;
-        return new Option<>(name, description, getter, setter, availability, clazz, defaultValue, onChange);
+    public Option<E> build() {
+        return new Option<>(name, description, getter, setter, availability, enumClass, defaultValue, onChange);
     }
 }

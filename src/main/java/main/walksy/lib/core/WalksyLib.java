@@ -1,11 +1,10 @@
 package main.walksy.lib.core;
 
-import main.walksy.lib.api.WalksyLibApi;
 import main.walksy.lib.core.callback.DropCallback;
 import main.walksy.lib.core.config.WalksyLibConfig;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
-import main.walksy.lib.core.mods.EntryPointList;
+import main.walksy.lib.core.mods.ModEntryPointList;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
@@ -16,7 +15,7 @@ public final class WalksyLib {
     static WalksyLib instance;
     private static final WalksyLibLogger LOGGER = new WalksyLibLogger();
     private static final Renderer2D renderer2D = new Renderer2D();
-    private static final EntryPointList entryPointList = new EntryPointList();
+    private static final ModEntryPointList entryPointList = new ModEntryPointList();
     private final DropCallback windowDropCallback;
     private final WalksyLibScreenManager screenManager;
     private final WalksyLibConfig config;

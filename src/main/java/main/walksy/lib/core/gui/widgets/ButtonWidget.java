@@ -99,7 +99,7 @@ public class ButtonWidget extends AbstractWidget {
         }
 
         if (grid != null) {
-            WalksyLib.get2DRenderer().renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1, 1);
+            WalksyLib.get2DRenderer().renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1);
         }
     }
 

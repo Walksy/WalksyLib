@@ -1,12 +1,9 @@
 package test.walksy.config;
 
-import main.walksy.lib.core.WalksyLib;
-import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.WalksyLibConfig;
+import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
-import main.walksy.lib.core.config.local.OptionDescription;
-import main.walksy.lib.core.config.local.builders.LocalConfigBuilder;
 import main.walksy.lib.core.config.local.options.*;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
@@ -14,7 +11,6 @@ import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.utils.IdentifierWrapper;
 import main.walksy.lib.core.utils.PathUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 
 import java.awt.*;
@@ -46,6 +42,19 @@ public class Config implements WalksyLibConfig {
     public static IdentifierWrapper shieldTexture = new IdentifierWrapper(Identifier.ofVanilla("textures/entity/shield_base.png"));
     public static String string = "Default Value!";
 
+    public static TestEnum enumOption = TestEnum.TEST1;
+
+    public enum TestEnum
+    {
+        TEST1,
+        TEST2,
+        TEST3,
+        TEST4,
+        TEST5,
+        TEST6,
+        WAWAWAWAWAAW
+    }
+
     @Override
     public LocalConfig define() {
         return LocalConfig.createBuilder("Walksy's Test Config")
@@ -69,12 +78,18 @@ public class Config implements WalksyLibConfig {
         Option<Boolean> experimental = BooleanOption.createBuilder("Experimental Feature", () -> experimentalFeatureEnabled, experimentalFeatureEnabled, val -> experimentalFeatureEnabled = val)
                 .build();
 
+        Option<TestEnum> optionEnum = EnumOption.createBuilder("Test Enum", () -> enumOption, enumOption, newValue -> enumOption = newValue,
+                TestEnum.class
+        ).build();
+
+
         return Category.createBuilder("General")
                 .option(toggle)
                 .group(OptionGroup.createBuilder("Main Settings")
                         .addOption(toggle)
                         .addOption(slider)
                         .addOption(experimental)
+                        .addOption(optionEnum)
                         .build())
                 .build();
     }
@@ -85,7 +100,7 @@ public class Config implements WalksyLibConfig {
 
         Option<PixelGridAnimation> animation = PixelGridAnimationOption
                 .createBuilder("Pixel Grid Animation", () -> testGrid, testGrid, val -> testGrid = val)
-                .position(new Point((MinecraftClient.getInstance().getWindow().getScaledWidth() / 2) - 5, (MinecraftClient.getInstance().getWindow().getScaledHeight() / 2) + 3))
+                .position(new Point(0, 0))
                 .build();
 
         Option<Runnable> debugButton = ButtonOption.createBuilder("Debug Print", () -> System.out.println("WOOO")).build();

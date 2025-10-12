@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public class ModMenuIntegration implements ModMenuApi {
 
+    //TODO Redo
+
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         Optional<WalksyLibApi> api = FabricLoader.getInstance()

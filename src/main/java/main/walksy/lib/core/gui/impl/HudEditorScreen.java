@@ -13,7 +13,6 @@ import java.awt.*;
 public class HudEditorScreen extends BaseScreen {
 
     private static final Identifier CROSSHAIR_TEXTURE = Identifier.ofVanilla("hud/crosshair");
-
     private final Option<?> hudOption;
     private boolean dragging = false;
     private int dragOffsetX = 0, dragOffsetY = 0;
@@ -26,30 +25,54 @@ public class HudEditorScreen extends BaseScreen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, "Currently Editing: " + this.hudOption.getName(), this.width / 2, 10, -1);
-        context.drawCenteredTextWithShadow(this.textRenderer, "(ESC to leave)", this.width / 2, 20, Color.GRAY.getRGB());
+
+        context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                "Currently Editing: " + this.hudOption.getName(),
+                this.width / 2,
+                10,
+                -1
+        );
+        context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                "(ESC to leave)",
+                this.width / 2,
+                20,
+                Color.GRAY.getRGB()
+        );
+
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
             Point pos = pixelGridAnimation.getAbsolutePosition();
             int x = pos.x;
             int y = pos.y;
 
-            context.fill(0, 0, width, height, Color.BLACK.getRGB());
-
-            if (this.client.world == null)
-            {
-                context.drawGuiTexture(RenderLayer::getCrosshair, CROSSHAIR_TEXTURE, (context.getScaledWindowWidth() - 15) / 2, (context.getScaledWindowHeight() - 15) / 2, 15, 15);
+            if (this.client.world == null) {
+                context.fill(0, 0, width, height, Color.BLACK.getRGB());
+                context.drawGuiTexture(
+                        RenderLayer::getCrosshair,
+                        CROSSHAIR_TEXTURE,
+                        (context.getScaledWindowWidth() - 15) / 2,
+                        (context.getScaledWindowHeight() - 15) / 2,
+                        15,
+                        15
+                );
             }
 
             pixelGridAnimation.render(context);
+
             if (!dragging) {
+                context.getMatrices().push();
+                float size = pixelGridAnimation.getSize();
+                context.getMatrices().scale(size, size, size);
                 WalksyLib.get2DRenderer().renderGridOutline(
                         context,
                         pixelGridAnimation.getCurrentFrame(),
-                        x,
-                        y,
+                        (int) (x / size),
+                        (int) (y / size),
                         1,
                         0
                 );
+                context.getMatrices().pop();
             }
         }
     }
@@ -58,27 +81,37 @@ public class HudEditorScreen extends BaseScreen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
             Point pos = pixelGridAnimation.getAbsolutePosition();
-            int gridWidth = pixelGridAnimation.getCurrentFrame().getWidth();
-            int gridHeight = pixelGridAnimation.getCurrentFrame().getHeight();
+            float size = pixelGridAnimation.getSize();
+            int gridWidth = (int) (pixelGridAnimation.getCurrentFrame().getWidth() * size);
+            int gridHeight = (int) (pixelGridAnimation.getCurrentFrame().getHeight() * size);
 
             if (mouseX >= pos.x && mouseX <= pos.x + gridWidth
                     && mouseY >= pos.y && mouseY <= pos.y + gridHeight) {
                 dragging = true;
-                dragOffsetX = (int) mouseX - pos.x;
-                dragOffsetY = (int) mouseY - pos.y;
+                dragOffsetX = (int) (mouseX - pos.x);
+                dragOffsetY = (int) (mouseY - pos.y);
                 return true;
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
         if (dragging && hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
+            int screenWidth = this.client.getWindow().getScaledWidth();
+            int screenHeight = this.client.getWindow().getScaledHeight();
+
             int newX = (int) mouseX - dragOffsetX;
             int newY = (int) mouseY - dragOffsetY;
 
-            pixelGridAnimation.setPosition(newX, newY);
+            int centerX = (screenWidth / 2) - 8;
+            int centerY = (screenHeight / 2) - 8;
+            int offsetX = newX - centerX;
+            int offsetY = newY - centerY;
+
+            pixelGridAnimation.setOffset(offsetX, offsetY);
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dx, dy);
@@ -90,10 +123,19 @@ public class HudEditorScreen extends BaseScreen {
             dragging = false;
 
             if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
+                int screenWidth = this.client.getWindow().getScaledWidth();
+                int screenHeight = this.client.getWindow().getScaledHeight();
+
                 int newX = (int) mouseX - dragOffsetX;
                 int newY = (int) mouseY - dragOffsetY;
-                pixelGridAnimation.setPosition(newX, newY);
 
+                int centerX = (screenWidth / 2) - 8;
+                int centerY = (screenHeight / 2) - 8;
+
+                int offsetX = newX - centerX;
+                int offsetY = newY - centerY;
+
+                pixelGridAnimation.setOffset(offsetX, offsetY);
                 hudOption.setValue(pixelGridAnimation);
             }
         }
@@ -103,8 +145,6 @@ public class HudEditorScreen extends BaseScreen {
     @Override
     public void close() {
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            Point pos = pixelGridAnimation.getAbsolutePosition();
-            pixelGridAnimation.setPosition(pos.x, pos.y);
             hudOption.setValue(pixelGridAnimation);
         }
         super.close();
@@ -113,7 +153,6 @@ public class HudEditorScreen extends BaseScreen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         if (this.client.world == null) {
-            //this.renderPanoramaBackground(context, delta);
         }
     }
 }

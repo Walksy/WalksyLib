@@ -3,7 +3,7 @@
 	"id": "walksylib",
 	"version": "${version}",
 	"name": "Walksy Lib",
-	"description": "Empty.",
+	"description": "A config library for Walksy's mods",
 	"authors": [
 		"Walksy"
 	],

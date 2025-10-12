@@ -9,6 +9,7 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.impl.FrameManagerPopUp;
 import main.walksy.lib.core.gui.popup.impl.GridEditorPopUp;
 import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
+import main.walksy.lib.core.gui.widgets.sub.adaptor.FloatSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.utils.MainColors;
@@ -17,7 +18,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PixelGridAnimationWidget extends OpenableWidget {
@@ -27,6 +28,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     public final ButtonWidget viewFrames;
     private final Option<PixelGridAnimation> option;
     private final SliderSubWidget<Integer> animationSpeedSlider;
+    private final SliderSubWidget<Float> frameSize;
     private final List<ButtonWidget> buttonFrames = new ArrayList<>();
     private PixelGrid viewingGrid;
     private final Scroller scroller;
@@ -46,12 +48,14 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             this.viewingGrid = frames.get(0).copy();
         }
         this.animationSpeedSlider = new SliderSubWidget<>(getX() + 75, getY() + 38, 100, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(0, 20, option.getValue().getAnimationSpeed()), option.getValue().getAnimationSpeed(), option.getValue()::setAnimationSpeed, true);
+        this.frameSize = new SliderSubWidget<>(getX() + 75, getY() + 68, 100, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new FloatSliderAdapter(0F, 10F, option.getValue().getSize()), option.getValue().getSize(), option.getValue()::setSize, true);
     }
 
     @Override
     public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
         super.draw(context, mouseX, mouseY, delta);
         this.animationSpeedSlider.setOnChange(option.getValue()::setAnimationSpeed);
+        this.frameSize.setOnChange(option.getValue()::setSize);
         if (this.option.has2DPosition()) {
             this.editHudButton.render(context, mouseX, mouseY, delta);
         }
@@ -67,6 +71,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             this.viewFrames.render(context, mouseX, mouseY, delta);
             this.editFrameButton.render(context, mouseX, mouseY, delta);
             this.animationSpeedSlider.render(context, mouseX, mouseY, delta);
+            this.frameSize.render(context, mouseX, mouseY, delta);
             screen.scroll = !isHoveredFrameSelector();
             context.drawHorizontalLine(
                     getX() + 1,
@@ -83,6 +88,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             );
 
             context.drawTextWithShadow(screen.getTextRenderer(), "Animation Speed", getX() + 75, getY() + 28, Color.LIGHT_GRAY.getRGB());
+            context.drawTextWithShadow(screen.getTextRenderer(), "Size", getX() + 75, getY() + 58, Color.LIGHT_GRAY.getRGB());
 
             context.getMatrices().push();
             float scale = 0.6F;
@@ -112,8 +118,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
                     (getWidth() - 10),
                     getY() + 3,
                     1,
-                    0,
-                    1F
+                    0
             );
         }
     }
@@ -159,6 +164,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         }
 
         this.animationSpeedSlider.onClick((int) mouseX, (int) mouseY, button);
+        this.frameSize.onClick((int) mouseX, (int) mouseY, button);
 
         for (ButtonWidget btn : buttonFrames) {
             btn.onClick(mouseX, mouseY);
@@ -169,6 +175,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     public void onMouseRelease(double mouseX, double mouseY, int button) {
         super.onMouseRelease(mouseX, mouseY, button);
         this.animationSpeedSlider.release();
+        this.frameSize.release();
         draggingScroller = false;
     }
 
@@ -185,6 +192,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             scroller.setValue(MathHelper.clamp(newValue, 0, Math.max(0, contentHeight - trackHeight)));
         }
         this.animationSpeedSlider.onDrag((int) mouseX);
+        this.frameSize.onDrag((int) mouseX);
     }
 
     @Override
@@ -204,6 +212,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         this.updateButtons();
         scroller.setBounds(0, Math.max(0, buttonFrames.size() * 23 - (getHeight() - WalksyLibScreenManager.Globals.OPTION_HEIGHT)));
         this.animationSpeedSlider.setPos(new Point(getX() + 75, getY() + 38));
+        this.frameSize.setPos(new Point(getX() + 75, getY() + 68));
     }
 
     private void handleEditHudButtonClick(WalksyLibConfigScreen parent) {

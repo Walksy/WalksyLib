@@ -1,9 +1,7 @@
 package main.walksy.lib.core.config.local.options;
 
 import main.walksy.lib.core.config.local.Option;
-import main.walksy.lib.core.config.local.builders.LocalConfigBuilder;
 import main.walksy.lib.core.config.local.builders.OptionBuilder;
-import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 
 import java.awt.*;
@@ -21,8 +19,8 @@ public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, 
         return new PixelGridAnimationOption(name, getter, defaultValue, setter);
     }
 
-    public PixelGridAnimationOption position(Point point) {
-        this.point = point;
+    public PixelGridAnimationOption position(Point offsetPosition) {
+        this.point = offsetPosition;
         return this;
     }
 

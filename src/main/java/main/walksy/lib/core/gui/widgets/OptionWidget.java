@@ -2,17 +2,14 @@ package main.walksy.lib.core.gui.widgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import main.walksy.lib.core.WalksyLib;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.sound.SoundManager;
-import net.minecraft.text.Text;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.utils.MainColors;
-import main.walksy.lib.core.utils.SearchUtils;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public abstract class OptionWidget extends AbstractWidget {
@@ -67,8 +64,9 @@ public abstract class OptionWidget extends AbstractWidget {
         resetButton.setEnabled(option.hasChanged() && isAvailable());
         resetButton.render(context, mouseX, mouseY, delta);
         context.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight() - 1);
-        draw(context, isAvailable() ? mouseX : 0, isAvailable() ? mouseY : 0, delta);
+        this.draw(context, isAvailable() ? mouseX : 0, isAvailable() ? mouseY : 0, delta);
         context.disableScissor();
+        this.drawOutsideScissor(context, isAvailable() ? mouseX : 0, isAvailable() ? mouseY : 0, delta);
 
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
@@ -90,6 +88,10 @@ public abstract class OptionWidget extends AbstractWidget {
     }
 
     public abstract void onWidgetUpdate();
+
+    public abstract void draw(DrawContext context, int mouseX, int mouseY, float delta);
+
+    public void drawOutsideScissor(DrawContext context, int mouseX, int mouseY, float delta) {}
 
     private void renderBase(DrawContext context)
     {
@@ -134,9 +136,6 @@ public abstract class OptionWidget extends AbstractWidget {
     public boolean isHovered() {
         return isAvailable() && isHovered && isVisible();
     }
-
-
-    public abstract void draw(DrawContext context, int mouseX, int mouseY, float delta);
 
     public boolean isVisible() {
         return parent.isExpanded() && option.searched();

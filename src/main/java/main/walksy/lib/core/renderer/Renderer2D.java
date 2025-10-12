@@ -348,7 +348,7 @@ public class Renderer2D {
         }
     }
 
-    public void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, float scale) {
+    public void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
                 boolean val = grid.getPixel(x, y);
@@ -379,19 +379,18 @@ public class Renderer2D {
         float borderWidth = 0.3f;
         int blue = new Color(0, 100, 255).getRGB();
 
-        // Top
+        //Top
         this.fill(context.getMatrices(), x1 - borderWidth, y1 - borderWidth, x2 + borderWidth, y1, blue);
 
-        // Bottom
+        //Bottom
         this.fill(context.getMatrices(), x1 - borderWidth, y2, x2 + borderWidth, y2 + borderWidth, blue);
 
-        // Left
+        //Left
         this.fill(context.getMatrices(), x1 - borderWidth, y1, x1, y2, blue);
 
-        // Right
+        //Right
         this.fill(context.getMatrices(), x2, y1, x2 + borderWidth, y2, blue);
     }
-
 
 
     public void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, int outlineColor, boolean markCenter) {

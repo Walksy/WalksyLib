@@ -5,11 +5,11 @@ import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.ArrayList;
 
-public class EntryPointList {
+public class ModEntryPointList {
 
     private final ArrayList<Mod> entries;
 
-    public EntryPointList()
+    public ModEntryPointList()
     {
         this.entries = new ArrayList<>();
     }

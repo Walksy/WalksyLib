@@ -4,7 +4,6 @@ import com.google.gson.*;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 
-import java.awt.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +21,11 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
 
         obj.add("frames", frames);
         obj.addProperty("animationSpeed", src.getAnimationSpeed());
+        obj.addProperty("size", src.getSize());
 
         JsonObject pos = new JsonObject();
-        pos.addProperty("x", src.getRelativeX());
-        pos.addProperty("y", src.getRelativeY());
+        pos.addProperty("x", src.getOffsetX());
+        pos.addProperty("y", src.getOffsetY());
         obj.add("position", pos);
 
         return obj;
@@ -44,14 +44,17 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
         PixelGridAnimation animation = new PixelGridAnimation(frames);
 
         if (obj.has("animationSpeed")) {
-            int speed = obj.get("animationSpeed").getAsInt();
-            animation.setAnimationSpeed(speed);
+            animation.setAnimationSpeed(obj.get("animationSpeed").getAsInt());
         }
 
-        JsonObject posObj = obj.getAsJsonObject("position");
-        float x = posObj.get("x").getAsFloat();
-        float y = posObj.get("y").getAsFloat();
-        animation.setRelativePosition(x, y);
+        if (obj.has("size")) {
+            animation.setSize(obj.get("size").getAsFloat());
+        }
+
+        if (obj.has("position")) {
+            JsonObject posObj = obj.getAsJsonObject("position");
+            animation.setOffset(posObj.get("x").getAsInt(), posObj.get("y").getAsInt());
+        }
 
         return animation;
     }

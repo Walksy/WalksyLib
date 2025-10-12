@@ -30,12 +30,12 @@ public class PixelGrid {
         {
             return;
         }
-        WalksyLib.get2DRenderer().renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, 1);
+        WalksyLib.get2DRenderer().renderGridTexture(context, this, position.get().x, position.get().y, 1, 0);
     }
 
     public void render(DrawContext context, int x, int y)
     {
-        WalksyLib.get2DRenderer().renderGridTexture(context, this, x, y, 1, 0, 1);
+        WalksyLib.get2DRenderer().renderGridTexture(context, this, x, y, 1, 0);
     }
 
     public boolean getPixel(int x, int y) {
