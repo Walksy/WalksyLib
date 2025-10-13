@@ -2,31 +2,30 @@ package main.walksy.lib.core.gui.impl;
 
 import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.impl.LocalConfig;
+import main.walksy.lib.core.config.local.Category;
+import main.walksy.lib.core.config.local.Option;
+import main.walksy.lib.core.config.local.OptionDescription;
+import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.popup.impl.WarningPopUp;
+import main.walksy.lib.core.gui.utils.CategoryTab;
+import main.walksy.lib.core.gui.utils.TabLocation;
 import main.walksy.lib.core.gui.widgets.*;
+import main.walksy.lib.core.manager.WalksyLibScreenManager;
+import main.walksy.lib.core.mixin.ScreenAccessor;
 import main.walksy.lib.core.utils.Animation;
+import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tab.TabManager;
 import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
-import main.walksy.lib.core.config.local.Category;
-import main.walksy.lib.core.config.local.Option;
-import main.walksy.lib.core.config.local.OptionDescription;
-import main.walksy.lib.core.config.local.options.groups.OptionGroup;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
-import main.walksy.lib.core.gui.utils.CategoryTab;
-import main.walksy.lib.core.gui.utils.TabLocation;
-import main.walksy.lib.core.mixin.ScreenAccessor;
-import main.walksy.lib.core.utils.MainColors;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WalksyLibConfigScreen extends BaseScreen {
@@ -35,14 +34,14 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private final List<OptionGroupWidget> allGroupWidgets = new ArrayList<>();
     private final List<OptionWidget> allOptionWidgets = new ArrayList<>();
     private ScrollableTabWidget tabWidget;
-    private List<CategoryTab> allTabs = new ArrayList<>();
+    private final List<CategoryTab> allTabs = new ArrayList<>();
     private ButtonWidget backButton, allModsButton, saveButton, resetButton, undoButton;
     private SearchBarWidget searchBar;
     private Option<?> focusedOption;
     private int maxScroll = 0;
     public boolean scroll = true;
     public PopUp popUp = null;
-    private final Animation scrollAnim = new Animation(0, 0.5F);
+    public final Animation scrollAnim = new Animation(0, 0.5F);
 
     public WalksyLibConfigScreen(Screen parent) {
         super(parent.getTitle().getString(), parent);
@@ -409,7 +408,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         if (popUp != null)
         {
             popUp.onClick(mouseX, mouseY, button);
-        } else {
+        } else if (!tabWidget.isHoveringOverAnyTab(mouseX, mouseY)) {
 
             if (!searchBar.isHovered())
             {
@@ -594,6 +593,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         CategoryTab selected = (CategoryTab) tabManager.getCurrentTab();
         if (selected == null || !selected.getCategory().name().equalsIgnoreCase(category.name())) return;
         tabWidget.updateVisibleWidgetsForTab(selected);
+        this.scrollAnim.setTargetValue(0);
     }
 
 

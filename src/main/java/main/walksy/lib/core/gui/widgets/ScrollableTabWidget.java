@@ -1,19 +1,18 @@
 package main.walksy.lib.core.gui.widgets;
 
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.gui.utils.CategoryTab;
+import main.walksy.lib.core.gui.utils.TabLocation;
+import main.walksy.lib.core.mixin.ScreenAccessor;
+import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.MarqueeUtil;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tab.TabManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
-import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.gui.utils.CategoryTab;
-import main.walksy.lib.core.gui.utils.TabLocation;
-import main.walksy.lib.core.mixin.ScreenAccessor;
-import main.walksy.lib.core.utils.MainColors;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -31,8 +30,6 @@ public class ScrollableTabWidget extends AbstractWidget {
 
     private float currentScrollOffset = 0;
     private float targetScrollOffset = 0;
-
-
 
     public ScrollableTabWidget(int x, int y, int width, int height, List<CategoryTab> tabs, TabManager tabManager, TabLocation location, WalksyLibConfigScreen parent) {
         super(x, y, width, height, null);
@@ -265,6 +262,24 @@ public class ScrollableTabWidget extends AbstractWidget {
             parent.setFocusedOption(null);
         }
     }
+
+    public boolean isHoveringOverAnyTab(double mouseX, double mouseY) {
+        if (location != TabLocation.TOP && location != TabLocation.BOTTOM || tabs.isEmpty()) return false;
+
+        int totalWidth = tabs.size() * (TAB_WIDTH + 4) - 4;
+        int baseX = totalWidth <= this.width
+                ? this.getX() + (this.width - totalWidth) / 2
+                : this.getX() - (int) currentScrollOffset;
+
+        for (int i = 0; i < tabs.size(); i++) {
+            int tabX = baseX + i * (TAB_WIDTH + 4);
+            if (mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public enum MaxOffset {
         LEFT,

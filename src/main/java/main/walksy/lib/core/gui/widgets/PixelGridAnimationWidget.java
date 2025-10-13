@@ -41,7 +41,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         this.editHudButton = new ButtonWidget(getWidth() - 82, getY() + 3, 50, 14, false, "Edit Hud", () -> this.handleEditHudButtonClick(screen));
         this.editFrameButton = new ButtonWidget(getWidth() - 142, getY() + 101, 60, 14, false, "Edit Frame", this::handleEditFrameButtonClick);
         this.viewFrames = new ButtonWidget(getX() + 70, getY() + 101, 77, 14, false, "View Frames", this::handleViewFramesButtonClick);
-        this.setupFrames(-1);
+        this.setupFrames(-1, true);
 
         List<PixelGrid> frames = option.getValue().getFrames();
         if (!frames.isEmpty()) {
@@ -228,7 +228,11 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     }
 
     private void handleViewFramesButtonClick() {
-        screen.popUp = new FrameManagerPopUp(screen, option, () -> this.setupFrames(this.frameToReplace), grid -> {
+        screen.popUp = new FrameManagerPopUp(screen, option, () ->
+        {
+            this.setupFrames(this.frameToReplace , false);
+            this.viewingGrid = this.option.getValue().getFrame(frameToReplace);
+        }, grid -> {
             this.option.getValue().setCurrentFrame(0);
         });
     }
@@ -277,9 +281,11 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         }
     }
 
-    public void setupFrames(int hoverFrame) {
+    public void setupFrames(int hoverFrame, boolean reset) {
         buttonFrames.clear();
-        this.resetViewingGrid();
+        if (reset) {
+            this.resetViewingGrid();
+        }
         List<PixelGrid> frames = option.getValue().getFrames();
 
         for (int i = 0; i < frames.size(); i++) {
@@ -325,11 +331,12 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     public <V> void onThirdPartyChange(V value) {
         super.onThirdPartyChange(value);
         this.animationSpeedSlider.setValue(this.option.getValue().getAnimationSpeed());
+        this.frameSize.setValue(this.option.getValue().getSize());
     }
 
     public void reset() {
         this.resetViewingGrid();
-        this.setupFrames(-1);
+        this.setupFrames(-1, true);
     }
 
     private void resetViewingGrid()
