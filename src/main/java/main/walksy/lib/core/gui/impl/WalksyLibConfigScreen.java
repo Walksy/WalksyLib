@@ -272,6 +272,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
         super.render(context, popUp == null ? mouseX : 0, popUp == null ? mouseY : 0, delta);
         this.render(context);
         this.scrollAnim.update(delta, this::layoutGroupWidgets); //this could cause some performance issues
+        if (this.isConfigEmpty()) {
+            context.drawCenteredTextWithShadow(this.getTextRenderer(), "No Available Options...", this.width / 2, this.height / 2, -1);
+        }
         if (popUp != null)
         {
             WalksyLib.get2DRenderer().startPopUpRender(context, 1, width, height);
@@ -297,7 +300,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
         this.saveButton.setTooltip(!this.saveButton.active ? Tooltip.of(Text.of("No changes have occurred")) : null);
         this.resetButton.setEnabled(this.shouldResetOptions());
         this.undoButton.setEnabled(this.shouldUndoOptions());
-        this.renderOptionPanel(context, this.focusedOption);
+        if (!this.isConfigEmpty()) {
+            this.renderOptionPanel(context, this.focusedOption);
+        }
     }
 
     private void renderOptionPanel(DrawContext context, Option<?> option)
@@ -596,6 +601,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
         this.scrollAnim.setTargetValue(0);
     }
 
+    private boolean isConfigEmpty() {
+        return (config.categories().isEmpty());
+    }
 
     public void setFocusedOption(Option<?> option)
     {

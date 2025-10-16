@@ -103,4 +103,10 @@ public class BooleanWidget extends OptionWidget {
         super.onChange();
         toggleAnim.setTargetValue(option.getValue() ? onX : offX);
     }
+
+    @Override
+    public <V> void onThirdPartyChange(V value) {
+        super.onThirdPartyChange(value);
+        toggleAnim.setTargetValue(option.getValue() ? onX : offX);
+    }
 }

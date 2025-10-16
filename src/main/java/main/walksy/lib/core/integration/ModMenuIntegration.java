@@ -2,26 +2,31 @@ package main.walksy.lib.core.integration;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import main.walksy.lib.api.WalksyLibApi;
+import main.walksy.lib.core.gui.impl.APIScreen;
+import net.fabricmc.loader.api.FabricLoader;
 
-import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ModMenuIntegration implements ModMenuApi {
 
-    //TODO Redo
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        Optional<WalksyLibApi> api = FabricLoader.getInstance()
-            .getEntrypointContainers("walksylib", WalksyLibApi.class).stream()
-            .map(EntrypointContainer::getEntrypoint)
-            .filter(e -> e.getConfigScreen() != null)
-            .findFirst();
+        return APIScreen::new;
+    }
 
-
-        return api.<ConfigScreenFactory<?>>map(walksyLibApi -> parent -> walksyLibApi.getConfigScreen().apply(parent))
-            .orElse(null);
+    /**
+     * Provides config screens for mods that use WalksyLib as a dependency
+     */
+    @Override
+    public Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
+        return FabricLoader.getInstance().getEntrypointContainers("walksylib", WalksyLibApi.class).stream()
+                .filter(c -> c.getEntrypoint().getConfigScreen() != null)
+                .collect(Collectors.toMap(
+                        c -> c.getProvider().getMetadata().getId(),
+                        c -> parent -> c.getEntrypoint().getConfigScreen().apply(parent)
+                ));
     }
 }

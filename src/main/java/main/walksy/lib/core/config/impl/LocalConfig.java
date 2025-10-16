@@ -8,8 +8,6 @@ import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.builders.LocalConfigBuilder;
 import main.walksy.lib.core.config.serialization.SerializableCategory;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
-import main.walksy.lib.core.utils.IdentifierWrapper;
-import net.minecraft.util.Identifier;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -64,7 +62,7 @@ public record LocalConfig(String name, Path path, List<Category> categories, Run
             String json = WalksyLibConfigManager.GSON.toJson(serializedCategories);
             Files.writeString(path, json);
         } catch (IOException e) {
-            System.err.println("Failed to save config to " + path + ": " + e.getMessage());
+            WalksyLib.getLogger().err("Failed to save config to " + path + ": " + e.getMessage());
         }
     }
 

@@ -1,7 +1,7 @@
 package main.walksy.lib.core;
 
 import main.walksy.lib.core.callback.DropCallback;
-import main.walksy.lib.core.config.WalksyLibConfig;
+import main.walksy.lib.api.WalksyLibConfig;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
 import main.walksy.lib.core.mods.ModEntryPointList;
@@ -41,7 +41,6 @@ public final class WalksyLib {
         this.configManager.getLocal().load();
         this.configManager.getAPI().load();
         this.configManager.cleanCache();
-        entryPointList.retrieve();
     }
 
     public WalksyLibScreenManager getScreenManager() {
@@ -59,6 +58,10 @@ public final class WalksyLib {
 
     public static ArrayList<Mod> getEntryPointModList() {
         return entryPointList.get();
+    }
+
+    public static void retrieveEntryPointList() {
+        entryPointList.retrieve();
     }
 
     public static WalksyLib getInstance() {

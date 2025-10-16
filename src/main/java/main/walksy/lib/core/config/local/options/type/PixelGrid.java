@@ -65,6 +65,10 @@ public class PixelGrid {
         return new Builder(width, height);
     }
 
+    public static Builder create() {
+        return create(15, 15);
+    }
+
     public static class Builder {
         private final int width;
         private final int height;

@@ -34,6 +34,17 @@ public class LocalConfigBuilder {
     }
 
     public LocalConfig build() {
+        if (path == null) {
+            throw new IllegalStateException("""
+                [WalksyLib] LocalConfigBuilder error: Missing required .path()!
+                You must call .path(Path) before build().
+                Example:
+                    new LocalConfigBuilder("example")
+                        .path(FabricLoader.getInstance().getConfigDir().resolve("example.json"))
+                        .build();
+                """);
+        }
+
         return new LocalConfig(configName, path, categories, onSave);
     }
 }

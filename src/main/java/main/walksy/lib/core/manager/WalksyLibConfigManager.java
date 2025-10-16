@@ -1,11 +1,8 @@
 package main.walksy.lib.core.manager;
 
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
 import main.walksy.lib.core.WalksyLib;
-import main.walksy.lib.core.config.Config;
 import main.walksy.lib.core.config.impl.APIConfig;
 import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
@@ -14,13 +11,15 @@ import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
-import main.walksy.lib.core.config.serialization.*;
+import main.walksy.lib.core.config.serialization.OptionConverter;
+import main.walksy.lib.core.config.serialization.SerializableCategory;
+import main.walksy.lib.core.config.serialization.SerializableGroup;
+import main.walksy.lib.core.config.serialization.SerializableOption;
 import main.walksy.lib.core.config.serialization.adapters.ColorTypeAdapter;
 import main.walksy.lib.core.config.serialization.adapters.IdentifierWrapperAdapter;
 import main.walksy.lib.core.config.serialization.adapters.PixelGridAdapter;
 import main.walksy.lib.core.config.serialization.adapters.PixelGridAnimationAdapter;
 import main.walksy.lib.core.utils.IdentifierWrapper;
-import main.walksy.lib.core.utils.PathUtils;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -29,7 +28,6 @@ import net.minecraft.util.Identifier;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -42,6 +40,7 @@ public class WalksyLibConfigManager {
             .registerTypeAdapter(PixelGrid.class, new PixelGridAdapter())
             .registerTypeAdapter(PixelGridAnimation.class, new PixelGridAnimationAdapter())
             .registerTypeAdapter(IdentifierWrapper.class, new IdentifierWrapperAdapter())
+            .serializeNulls()
             .setPrettyPrinting()
             .create();
 

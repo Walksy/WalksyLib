@@ -1,4 +1,4 @@
-package main.walksy.lib.core.config;
+package main.walksy.lib.api;
 
 import main.walksy.lib.core.config.impl.LocalConfig;
 

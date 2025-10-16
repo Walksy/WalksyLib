@@ -16,6 +16,7 @@ public class ModEntryPointList {
 
     public void retrieve()
     {
+        this.entries.clear();
         FabricLoader.getInstance().getEntrypointContainers("walksylib", WalksyLibApi.class)
                 .forEach(entry -> {
                     if (entry.getEntrypoint().getConfigScreen() != null) {

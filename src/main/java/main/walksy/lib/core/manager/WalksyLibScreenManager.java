@@ -5,26 +5,30 @@ import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
-import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.gui.impl.APIScreen;
 import main.walksy.lib.core.gui.impl.HudEditorScreen;
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-
-import java.awt.*;
 
 public class WalksyLibScreenManager {
 
     public PixelGrid gridClipboard = null;
 
     public Screen create(Screen parent) {
+        WalksyLib.retrieveEntryPointList();
         return new WalksyLibConfigScreen(parent);
     }
 
     public void openAPIScreen(Screen parent)
     {
         MinecraftClient.getInstance().setScreen(new APIScreen(parent));
+    }
+
+    public Screen getAndOpenAPIScreen(Screen parent) {
+        APIScreen screen = new APIScreen(parent);
+        MinecraftClient.getInstance().setScreen(screen);
+        return screen;
     }
 
     public void openHudEditorScreen(WalksyLibConfigScreen screen, Option<?> option)

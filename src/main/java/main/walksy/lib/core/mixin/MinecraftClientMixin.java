@@ -19,14 +19,15 @@ public class MinecraftClientMixin {
     @Shadow @Nullable public Screen currentScreen;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    public void onInit(RunArgs args, CallbackInfo ci)
-    {
+    public void onInit(RunArgs args, CallbackInfo ci) {
+        if (WalksyLib.getInstance() == null) return;
         WalksyLib.getInstance().onInitFinished();
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
     public void onTick(CallbackInfo ci)
     {
+        if (WalksyLib.getInstance() == null) return;
         if (this.currentScreen instanceof BaseScreen) {
             MarqueeUtil.tickCount++;
         }
@@ -36,6 +37,7 @@ public class MinecraftClientMixin {
     @Inject(method = "setScreen", at = @At("HEAD"))
     public void setScreen(Screen screen, CallbackInfo ci)
     {
+        if (WalksyLib.getInstance() == null) return;
         if (screen instanceof BaseScreen)
         {
             MarqueeUtil.tickCount = 0;

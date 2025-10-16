@@ -91,6 +91,9 @@ public class APIScreen extends BaseScreen {
         if (!viewingMods()) {
             logWidget.render(context, mouseX, mouseY, delta);
         } else {
+            if (this.modWidgets.isEmpty()) {
+                context.drawCenteredTextWithShadow(textRenderer, "No Mods", width / 2, height / 2, 0xFFFFFF);
+            }
             for (ModWidget widget : this.modWidgets) {
                 widget.render(context, mouseX, mouseY, delta);
             }

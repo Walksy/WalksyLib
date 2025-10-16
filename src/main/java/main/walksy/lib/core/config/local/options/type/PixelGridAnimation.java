@@ -50,13 +50,7 @@ public class PixelGridAnimation {
 
     public void render(DrawContext context) {
         Point pos = getAbsolutePosition();
-        PixelGrid frame = this.getCurrentFrame();
-        if (frame != null) {
-            context.getMatrices().push();
-            context.getMatrices().scale(size, size, 1.0f);
-            frame.render(context, (int) (pos.x / size), (int) (pos.y / size));
-            context.getMatrices().pop();
-        }
+        this.render(context, pos.x, pos.y);
     }
 
     public void render(DrawContext context, int x, int y) {
@@ -169,7 +163,7 @@ public class PixelGridAnimation {
         if (this.frames.size() != other.frames.size()) return false;
 
         for (int i = 0; i < frames.size(); i++) {
-            if (!this.frames.get(i).equals(other.frames.get(i))) return false;
+            if (!this.frames.get(i).equals(other.frames.get(i))) return false; //deepcopy?
         }
 
         return true;
