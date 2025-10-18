@@ -48,6 +48,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     public WalksyLibConfigScreen(Screen parent, WalksyLibConfig config) {
         super(parent.getTitle().getString(), parent);
         LocalConfig defConfig = config.define();
+        defConfig.load();
         this.configManager = new WalksyLibConfigManager(defConfig);
         this.focusedOption = null;
     }
@@ -200,8 +201,8 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
                     int childHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
 
-                    if (child instanceof OpenableWidget oW && oW.open) {
-                        childHeight = oW.OPEN_HEIGHT;
+                    if (child instanceof OpenableWidget oW) {
+                        childHeight = (int) oW.getCurrentHeight();
                     } else if (child instanceof StringListOptionWidget slw) {
                         childHeight += slw.ADDITIONAL_HEIGHT;
                     }
