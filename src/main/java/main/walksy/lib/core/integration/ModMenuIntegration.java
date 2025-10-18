@@ -4,6 +4,7 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import main.walksy.lib.api.WalksyLibApi;
 import main.walksy.lib.core.gui.impl.APIScreen;
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.Map;
@@ -22,10 +23,10 @@ public class ModMenuIntegration implements ModMenuApi {
     @Override
     public Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
         return FabricLoader.getInstance().getEntrypointContainers("walksylib", WalksyLibApi.class).stream()
-                .filter(c -> c.getEntrypoint().getConfigScreen() != null)
+                .filter(c -> c.getEntrypoint().getConfig() != null)
                 .collect(Collectors.toMap(
                         c -> c.getProvider().getMetadata().getId(),
-                        c -> parent -> c.getEntrypoint().getConfigScreen().apply(parent)
+                        c -> parent -> new WalksyLibConfigScreen(parent, c.getEntrypoint().getConfig())
                 ));
     }
 }

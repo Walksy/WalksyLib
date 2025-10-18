@@ -1,6 +1,7 @@
 package main.walksy.lib.core.gui.widgets;
 
 import main.walksy.lib.core.gui.impl.APIScreen;
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
@@ -49,7 +50,7 @@ public class ModWidget extends AbstractWidget {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isHovered())
         {
-            MinecraftClient.getInstance().setScreen(this.mod.getConfigScreen(this.parent));
+            MinecraftClient.getInstance().setScreen(new WalksyLibConfigScreen(parent, this.mod.getConfig()));
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }

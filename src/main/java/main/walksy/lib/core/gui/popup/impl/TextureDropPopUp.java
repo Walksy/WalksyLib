@@ -66,7 +66,6 @@ public class TextureDropPopUp extends PopUp {
                     int imgW = image.getWidth();
                     int imgH = image.getHeight();
 
-                    // Define max drawing area inside popup (with padding)
                     int maxWidth = width - 40;
                     int maxHeight = height - 100;
 
@@ -107,7 +106,7 @@ public class TextureDropPopUp extends PopUp {
     }
 
 
-    private void onFileDropped(String filePath) {
+    private void onFileDropped(String filePath) { //TODO TEST
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) return;
 

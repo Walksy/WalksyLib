@@ -1,10 +1,10 @@
 package main.walksy.lib.core.mods;
 
 import com.terraformersmc.modmenu.gui.widget.entries.ModListEntry;
+import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
@@ -14,18 +14,16 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.UnaryOperator;
 
 public class Mod {
     private final ModContainer container;
-    private final UnaryOperator<Screen> configScreen;
     private final Identifier modIcon;
+    private final LocalConfig config;
 
-    public Mod(ModContainer container, UnaryOperator<Screen> configScreen)
+    public Mod(ModContainer container, LocalConfig config)
     {
         this.container = container;
-        this.configScreen = configScreen;
-
+        this.config = config;
         /**
          * Credit to uku for this code:
          * https://github.com/uku3lig/ukulib/blob/de3c36f921f3dba6401601eb05912337d2c602ee/src/main/java/net/uku3lig/ukulib/config/impl/EntrypointList.java#L67
@@ -56,9 +54,8 @@ public class Mod {
         return this.container;
     }
 
-    public Screen getConfigScreen(Screen parent)
-    {
-        return this.configScreen.apply(parent);
+    public LocalConfig getConfig() {
+        return this.config;
     }
 
     public Identifier getModIcon()

@@ -71,7 +71,7 @@ public class Option<T> {
         } else {
             this.defaultValue = defaultValue;
         }
-
+        System.out.println(name + " " + defaultValue);
         this.prevValue = null;
         this.onChange = onChange;
         this.warning = warning;
@@ -117,6 +117,8 @@ public class Option<T> {
         }
     }
 
+    //Reset is also completely broken
+
     public boolean has2DPosition() {
         if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
             return pixelGridAnimation.getOffsetX() != -1 && pixelGridAnimation.getOffsetY() != -1;
@@ -140,19 +142,17 @@ public class Option<T> {
     public void setValue(Object value) {
         if (type.isInstance(value)) {
             if (setter != null) {
-                setter.accept((T) value);
-                if (this.onChange != null)
-                {
-                    this.onChange.run();
+                if (!this.getter.get().equals(value)) {
+                    this.runChange();
                 }
+                setter.accept((T) value);
             }
         } else {
             throw new IllegalArgumentException("Invalid value type: " + value.getClass().getName());
         }
     }
 
-    public boolean canReset()
-    {
+    public boolean canReset() {
         return this.getValue() != this.defaultValue;
     }
 
@@ -290,7 +290,9 @@ public class Option<T> {
     }
 
     public void runChange() {
-        this.onChange.run();
+        if (this.onChange != null) {
+            this.onChange.run();
+        }
     }
 
     @SuppressWarnings("unchecked")

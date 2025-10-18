@@ -1,6 +1,5 @@
 package main.walksy.lib.core.gui.impl;
 
-import main.walksy.lib.api.WalksyLibConfig;
 import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
@@ -45,11 +44,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private int maxScroll = 0;
     public boolean scroll = true;
 
-    public WalksyLibConfigScreen(Screen parent, WalksyLibConfig config) {
+    public WalksyLibConfigScreen(Screen parent, LocalConfig config) {
         super(parent.getTitle().getString(), parent);
-        LocalConfig defConfig = config.define();
-        defConfig.load();
-        this.configManager = new WalksyLibConfigManager(defConfig);
+        this.configManager = new WalksyLibConfigManager(config);
         this.focusedOption = null;
     }
 
@@ -310,6 +307,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         }
     }
 
+    //TODO fix the option names not being formatted properly
     private void renderOptionPanel(DrawContext context, Option<?> option)
     {
         Renderer2D.fillRoundedRect(
@@ -603,7 +601,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         CategoryTab selected = (CategoryTab) tabManager.getCurrentTab();
         if (selected == null || !selected.getCategory().name().equalsIgnoreCase(category.name())) return;
         tabWidget.updateVisibleWidgetsForTab(selected);
-        this.scrollAnim.jumpTo(0);
+        this.scrollAnim.setTargetValue(0);
     }
 
     private boolean isConfigEmpty() {
@@ -744,5 +742,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
                 }
             }
         }
+    }
+
+    public WalksyLibConfigManager getConfigManager () {
+        return this.configManager;
     }
 }

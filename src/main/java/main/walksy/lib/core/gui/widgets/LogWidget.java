@@ -62,7 +62,7 @@ public class LogWidget extends AbstractWidget {
                 mouseY >= getY() + offset &&
                 mouseY <= getY() + height;
 
-        context.enableScissor(getX(), getY() + offset, getX() + width, getY() + height);
+        context.enableScissor(getX(), getY() + offset + 2, getX() + width, getY() + height + 5);
 
         if (!logLines.isEmpty()) {
             TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
