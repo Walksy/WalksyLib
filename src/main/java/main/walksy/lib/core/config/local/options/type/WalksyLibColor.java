@@ -134,7 +134,7 @@ public class WalksyLibColor {
         setPulseSpeed(additions.pulseSpeed);
     }
 
-    public void handleRainbow()
+    public void tick()
     {
         if (!rainbow) return;
 
@@ -145,9 +145,10 @@ public class WalksyLibColor {
         WalksyLibColor newColor = getHSBColor(hue, saturation, brightness);
         WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), getAlpha());
         this.value = newColorAlpha.getRGB();
+        this.handlePulse();
     }
 
-    public void handlePulse() {
+    private void handlePulse() {
         if (!this.pulse) return;
 
         pulseTime += (float) this.pulseSpeed / 1000f;

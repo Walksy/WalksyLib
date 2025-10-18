@@ -13,12 +13,13 @@ import net.minecraft.util.Identifier;
 public class BaseScreen extends Screen {
 
     private final Screen parent;
-    private final Pool shaderPool = new Pool(3);
+    private final Pool shaderPool;
     public int tickCount = 0;
 
     protected BaseScreen(String title, Screen parent) {
         super(Text.of(title));
         this.parent = parent;
+        this.shaderPool = new Pool(3);
     }
 
     @Override

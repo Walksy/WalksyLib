@@ -1,7 +1,6 @@
 package main.walksy.lib.core.config.serialization;
 
 import com.google.gson.JsonElement;
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
 

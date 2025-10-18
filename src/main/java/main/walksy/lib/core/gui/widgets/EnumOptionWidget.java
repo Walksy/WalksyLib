@@ -1,9 +1,9 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
@@ -39,9 +39,9 @@ public class EnumOptionWidget<E extends Enum<E>> extends OptionWidget {
         int rectWidth = maxWidth + 38;
         int rectHeight = (int) (getHeight() - 6 + this.animation.getCurrentValue());
 
-        WalksyLib.get2DRenderer().fillRoundedRect(context, rectX, rectY, rectWidth, rectHeight, 2, new Color(0, 0, 0, 220).getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, rectX - 1, rectY - 1, rectWidth + 2, rectHeight + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, rectX, rectY, rectWidth, rectHeight, 2, 1,
+        Renderer2D.fillRoundedRect(context, rectX, rectY, rectWidth, rectHeight, 2, new Color(0, 0, 0, 220).getRGB());
+        Renderer2D.fillRoundedRectOutline(context, rectX - 1, rectY - 1, rectWidth + 2, rectHeight + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, rectX, rectY, rectWidth, rectHeight, 2, 1,
                 isHoveringEnum(mouseX, mouseY)
                         ? MainColors.OUTLINE_WHITE_HOVERED.getRGB()
                         : MainColors.OUTLINE_WHITE.getRGB());

@@ -1,19 +1,21 @@
 package main.walksy.lib.core.gui.popup.impl;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Scroller;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -155,7 +157,7 @@ public class FrameManagerPopUp extends PopUp {
             if (index >= 0 && index < frames.size()) {
                 PixelGrid grid = frames.get(index);
                 Point pos = entry.getValue();
-                WalksyLib.get2DRenderer().renderGridTexture(
+                Renderer2D.renderGridTexture(
                         context, grid,
                         pos.x - 1,
                         (int) (pos.y - 6 - scroller.getValue()),

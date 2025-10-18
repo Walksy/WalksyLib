@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 public class ModMenuIntegration implements ModMenuApi {
 
-
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return APIScreen::new;

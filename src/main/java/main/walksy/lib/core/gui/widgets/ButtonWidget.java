@@ -1,7 +1,8 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
+import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
@@ -10,7 +11,6 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import main.walksy.lib.core.utils.MainColors;
 
 import java.awt.*;
 
@@ -71,20 +71,20 @@ public class ButtonWidget extends AbstractWidget {
         }
 
         if (this.outlineColor == -1) {
-            WalksyLib.get2DRenderer().fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
+            Renderer2D.fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
                     this.active
                             ? new Color(255, 255, 255, (isHovered() || overrideHover)
                             ? MainColors.OUTLINE_WHITE_HOVERED.getAlpha()
                             : MainColors.OUTLINE_WHITE.getAlpha()).getRGB()
                             : new Color(180, 180, 180, 50).getRGB());
         } else {
-            WalksyLib.get2DRenderer().fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
+            Renderer2D.fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
                     this.active
                             ? (isHovered() || overrideHover ? hoveredColor : outlineColor)
                             : new Color(180, 180, 180, 50).getRGB());
         }
 
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(ctx, drawX - 1, drawY - 1, width + 2, height + 2, 2, 1,
+        Renderer2D.fillRoundedRectOutline(ctx, drawX - 1, drawY - 1, width + 2, height + 2, 2, 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
 
         if (texture == null && grid == null) {
@@ -99,7 +99,7 @@ public class ButtonWidget extends AbstractWidget {
         }
 
         if (grid != null) {
-            WalksyLib.get2DRenderer().renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1);
+            Renderer2D.renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1);
         }
     }
 

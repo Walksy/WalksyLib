@@ -1,12 +1,12 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.BooleanOption;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.impl.WarningPopUp;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
@@ -56,14 +56,14 @@ public class BooleanWidget extends OptionWidget {
     public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
         if (WalksyLibScreenManager.Globals.DEBUG) renderDebug(context);
 
-        WalksyLib.get2DRenderer().fillRoundedRect(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, new Color(255, 255, 255, 20).getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRect(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, new Color(255, 255, 255, 20).getRGB());
+        Renderer2D.fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
 
         toggleAnim.update(delta);
         int color = option.getValue() ? Color.WHITE.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
         float animX = toggleAnim.getCurrentValue();
 
-        WalksyLib.get2DRenderer().fillRoundedRect(context, animX, getY() + 4, 14, getHeight() - 8, 2, color);
+        Renderer2D.fillRoundedRect(context, animX, getY() + 4, 14, getHeight() - 8, 2, color);
     }
 
     @Override

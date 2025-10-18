@@ -1,10 +1,10 @@
 package main.walksy.lib.core.gui.popup.impl;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
+import main.walksy.lib.core.utils.Clipboard;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Scroller;
 import net.minecraft.client.MinecraftClient;
@@ -61,11 +61,11 @@ public class GridEditorPopUp extends PopUp {
         });
 
         this.copyButton = new ButtonWidget(x + width - 44, y + 5, 18, 12, false, "C", () -> {
-            WalksyLib.getInstance().getScreenManager().gridClipboard = currentGrid.copy();
+            Clipboard.grid = currentGrid.copy();
         });
 
         this.pasteButton = new ButtonWidget(x + width - 22, y + 5, 18, 12, false, "P", () -> {
-            PixelGrid clipboard = WalksyLib.getInstance().getScreenManager().gridClipboard;
+            PixelGrid clipboard = Clipboard.grid;
             if (clipboard != null && clipboard.getWidth() == currentGrid.getWidth() && clipboard.getHeight() == currentGrid.getHeight()) {
                 for (int py = 0; py < clipboard.getHeight(); py++) {
                     for (int px = 0; px < clipboard.getWidth(); px++) {
@@ -105,7 +105,7 @@ public class GridEditorPopUp extends PopUp {
         clearButton.render(context, (int) mouseX, (int) mouseY, delta);
         copyButton.render(context, (int) mouseX, (int) mouseY, delta);
         pasteButton.render(context, (int) mouseX, (int) mouseY, delta);
-        pasteButton.setEnabled(WalksyLib.getInstance().getScreenManager().gridClipboard != null);
+        pasteButton.setEnabled(Clipboard.grid != null);
     }
 
     @Override

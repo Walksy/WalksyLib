@@ -1,13 +1,14 @@
 package main.walksy.lib.core.gui.impl;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.gui.utils.CategoryTab;
 import main.walksy.lib.core.gui.utils.TabLocation;
 import main.walksy.lib.core.gui.widgets.*;
 import main.walksy.lib.core.mods.Mod;
+import main.walksy.lib.core.mods.ModEntryPointList;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.log.InternalLog;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
@@ -29,11 +30,13 @@ public class APIScreen extends BaseScreen {
     public APIScreen(Screen parent) {
         super("APIScreen", parent);
         this.modWidgets = new ArrayList<>();
+        ModEntryPointList modEntryPointList = new ModEntryPointList();
+        modEntryPointList.retrieve();
         int yOffset = 60;
         int xOffset = 13;
 
         int count = 0;
-        for (Mod mod : WalksyLib.getEntryPointModList()) {
+        for (Mod mod : modEntryPointList.get()) {
             modWidgets.add(new ModWidget(mod, this, xOffset, yOffset));
             count++;
             if (count % 4 == 0) {
@@ -69,7 +72,7 @@ public class APIScreen extends BaseScreen {
     public void refreshLogs(LogWidget widget)
     {
         widget.clearLogs();
-        for (InternalLog log : WalksyLib.getLogger().getLogs()) {
+        for (InternalLog log : WalksyLibLogger.getLogs()) {
             widget.addLog(log);
         }
     }

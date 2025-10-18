@@ -1,6 +1,6 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.MarqueeUtil;
 import main.walksy.lib.core.utils.Scroller;
@@ -44,15 +44,15 @@ public class LogWidget extends AbstractWidget {
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         int offset = 10;
 
-        WalksyLib.get2DRenderer().fillRoundedRect(
+        Renderer2D.fillRoundedRect(
                 context, getX(), getY() + offset, width, height, 2,
                 new Color(0, 0, 0, 100).getRGB()
         );
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(
+        Renderer2D.fillRoundedRectOutline(
                 context, getX(), getY() + offset, width, height, 2, 1,
                 MainColors.OUTLINE_BLACK.getRGB()
         );
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(
+        Renderer2D.fillRoundedRectOutline(
                 context, getX() + 1, getY() + 1 + offset, width - 2, height - 2, 2, 1,
                 MainColors.OUTLINE_WHITE.getRGB()
         );

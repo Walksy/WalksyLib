@@ -1,6 +1,6 @@
 package main.walksy.lib.core.gui.popup.impl;
 
-import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.callback.WindowDropCallback;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
@@ -46,7 +46,7 @@ public class TextureDropPopUp extends PopUp {
                     parent.popUp.close();
                 });
 
-        WalksyLib.getInstance().getWindowDropCallback().register(MinecraftClient.getInstance().getWindow().getHandle(), this::onFileDropped);
+        WindowDropCallback.register(MinecraftClient.getInstance().getWindow().getHandle(), this::onFileDropped);
     }
 
     @Override
@@ -153,6 +153,6 @@ public class TextureDropPopUp extends PopUp {
 
     @Override
     protected void onClose() {
-        WalksyLib.getInstance().getWindowDropCallback().unregister(MinecraftClient.getInstance().getWindow().getHandle());
+        WindowDropCallback.unregister();
     }
 }

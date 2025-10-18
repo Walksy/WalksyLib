@@ -1,6 +1,6 @@
 package main.walksy.lib.core.config.local.options.type;
 
-import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.renderer.Renderer2D;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -30,12 +30,12 @@ public class PixelGrid {
         {
             return;
         }
-        WalksyLib.get2DRenderer().renderGridTexture(context, this, position.get().x, position.get().y, 1, 0);
+        Renderer2D.renderGridTexture(context, this, position.get().x, position.get().y, 1, 0);
     }
 
     public void render(DrawContext context, int x, int y)
     {
-        WalksyLib.get2DRenderer().renderGridTexture(context, this, x, y, 1, 0);
+        Renderer2D.renderGridTexture(context, this, x, y, 1, 0);
     }
 
     public boolean getPixel(int x, int y) {

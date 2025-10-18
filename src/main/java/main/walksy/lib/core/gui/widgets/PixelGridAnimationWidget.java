@@ -1,10 +1,10 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
+import main.walksy.lib.core.gui.impl.HudEditorScreen;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.impl.FrameManagerPopUp;
 import main.walksy.lib.core.gui.popup.impl.GridEditorPopUp;
@@ -12,8 +12,10 @@ import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.FloatSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Scroller;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 
@@ -95,7 +97,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
             context.getMatrices().scale(scale, scale, 1F);
 
             if (viewingGrid != null) {
-                WalksyLib.get2DRenderer().renderGridOutline(
+                Renderer2D.renderGridOutline(
                         context,
                         viewingGrid,
                         (int) ((getWidth() - 78) / scale),
@@ -112,7 +114,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         }
 
         if (option.getValue().getCurrentFrame() != null) {
-            WalksyLib.get2DRenderer().renderGridTexture(
+            Renderer2D.renderGridTexture(
                     context,
                     option.getValue().getCurrentFrame(),
                     (getWidth() - 10),
@@ -216,7 +218,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     }
 
     private void handleEditHudButtonClick(WalksyLibConfigScreen parent) {
-        WalksyLib.getInstance().getScreenManager().openHudEditorScreen(parent, this.option);
+        MinecraftClient.getInstance().setScreen(new HudEditorScreen(parent, this.option));
     }
 
     private void handleEditFrameButtonClick() {

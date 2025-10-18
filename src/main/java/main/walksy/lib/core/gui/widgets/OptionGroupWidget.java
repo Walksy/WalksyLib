@@ -1,6 +1,5 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.renderer.Renderer2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -75,7 +74,7 @@ public class OptionGroupWidget extends AbstractWidget {
         //LEFT
         context.drawHorizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
         context.drawHorizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
-        WalksyLib.get2DRenderer().renderMiniArrow(
+        Renderer2D.renderMiniArrow(
                 context,
                 textStartX - 50 - 5,
                 midY - (group.isExpanded() ? 1 : 0),
@@ -87,7 +86,7 @@ public class OptionGroupWidget extends AbstractWidget {
         //RIGHT
         context.drawHorizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
         context.drawHorizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
-        WalksyLib.get2DRenderer().renderMiniArrow(
+        Renderer2D.renderMiniArrow(
                 context,
                 textEndX + 50 + 6,
                 midY - (group.isExpanded() ? 1 : 0),

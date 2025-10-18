@@ -2,8 +2,6 @@ package main.walksy.lib.core.manager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import main.walksy.lib.core.WalksyLib;
-import main.walksy.lib.core.config.impl.APIConfig;
 import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
@@ -20,6 +18,7 @@ import main.walksy.lib.core.config.serialization.adapters.IdentifierWrapperAdapt
 import main.walksy.lib.core.config.serialization.adapters.PixelGridAdapter;
 import main.walksy.lib.core.config.serialization.adapters.PixelGridAnimationAdapter;
 import main.walksy.lib.core.utils.IdentifierWrapper;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -45,21 +44,14 @@ public class WalksyLibConfigManager {
             .create();
 
     private final LocalConfig localConfig;
-    private final APIConfig apiConfig;
 
     public WalksyLibConfigManager(LocalConfig localConfig) {
         this.localConfig = localConfig;
-        this.apiConfig = new APIConfig();
     }
 
-    public LocalConfig getLocal()
+    public LocalConfig get()
     {
         return localConfig;
-    }
-
-    public APIConfig getAPI()
-    {
-        return apiConfig;
     }
 
     public void cleanCache() {
@@ -99,12 +91,12 @@ public class WalksyLibConfigManager {
                     try {
                         Files.delete(path);
                     } catch (IOException e) {
-                        WalksyLib.getLogger().err("Failed to delete unused cached image: " + fileName);
+                        WalksyLibLogger.err("Failed to delete unused cached image: " + fileName);
                     }
                 }
             });
         } catch (IOException e) {
-            WalksyLib.getLogger().err("Failed to list cache directory: " + e.getMessage());
+            WalksyLibLogger.err("Failed to list cache directory: " + e.getMessage());
         }
     }
 

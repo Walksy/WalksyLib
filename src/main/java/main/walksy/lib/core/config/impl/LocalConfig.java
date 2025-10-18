@@ -2,12 +2,12 @@ package main.walksy.lib.core.config.impl;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonParseException;
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.Config;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.builders.LocalConfigBuilder;
 import main.walksy.lib.core.config.serialization.SerializableCategory;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -32,7 +32,7 @@ public record LocalConfig(String name, Path path, List<Category> categories, Run
             Type type = new TypeToken<List<SerializableCategory>>() {}.getType();
             loadedCategories = WalksyLibConfigManager.GSON.fromJson(json, type);
         } catch (IOException | JsonParseException e) {
-            WalksyLib.getLogger().err("Failed to read or parse config from " + path + ": " + e.getMessage());
+            WalksyLibLogger.err("Failed to read or parse config from " + path + ": " + e.getMessage());
             return;
         }
 
@@ -62,7 +62,7 @@ public record LocalConfig(String name, Path path, List<Category> categories, Run
             String json = WalksyLibConfigManager.GSON.toJson(serializedCategories);
             Files.writeString(path, json);
         } catch (IOException e) {
-            WalksyLib.getLogger().err("Failed to save config to " + path + ": " + e.getMessage());
+            WalksyLibLogger.err("Failed to save config to " + path + ": " + e.getMessage());
         }
     }
 

@@ -1,8 +1,8 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.mixin.TextFieldWidgetAccessor;
+import main.walksy.lib.core.renderer.Renderer2D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -60,7 +60,7 @@ public class TextboxSubWidget extends SubWidget { //TODO Fix selection issue wit
             int cursor = MathHelper.clamp(field.getCursor() - accessor.getFirstCharacterIndex(), 0, text.length());
             String visible = MinecraftClient.getInstance().textRenderer.trimToWidth(text.substring(accessor.getFirstCharacterIndex()), field.getInnerWidth());
             int caretX = x + 4 + MinecraftClient.getInstance().textRenderer.getWidth(visible.substring(0, MathHelper.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
-            WalksyLib.get2DRenderer().drawVerticalLine(context, caretX, y + tr.fontHeight / 2 - 1, y + tr.fontHeight + 5, -1);
+            Renderer2D.drawVerticalLine(context, caretX, y + tr.fontHeight / 2 - 1, y + tr.fontHeight + 5, -1);
         }
 
 

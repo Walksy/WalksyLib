@@ -1,6 +1,9 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.mixin.TextFieldWidgetAccessor;
+import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -8,9 +11,6 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
-import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.mixin.TextFieldWidgetAccessor;
-import main.walksy.lib.core.utils.MainColors;
 
 import java.awt.*;
 import java.util.function.Consumer;
@@ -33,14 +33,14 @@ public class SearchBarWidget extends TextFieldWidget {
             //context.fill(getX() + 2, getY() + 2, getX() + getWidth() - 2, getY() + getHeight() - 2, MainColors.OUTLINE_BLACK.getRGB());
 
             //TOP AND BOTTOM
-            WalksyLib.get2DRenderer().fillRoundedRect(context, getX() + 1, getY() + 1, getWidth() - 2, getHeight() - 2, 2, MainColors.OUTLINE_BLACK.getRGB());
+            Renderer2D.fillRoundedRect(context, getX() + 1, getY() + 1, getWidth() - 2, getHeight() - 2, 2, MainColors.OUTLINE_BLACK.getRGB());
 
 
             int color = hovered ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
             if (this.isFocused()) {
                 color = Color.WHITE.getRGB();
             }
-            WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, color);
+            Renderer2D.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, color);
 
             if (this.getText().isEmpty() && !this.isFocused()) {
                 context.drawTextWithShadow(

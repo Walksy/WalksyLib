@@ -1,7 +1,7 @@
 package main.walksy.lib.core.mods;
 
 import com.terraformersmc.modmenu.gui.widget.entries.ModListEntry;
-import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -40,7 +40,7 @@ public class Mod {
 
                         return Optional.of(new NativeImageBackedTexture(image));
                     } catch (IOException e) {
-                        WalksyLib.getLogger().err("Failed to load icon from mod jar: " + " " + path + " " + e);
+                        WalksyLibLogger.err("Failed to load icon from mod jar: " + " " + path + " " + e);
                         return Optional.empty();
                     }
                 })

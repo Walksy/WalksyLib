@@ -5,18 +5,18 @@ import org.lwjgl.glfw.GLFWDropCallback;
 
 import java.util.function.Consumer;
 
-public class DropCallback {
+public class WindowDropCallback {
 
-    private Consumer<String> dropCallback;
+    private static Consumer<String> dropCallback;
 
-    public void register(long windowHandle, Consumer<String> callback) {
-        this.dropCallback = callback;
+    public static void register(long windowHandle, Consumer<String> callback) {
+        dropCallback = callback;
 
         GLFWDropCallback glfwDropCallback = new GLFWDropCallback() {
             @Override
             public void invoke(long window, int count, long names) {
                 for (int i = 0; i < count; i++) {
-                    String path = this.getName(names, i);
+                    String path = getName(names, i);
                     onFileDrop(path);
                 }
             }
@@ -24,11 +24,11 @@ public class DropCallback {
         GLFW.glfwSetDropCallback(windowHandle, glfwDropCallback);
     }
 
-    public void unregister(long windowHandle) {
+    public static void unregister() {
         dropCallback = null;
     }
 
-    private void onFileDrop(String path) {
+    private static void onFileDrop(String path) {
         if (dropCallback != null) {
             dropCallback.accept(path);
         }

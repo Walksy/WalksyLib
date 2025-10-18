@@ -1,7 +1,7 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
@@ -37,11 +37,11 @@ public class SliderSubWidget<T> extends SubWidget {
 
         isHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
 
-        WalksyLib.get2DRenderer().fillRoundedRect(context, x, y, width, height, 1, new Color(255, 255, 255, 20).getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRect(context, x, y, width, height, 1, new Color(255, 255, 255, 20).getRGB());
+        Renderer2D.fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
 
         int v = isHovered ? 220 : 155;
-        WalksyLib.get2DRenderer().fillRoundedRect(
+        Renderer2D.fillRoundedRect(
                 context,
                 x + (sliderPosition * (width - 10)),
                 y + (float) (height - 10) / 2,

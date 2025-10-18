@@ -1,11 +1,11 @@
 package main.walksy.lib.core.gui.widgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.manager.WalksyLibScreenManager;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
@@ -95,8 +95,8 @@ public abstract class OptionWidget extends AbstractWidget {
 
     private void renderBase(DrawContext context)
     {
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         renderName(context);
     }
 

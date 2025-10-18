@@ -1,6 +1,6 @@
 package main.walksy.lib.core.config.local;
 
-import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.options.BooleanOption;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
@@ -10,6 +10,7 @@ import main.walksy.lib.core.gui.widgets.*;
 import main.walksy.lib.core.utils.IdentifierWrapper;
 import main.walksy.lib.core.utils.SearchUtils;
 import main.walksy.lib.core.utils.log.InternalLog;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.text.Text;
 
@@ -33,7 +34,7 @@ public class Option<T> {
     private final T defaultValue;
     private final Supplier<Boolean> availability;
     private T prevValue;
-    private  Runnable onChange; //TODO
+    private final Runnable onChange;
 
     //Screen
     public T screenInstanceValue = null;
@@ -160,7 +161,7 @@ public class Option<T> {
         return this.availability.get();
     }
 
-    public void setPrev() {
+    public void setPrev(LocalConfig config) {
         if (Objects.equals(getValue(), screenInstanceValue)) return;
 
         this.prevValue = screenInstanceValue;
@@ -170,35 +171,35 @@ public class Option<T> {
 
         if (oldVal instanceof WalksyLibColor oldColor && newVal instanceof WalksyLibColor newColor) {
             if (oldColor.isRainbow() != newColor.isRainbow()) {
-                logField(this.getName() + "'s Rainbow", oldColor.isRainbow(), newColor.isRainbow());
+                logField(config, this.getName() + "'s Rainbow", oldColor.isRainbow(), newColor.isRainbow());
             }
             if (oldColor.getRainbowSpeed() != newColor.getRainbowSpeed()) {
-                logField(this.getName() + "'s Rainbow Speed", oldColor.getRainbowSpeed(), newColor.getRainbowSpeed());
+                logField(config, this.getName() + "'s Rainbow Speed", oldColor.getRainbowSpeed(), newColor.getRainbowSpeed());
             }
             if (oldColor.isPulse() != newColor.isPulse()) {
-                logField(this.getName() + "'s Pulse", oldColor.isPulse(), newColor.isPulse());
+                logField(config, this.getName() + "'s Pulse", oldColor.isPulse(), newColor.isPulse());
             }
             if (oldColor.getPulseSpeed() != newColor.getPulseSpeed()) {
-                logField(this.getName() + "'s Pulse Speed", oldColor.getPulseSpeed(), newColor.getPulseSpeed());
+                logField(config, this.getName() + "'s Pulse Speed", oldColor.getPulseSpeed(), newColor.getPulseSpeed());
             }
             if (Float.compare(oldColor.getSaturation(), newColor.getSaturation()) != 0) {
-                logField(this.getName() + "'s Saturation", oldColor.getSaturation(), newColor.getSaturation());
+                logField(config, this.getName() + "'s Saturation", oldColor.getSaturation(), newColor.getSaturation());
             }
             if (Float.compare(oldColor.getBrightness(), newColor.getBrightness()) != 0) {
-                logField(this.getName() + "'s Brightness", oldColor.getBrightness(), newColor.getBrightness());
+                logField(config, this.getName() + "'s Brightness", oldColor.getBrightness(), newColor.getBrightness());
             }
         } else if (oldVal instanceof PixelGridAnimation oldAnim && newVal instanceof PixelGridAnimation newAnim) {
             if (oldAnim.getAnimationSpeed() != newAnim.getAnimationSpeed()) {
-                logField(this.getName() + "'s Speed", oldAnim.getAnimationSpeed(), newAnim.getAnimationSpeed());
+                logField(config, this.getName() + "'s Speed", oldAnim.getAnimationSpeed(), newAnim.getAnimationSpeed());
             }
             if (Float.compare(oldAnim.getOffsetX(), newAnim.getOffsetX()) != 0) {
-                logField(this.getName() + "'s X Pos", oldAnim.getOffsetX(), newAnim.getOffsetX());
+                logField(config, this.getName() + "'s X Pos", oldAnim.getOffsetX(), newAnim.getOffsetX());
             }
             if (Float.compare(oldAnim.getOffsetY(), newAnim.getOffsetY()) != 0) {
-                logField(this.getName() + "'s Y Pos", oldAnim.getOffsetY(), newAnim.getOffsetY());
+                logField(config, this.getName() + "'s Y Pos", oldAnim.getOffsetY(), newAnim.getOffsetY());
             }
         } else {
-            logField(getName(), oldVal, newVal);
+            logField(config, getName(), oldVal, newVal);
         }
     }
 
@@ -217,15 +218,15 @@ public class Option<T> {
         return str;
     }
 
-    private <V> void logField(String name, V oldVal, V newVal) {
-        String configName = WalksyLib.getInstance().getConfigManager().getLocal().name();
+    private <V> void logField(LocalConfig config, String name, V oldVal, V newVal) {
+        String configName = config.name();
         InternalLog.ToolTip toolTip = null;
         if (this.warning != null)
         {
             toolTip = new InternalLog.ToolTip(Tooltip.of(Text.of("Option has warning: " + this.warning.message)), Color.RED.getRGB());
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        WalksyLib.getLogger().log(InternalLog.of("[" + time + "]: " + "[" + configName + "] " + "-> " + "[" + name + "], " + "[" + oldVal + "] to " + "[" + newVal + "]", toolTip));
+        WalksyLibLogger.log(InternalLog.of("[" + time + "]: " + "[" + configName + "] " + "-> " + "[" + name + "], " + "[" + oldVal + "] to " + "[" + newVal + "]", toolTip));
     }
 
 
@@ -244,17 +245,6 @@ public class Option<T> {
     public Option<T> description(OptionDescription description) {
         this.description = description;
         return this;
-    }
-
-    public void tick() {
-        if (this.getValue() instanceof WalksyLibColor color)
-        {
-            color.handleRainbow();
-            color.handlePulse();
-        } else if (this.getValue() instanceof PixelGridAnimation animation)
-        {
-            animation.tick();
-        }
     }
 
     public boolean hasChanged() {

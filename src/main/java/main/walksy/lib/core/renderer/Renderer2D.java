@@ -14,7 +14,7 @@ import java.util.function.Function;
 
 public class Renderer2D {
 
-    public void drawRoundedTexture(
+    public static void drawRoundedTexture(
             DrawContext ctx,
             Function<Identifier, RenderLayer> renderLayers,
             Identifier sprite,
@@ -47,17 +47,7 @@ public class Renderer2D {
     }
 
 
-
-
-
-
-
-
-    public void renderCircleArrow(DrawContext context, int x, int y, ArrowDirection direction, int color)
-    {
-    }
-
-    public void renderMiniArrow(DrawContext context, float x, float y, float scale, ArrowDirection direction, int color) {
+    public static void renderMiniArrow(DrawContext context, float x, float y, float scale, ArrowDirection direction, int color) {
         int[][] lines = {
                 { -3, 0,  3, 1 },
                 { -2, 1,  2, 2 },
@@ -89,27 +79,27 @@ public class Renderer2D {
 
 
 
-    public void drawVerticalLine(DrawContext context, float x, float y1, float y2, int color) {
+    public static void drawVerticalLine(DrawContext context, float x, float y1, float y2, int color) {
         if (y2 < y1) {
             float i = y1;
             y1 = y2;
             y2 = i;
         }
 
-        this.fill(context.getMatrices(), x, y1 + 1, (float) (x + 0.8), y2, color);
+        fill(context.getMatrices(), x, y1 + 1, (float) (x + 0.8), y2, color);
     }
 
 
-    public enum ArrowDirection {
+    public static enum ArrowDirection {
         UP, DOWN, LEFT, RIGHT
     }
 
-    private void fillArrowLine(DrawContext context, int centerX, int topY, int width) {
+    private static void fillArrowLine(DrawContext context, int centerX, int topY, int width) {
         int half = width / 2;
         context.fill(centerX - half, topY, centerX + half, topY + 2, -1);
     }
 
-    public void fillRoundedRectGradient(DrawContext ctx, int x, int y, int width, int height, int radius, int colorTop, int colorBottom) {
+    public static void fillRoundedRectGradient(DrawContext ctx, int x, int y, int width, int height, int radius, int colorTop, int colorBottom) {
         int right = x + width;
         int bottom = y + height;
 
@@ -168,22 +158,21 @@ public class Renderer2D {
         }
     }
 
-
-    public void fillRoundedRect(DrawContext ctx, float x, float y, float width, float height, int radius, int color) {
+    public static void fillRoundedRect(DrawContext ctx, float x, float y, float width, float height, int radius, int color) {
         float right = x + width;
         float bottom = y + height;
         MatrixStack stack = ctx.getMatrices();
-        this.fill(stack, x + radius + 1, y, right - radius - 1, y + radius, color); // top
-        this.fill(stack, x + radius + 1, bottom - radius, right - radius - 1, bottom, color); // bottom
+        fill(stack, x + radius + 1, y, right - radius - 1, y + radius, color); // top
+        fill(stack, x + radius + 1, bottom - radius, right - radius - 1, bottom, color); // bottom
 
-        this.fill(stack, x, y + radius + 1, x + radius, bottom - radius - 1, color); // left
-        this.fill(stack, right - radius, y + radius + 1, right, bottom - radius - 1, color); // right
+        fill(stack, x, y + radius + 1, x + radius, bottom - radius - 1, color); // left
+        fill(stack, right - radius, y + radius + 1, right, bottom - radius - 1, color); // right
 
-        this.fill(stack, x + radius + 1, y + radius, right - radius - 1, bottom - radius, color);
+        fill(stack, x + radius + 1, y + radius, right - radius - 1, bottom - radius, color);
 
         //Fills these stupid little gaps
-        this.fill(stack, x + radius, y + radius + 1, x + radius + 1, bottom - radius - 1, color);
-        this.fill(stack, right - radius - 1, y + radius + 1, right - radius, bottom - radius - 1, color);
+        fill(stack, x + radius, y + radius + 1, x + radius + 1, bottom - radius - 1, color);
+        fill(stack, right - radius - 1, y + radius + 1, right - radius, bottom - radius - 1, color);
 
         fillCircleQuarter(ctx, x + radius, y + radius, radius, color, Corner.TOP_LEFT);
         fillCircleQuarter(ctx, right - radius - 1, y + radius, radius, color, Corner.TOP_RIGHT);
@@ -191,7 +180,7 @@ public class Renderer2D {
         fillCircleQuarter(ctx, right - radius - 1, bottom - radius - 1, radius, color, Corner.BOTTOM_RIGHT);
     }
 
-    public void fillRoundedRectOutline(DrawContext ctx, int x, int y, int width, int height, int radius, int thickness, int color) {
+    public static void fillRoundedRectOutline(DrawContext ctx, int x, int y, int width, int height, int radius, int thickness, int color) {
         int right = x + width;
         int bottom = y + height;
 
@@ -207,7 +196,7 @@ public class Renderer2D {
         drawCircleQuarterOutline(ctx, right - radius - 1, bottom - radius - 1, radius, thickness, color, Corner.BOTTOM_RIGHT);
     }
 
-    public void fillRoundedRectOutline_ModWidget(DrawContext ctx, int x, int y, int width, int height, int radius, int thickness, int color) {
+    public static void fillRoundedRectOutline_ModWidget(DrawContext ctx, int x, int y, int width, int height, int radius, int thickness, int color) {
         int right = x + width;
         int bottom = y + height;
 
@@ -222,7 +211,7 @@ public class Renderer2D {
     }
 
 
-    public void drawHueSaturationValueBox(DrawContext ctx, int x, int y, int width, int height, int radius, float hue) {
+    public static void drawHueSaturationValueBox(DrawContext ctx, int x, int y, int width, int height, int radius, float hue) {
         int right = x + width;
         int bottom = y + height;
 
@@ -259,7 +248,7 @@ public class Renderer2D {
         fillCircleQuarter(ctx, right - radius - 1, bottom - radius - 1, radius, Color.BLACK.getRGB(), Corner.BOTTOM_RIGHT);
     }
 
-    public void drawRoundedHueSlider(DrawContext ctx, int x, int y, int width, int height, int radius) {
+    public static void drawRoundedHueSlider(DrawContext ctx, int x, int y, int width, int height, int radius) {
         int right = x + width;
         int bottom = y + height;
 
@@ -288,7 +277,7 @@ public class Renderer2D {
     }
 
 
-    public void fillPixelCircle(DrawContext ctx, int centerX, int centerY, int radius, int color) {
+    public static void fillPixelCircle(DrawContext ctx, int centerX, int centerY, int radius, int color) {
         int x = radius;
         int y = 0;
         int err = 0;
@@ -309,7 +298,7 @@ public class Renderer2D {
         }
     }
     
-    private void fillCircleQuarter(DrawContext ctx, float centerX, float centerY, int radius, int color, Corner corner) {
+    private static void fillCircleQuarter(DrawContext ctx, float centerX, float centerY, int radius, int color, Corner corner) {
         for (int y = 0; y <= radius; y++) {
             for (int x = 0; x <= radius; x++) {
                 if (x * x + y * y <= radius * radius) {
@@ -317,17 +306,17 @@ public class Renderer2D {
                     float drawY = centerY;
                     MatrixStack stack = ctx.getMatrices();
                     switch (corner) {
-                        case TOP_LEFT -> this.fill(stack, drawX - x, drawY - y, drawX - x + 1, drawY - y + 1, color);
-                        case TOP_RIGHT -> this.fill(stack, drawX + x, drawY - y, drawX + x + 1, drawY - y + 1, color);
-                        case BOTTOM_LEFT -> this.fill(stack, drawX - x, drawY + y, drawX - x + 1, drawY + y + 1, color);
-                        case BOTTOM_RIGHT -> this.fill(stack, drawX + x, drawY + y, drawX + x + 1, drawY + y + 1, color);
+                        case TOP_LEFT -> fill(stack, drawX - x, drawY - y, drawX - x + 1, drawY - y + 1, color);
+                        case TOP_RIGHT -> fill(stack, drawX + x, drawY - y, drawX + x + 1, drawY - y + 1, color);
+                        case BOTTOM_LEFT -> fill(stack, drawX - x, drawY + y, drawX - x + 1, drawY + y + 1, color);
+                        case BOTTOM_RIGHT -> fill(stack, drawX + x, drawY + y, drawX + x + 1, drawY + y + 1, color);
                     }
                 }
             }
         }
     }
 
-    private void drawCircleQuarterOutline(DrawContext ctx, int centerX, int centerY, int radius, int thickness, int color, Corner corner) {
+    private static void drawCircleQuarterOutline(DrawContext ctx, int centerX, int centerY, int radius, int thickness, int color, Corner corner) {
         int outerRadiusSq = radius * radius;
         int innerRadiusSq = (radius - thickness) * (radius - thickness);
 
@@ -348,7 +337,7 @@ public class Renderer2D {
         }
     }
 
-    public void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
+    public static void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
                 boolean val = grid.getPixel(x, y);
@@ -369,7 +358,7 @@ public class Renderer2D {
         }
     }
 
-    public void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
+    public static void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
         int gridWidthPixels = grid.getWidth() * pixelSize + (grid.getWidth() - 1) * gapSize;
         int gridHeightPixels = grid.getHeight() * pixelSize + (grid.getHeight() - 1) * gapSize;
 
@@ -380,20 +369,20 @@ public class Renderer2D {
         int blue = new Color(0, 100, 255).getRGB();
 
         //Top
-        this.fill(context.getMatrices(), x1 - borderWidth, y1 - borderWidth, x2 + borderWidth, y1, blue);
+        fill(context.getMatrices(), x1 - borderWidth, y1 - borderWidth, x2 + borderWidth, y1, blue);
 
         //Bottom
-        this.fill(context.getMatrices(), x1 - borderWidth, y2, x2 + borderWidth, y2 + borderWidth, blue);
+        fill(context.getMatrices(), x1 - borderWidth, y2, x2 + borderWidth, y2 + borderWidth, blue);
 
         //Left
-        this.fill(context.getMatrices(), x1 - borderWidth, y1, x1, y2, blue);
+        fill(context.getMatrices(), x1 - borderWidth, y1, x1, y2, blue);
 
         //Right
-        this.fill(context.getMatrices(), x2, y1, x2 + borderWidth, y2, blue);
+        fill(context.getMatrices(), x2, y1, x2 + borderWidth, y2, blue);
     }
 
 
-    public void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, int outlineColor, boolean markCenter) {
+    public static void renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, int outlineColor, boolean markCenter) {
         if (markCenter) {
             int centerX = grid.getWidth() / 2;
             int centerY = grid.getHeight() / 2;
@@ -436,17 +425,17 @@ public class Renderer2D {
 
 
 
-    public void startPopUpRender(DrawContext context, int z, int width, int height) {
+    public static void startPopUpRender(DrawContext context, int z, int width, int height) {
         context.getMatrices().push();
         context.getMatrices().translate(0, 0, z); //push it above everything else
         context.fill(0, 0, width, height, new Color(0, 0, 0, 100).getRGB());
     }
 
-    public void endPopUpRender(DrawContext context) {
+    public static void endPopUpRender(DrawContext context) {
         context.getMatrices().pop();
     }
 
-    public void fill(MatrixStack stack, float x1, float y1, float x2, float y2, int color) {
+    public static void fill(MatrixStack stack, float x1, float y1, float x2, float y2, int color) {
         Matrix4f matrix4f = stack.peek().getPositionMatrix();
         if (x1 < x2) {
             float i = x1;
@@ -469,5 +458,5 @@ public class Renderer2D {
 
 
 
-    private enum Corner { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT; }
+    private static enum Corner { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT; }
 }

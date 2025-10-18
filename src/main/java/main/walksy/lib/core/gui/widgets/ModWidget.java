@@ -1,8 +1,8 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.gui.impl.APIScreen;
 import main.walksy.lib.core.mods.Mod;
+import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -27,9 +27,9 @@ public class ModWidget extends AbstractWidget {
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        WalksyLib.get2DRenderer().fillRoundedRectOutline_ModWidget(context, getX(), getY(), width, height, 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.fillRoundedRectOutline_ModWidget(context, getX(), getY(), width, height, 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
 
-        WalksyLib.get2DRenderer().fillRoundedRectOutline_ModWidget(context, getX() - 1, getY() - 1, width + 2, height + 2, 2, 1,
+        Renderer2D.fillRoundedRectOutline_ModWidget(context, getX() - 1, getY() - 1, width + 2, height + 2, 2, 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
         //context.drawVerticalLine(getX() + 33, getY(), getY() + getHeight() - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
 

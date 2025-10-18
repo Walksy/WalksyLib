@@ -1,17 +1,17 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
-import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
-import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
-import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
-import main.walksy.lib.core.utils.Animation;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
+import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
+import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
+import main.walksy.lib.core.manager.WalksyLibScreenManager;
+import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
@@ -79,9 +79,9 @@ public class ColorWidget extends OpenableWidget {
         satThumbYAnim.update(delta);
         hueThumbYAnim.update(delta);
         opacityThumbYAnim.update(delta);
-        WalksyLib.get2DRenderer().drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, 4, 4);
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRect(context, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, option.getValue().getRGB());
+        Renderer2D.drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, 4, 4);
+        Renderer2D.fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRect(context, getWidth() - 15, getY() + 4, 23, baseHeight - 8, 2, option.getValue().getRGB());
 
         context.drawTextWithShadow(
                 MinecraftClient.getInstance().textRenderer,
@@ -129,24 +129,24 @@ public class ColorWidget extends OpenableWidget {
 
     public void drawSatThumb(DrawContext context, int x, int y)
     {
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x, y, 6, 6, 1, 1, java.awt.Color.BLACK.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, x, y, 6, 6, 1, 1, java.awt.Color.BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
     }
 
     public void drawSliderThumb(DrawContext context, int x, int y)
     {
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, x, y, 9, 3, 1, 1, java.awt.Color.BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, x, y, 9, 3, 1, 1, java.awt.Color.BLACK.getRGB());
     }
 
     public void drawOpacitySlider(DrawContext  context)
     {
         int opacityHeight = getHeight() - 30 + 8;
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 34, getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 33, getY() + 20, 13, opacityHeight - 2, 2, 1, isHoveringOpacitySlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        WalksyLib.get2DRenderer().drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
+        Renderer2D.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 34, getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 33, getY() + 20, 13, opacityHeight - 2, 2, 1, isHoveringOpacitySlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.drawRoundedTexture(context, RenderLayer::getGuiTextured, TRANSPARENT_BACKGROUND, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
         WalksyLibColor color = new WalksyLibColor(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 255);
         WalksyLibColor colorG = new WalksyLibColor(option.getValue().getRed(), option.getValue().getGreen(), option.getValue().getBlue(), 0);
-        WalksyLib.get2DRenderer().fillRoundedRectGradient(context, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
+        Renderer2D.fillRoundedRectGradient(context, COLOR_PICKER_STARTX - 32, getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
 
         int opacitySliderX = COLOR_PICKER_STARTX - 34;
         drawSliderThumb(context, opacitySliderX + 3, (int) opacityThumbYAnim.getCurrentValue() + 1);
@@ -155,9 +155,9 @@ public class ColorWidget extends OpenableWidget {
     public void drawHueSlider(DrawContext context)
     {
         int hueHeight = getHeight() - 30 + 8;
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 17, getY() + 19, 15, hueHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 16, getY() + 20, 13, hueHeight - 2, 2, 1, isHoveringHueSlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        WalksyLib.get2DRenderer().drawRoundedHueSlider(context, COLOR_PICKER_STARTX - 15, getY() + 21, 11, hueHeight - 4, 2);
+        Renderer2D.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 17, getY() + 19, 15, hueHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, COLOR_PICKER_STARTX - 16, getY() + 20, 13, hueHeight - 2, 2, 1, isHoveringHueSlider(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.drawRoundedHueSlider(context, COLOR_PICKER_STARTX - 15, getY() + 21, 11, hueHeight - 4, 2);
 
         int hueSliderX = COLOR_PICKER_STARTX - 17;
 
@@ -166,9 +166,9 @@ public class ColorWidget extends OpenableWidget {
 
     public void drawSaturationBox(DrawContext context)
     {
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX, getY() + 19, getWidth() - COLOR_PICKER_STARTX + 9, getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        WalksyLib.get2DRenderer().fillRoundedRectOutline(context, COLOR_PICKER_STARTX + 1, getY() + 20, getWidth() - COLOR_PICKER_STARTX + 7, getHeight() - 28 + 6 - 2, 2, 1, isHoveringSaturationValueBox(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        WalksyLib.get2DRenderer().drawHueSaturationValueBox(context, COLOR_PICKER_STARTX + 2, getY() + 21, getWidth() - COLOR_PICKER_STARTX + 5, getHeight() - 28 + 6 - 4, 2, option.getValue().getHue());
+        Renderer2D.fillRoundedRectOutline(context, COLOR_PICKER_STARTX, getY() + 19, getWidth() - COLOR_PICKER_STARTX + 9, getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, COLOR_PICKER_STARTX + 1, getY() + 20, getWidth() - COLOR_PICKER_STARTX + 7, getHeight() - 28 + 6 - 2, 2, 1, isHoveringSaturationValueBox(mouseX, mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.drawHueSaturationValueBox(context, COLOR_PICKER_STARTX + 2, getY() + 21, getWidth() - COLOR_PICKER_STARTX + 5, getHeight() - 28 + 6 - 4, 2, option.getValue().getHue());
         drawSatThumb(context, (int) satThumbXAnim.getCurrentValue() + 1, (int) satThumbYAnim.getCurrentValue());
     }
 

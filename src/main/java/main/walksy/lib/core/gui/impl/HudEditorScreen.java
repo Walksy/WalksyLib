@@ -1,8 +1,8 @@
 package main.walksy.lib.core.gui.impl;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
+import main.walksy.lib.core.renderer.Renderer2D;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderLayer;
@@ -64,7 +64,7 @@ public class HudEditorScreen extends BaseScreen {
                 context.getMatrices().push();
                 float size = pixelGridAnimation.getSize();
                 context.getMatrices().scale(size, size, size);
-                WalksyLib.get2DRenderer().renderGridOutline(
+                Renderer2D.renderGridOutline(
                         context,
                         pixelGridAnimation.getCurrentFrame(),
                         (int) (x / size),

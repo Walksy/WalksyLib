@@ -1,6 +1,5 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
@@ -40,7 +39,7 @@ public abstract class OpenableWidget extends OptionWidget {
         super.renderWidget(context, mouseX, mouseY, delta);
 
         if (isVisible()) {
-            WalksyLib.get2DRenderer().renderMiniArrow(
+            Renderer2D.renderMiniArrow(
                     context,
                     getX() - 8,
                     getTextYCentered() + (open ? 4 : 5),

@@ -6,33 +6,28 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class WalksyLibLogger {
-    final Logger LOGGER = Logger.getLogger("WalksyLib");
-    private final List<InternalLog> logs;
-    private int revision = 0;
+    static final Logger LOGGER = Logger.getLogger("WalksyLib");
+    private static final List<InternalLog> logs = new ArrayList<>();
+    private static int revision = 0;
 
-    public WalksyLibLogger()
+    public static void log(InternalLog log)
     {
-        this.logs = new ArrayList<>();
-    }
-
-    public void log(InternalLog log)
-    {
-        this.logs.add(log);
+        logs.add(log);
         revision++;
     }
 
-    public void info(Object message)
+    public static void info(Object message)
     {
         LOGGER.info((String) message);
     }
 
-    public void err(Object message)
+    public static void err(Object message)
     {
         LOGGER.info("[Error] " + message);
     }
 
-    public List<InternalLog> getLogs()
+    public static List<InternalLog> getLogs()
     {
-        return Collections.unmodifiableList(this.logs);
+        return Collections.unmodifiableList(logs);
     }
 }
