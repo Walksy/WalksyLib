@@ -45,7 +45,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     public boolean scroll = true;
 
     public WalksyLibConfigScreen(Screen parent, LocalConfig config) {
-        super(parent.getTitle().getString(), parent);
+        super(config.name() + " Config Screen", parent);
         this.configManager = new WalksyLibConfigManager(config);
         this.focusedOption = null;
     }
@@ -307,108 +307,92 @@ public class WalksyLibConfigScreen extends BaseScreen {
         }
     }
 
-    //TODO fix the option names not being formatted properly
-    private void renderOptionPanel(DrawContext context, Option<?> option)
-    {
-        Renderer2D.fillRoundedRect(
-                context,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY,
-                2,
-                new Color(0, 0, 0, 100).getRGB()
-        );
-        Renderer2D.fillRoundedRectOutline(
-                context,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY - 1,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY,
-                2,
-                1,
-                MainColors.OUTLINE_WHITE.getRGB()
-        );
-        Renderer2D.fillRoundedRectOutline(
-                context,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX - 1,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY - 2,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX,
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY + 2,
-                2,
-                1,
-                MainColors.OUTLINE_BLACK.getRGB()
-        );
+    private void renderOptionPanel(DrawContext context, Option<?> option) {
+        int startX = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX;
+        int startY = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY;
+        int endX = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX;
+        int endY = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY;
 
-        context.drawHorizontalLine(WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX + 1, WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX, 78, MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.fillRoundedRect(context, startX, startY, endX, endY, 2, new Color(0, 0, 0, 100).getRGB());
+        Renderer2D.fillRoundedRectOutline(context, startX, startY - 1, endX, endY, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
+        Renderer2D.fillRoundedRectOutline(context, startX - 1, startY - 2, endX, endY + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
 
-        if (option != null)
-        {
-            context.drawCenteredTextWithShadow(
-                    this.textRenderer,
-                    option.getName(),
-                    (WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX + WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX) / 2,
-                    66,
-                    -1
-            );
+        if (option != null) {
+            String optionName = option.getName();
+            int maxTextWidth = endX - startX - 20;
+
+            List<OrderedText> nameLines = this.textRenderer.wrapLines(Text.of(optionName), maxTextWidth);
+
+            int lineSpacing = 2;
+            int totalNameHeight = (nameLines.size() * this.textRenderer.fontHeight) + ((nameLines.size() - 1) * lineSpacing);
+
+            int centerY = 66;
+            int nameStartY = centerY - (totalNameHeight / 2) + 4;
+            int z = nameLines.size() > 1 ? 4 : 0;
+
+            for (int i = 0; i < nameLines.size(); i++) {
+                int lineY = nameStartY + (i * (this.textRenderer.fontHeight + lineSpacing));
+                context.drawCenteredTextWithShadow(
+                        this.textRenderer,
+                        nameLines.get(i),
+                        (startX + endX) / 2,
+                        lineY + z,
+                        -1
+                );
+            }
+
+            int lineY = nameStartY + totalNameHeight + 4;
+            context.drawHorizontalLine(startX + 1, endX, lineY, MainColors.OUTLINE_WHITE.getRGB());
 
             OptionDescription desc = option.getDescription();
-            if (desc != null)
-            {
-                switch (desc.getType())
-                {
+            if (desc != null) {
+                switch (desc.getType()) {
                     case TEXT -> {
                         String description = desc.getStringSupplier().get();
-                        int maxWidth = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX;
-                        int startX = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX + 5;
-                        int startY = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY + 26;
+                        int descStartX = startX + 5;
+                        int descStartY = lineY + 8;
+                        int maxWidth = endX - descStartX;
 
-                        List<OrderedText> lines = MinecraftClient.getInstance().textRenderer.wrapLines(
-                                Text.of(description), (maxWidth - startX)
-                        );
+                        List<OrderedText> lines = MinecraftClient.getInstance().textRenderer.wrapLines(Text.of(description), maxWidth);
 
                         for (OrderedText line : lines) {
                             context.drawTextWithShadow(
                                     textRenderer,
                                     line,
-                                    startX,
-                                    startY,
+                                    descStartX,
+                                    descStartY,
                                     new Color(182, 182, 182).getRGB()
                             );
-                            startY += textRenderer.fontHeight + 2;
+                            descStartY += textRenderer.fontHeight + 2;
                         }
                     }
 
                     case RENDER -> {
-                        int x = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX;
-                        int y = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY;
-                        int endX = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX;
-                        int endY = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY;
-
-                        context.enableScissor(x, y, endX, y + endY);
+                        context.enableScissor(startX, startY, endX, endY);
                         desc.getRenderConsumer().accept(
                                 context,
-                                new OptionDescription.OptionPanel(x, y, endX, y + endY)
+                                new OptionDescription.OptionPanel(startX, startY, endX, endY)
                         );
                         context.disableScissor();
                     }
                 }
             } else {
                 context.drawCenteredTextWithShadow(
-                        this.textRenderer,
+                        textRenderer,
                         "No Description",
-                        (WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX + WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX) / 2,
-                        WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY + 26,
+                        (startX + endX) / 2,
+                        lineY + 8,
                         -1
-                        );
+                );
             }
         }
 
-        if (popUp != null)
-        {
+        if (popUp != null) {
             popUp.layout(popUp.width, popUp.height);
         }
     }
+
+
 
 
     @Override

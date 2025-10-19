@@ -71,7 +71,6 @@ public class Option<T> {
         } else {
             this.defaultValue = defaultValue;
         }
-        System.out.println(name + " " + defaultValue);
         this.prevValue = null;
         this.onChange = onChange;
         this.warning = warning;

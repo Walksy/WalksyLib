@@ -8,7 +8,9 @@
 		"Walksy"
 	],
 	"contact": {
-
+		"issues": "https://github.com/Walksy/WalksyLib/issues",
+		"sources": "https://github.com/Walksy/WalksyLib",
+		"homepage": "https://discord.com/invite/zeu7uNuBWY"
 	},
 	"license": "MIT",
 	"icon": "assets/walksylib/icon.png",
