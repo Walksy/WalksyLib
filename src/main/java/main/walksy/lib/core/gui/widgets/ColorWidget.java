@@ -6,10 +6,10 @@ import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.SliderSubWidget;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
+import main.walksy.lib.core.utils.ScreenGlobals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
@@ -45,7 +45,7 @@ public class ColorWidget extends OpenableWidget {
     private DragTarget activeDrag = DragTarget.NONE;
 
     public ColorWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<WalksyLibColor> option) {
-        super(parent, screen, option, x, y, width, height, option.getName(), WalksyLibScreenManager.Globals.OPTION_HEIGHT * 5);
+        super(parent, screen, option, x, y, width, height, option.getName(), ScreenGlobals.OPTION_HEIGHT * 5);
         this.option = option;
         WalksyLibColor initial = option.getValue();
         float[] hsb = WalksyLibColor.RGBtoHSB(initial.getRed(), initial.getGreen(), initial.getBlue(), null);
@@ -56,11 +56,11 @@ public class ColorWidget extends OpenableWidget {
         COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
         this.chromaButton = new ButtonWidget(x + 5, y + 19 + 10, 17, 17, false, RAINBOW_ICON, () -> this.option.getValue().setRainbow(!this.option.getValue().isRainbow()), -3, -3);
         this.pulseButton = new ButtonWidget(x + 5, y + 45 + 10, 17, 17, false, PULSE_ICON, () -> this.option.getValue().setPulse(!this.option.getValue().isPulse()), -3, -3);
-        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getRainbowSpeed()), this.option.getValue().getRainbowSpeed(), rainbowSpeed -> {
+        this.chromaSpeedSlider = new SliderSubWidget<>(x + 28, y + 23 + 10, COLOR_PICKER_STARTX - 32 - 60, ScreenGlobals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getRainbowSpeed()), this.option.getValue().getRainbowSpeed(), rainbowSpeed -> {
             this.option.getValue().setRainbowSpeed(rainbowSpeed);
             this.updateThumbTargets(false);
         }, true);
-        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, WalksyLibScreenManager.Globals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getPulseSpeed()), this.option.getValue().getPulseSpeed(), pulseSpeed ->
+        this.pulseSpeedSlider = new SliderSubWidget<>(x + 28, y + 49 + 10, COLOR_PICKER_STARTX - 32 - 60, ScreenGlobals.OPTION_HEIGHT - 12, new IntSliderAdapter(1, 20, this.option.getValue().getPulseSpeed()), this.option.getValue().getPulseSpeed(), pulseSpeed ->
         {
             this.option.getValue().setPulseSpeed(pulseSpeed);
             this.updateThumbTargets(false);
@@ -74,7 +74,7 @@ public class ColorWidget extends OpenableWidget {
         this.pulseSpeedSlider.setOnChange(this.option.getValue()::setPulseSpeed);
         this.chromaSpeedSlider.setOnChange(this.option.getValue()::setRainbowSpeed);
         COLOR_PICKER_STARTX = (getX() + getWidth()) / 2;
-        int baseHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+        int baseHeight = ScreenGlobals.OPTION_HEIGHT;
         satThumbXAnim.update(delta);
         satThumbYAnim.update(delta);
         hueThumbYAnim.update(delta);
@@ -97,7 +97,7 @@ public class ColorWidget extends OpenableWidget {
         );
 
         if (this.fullyClosed()) {
-            context.drawVerticalLine(getX() + getWidth() - 38, getY(), getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+            context.drawVerticalLine(getX() + getWidth() - 38, getY(), getY() + ScreenGlobals.OPTION_HEIGHT - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
         } else if (this.getCurrentHeight() > 34) { // Renderer2D::drawRoundedRec methods freak out if their given width and/or height is too low, therefore we stop rendering them early before the animation finishes
             drawHueSlider(context);
             drawSaturationBox(context);
@@ -245,7 +245,7 @@ public class ColorWidget extends OpenableWidget {
     @Override
     public boolean isHovered() {
         return mouseX >= getX() && mouseX < (getX() + getWidth() - 6)
-                && mouseY >= getY() && mouseY < (getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT) && isVisible() && isAvailable();
+                && mouseY >= getY() && mouseY < (getY() + ScreenGlobals.OPTION_HEIGHT) && isVisible() && isAvailable();
     }
 
     @Override

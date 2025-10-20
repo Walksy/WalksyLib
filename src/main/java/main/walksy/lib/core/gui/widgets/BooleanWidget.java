@@ -5,10 +5,10 @@ import main.walksy.lib.core.config.local.options.BooleanOption;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.impl.WarningPopUp;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
+import main.walksy.lib.core.utils.ScreenGlobals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -54,7 +54,7 @@ public class BooleanWidget extends OptionWidget {
 
     @Override
     public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (WalksyLibScreenManager.Globals.DEBUG) renderDebug(context);
+        if (ScreenGlobals.DEBUG) renderDebug(context);
 
         Renderer2D.fillRoundedRect(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, new Color(255, 255, 255, 20).getRGB());
         Renderer2D.fillRoundedRectOutline(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());

@@ -3,10 +3,10 @@ package main.walksy.lib.core.gui.widgets;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
+import main.walksy.lib.core.utils.ScreenGlobals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -23,21 +23,19 @@ public abstract class OpenableWidget extends OptionWidget {
         this.OPEN_HEIGHT = openedHeight;
         this.heightAnim = new Animation(height, 0.5f);
     }
-
+    
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
         heightAnim.update(delta);
+        if (!heightAnim.isAnimating()) {
+            this.setHeight(ScreenGlobals.OPTION_HEIGHT);
+        }
         float currentAnimated = heightAnim.getCurrentValue();
         if (Math.abs(currentAnimated - this.height) >= 1f) {
             int animHeight = Math.round(currentAnimated);
             setHeight(animHeight);
             update();
         }
-
-
-
-        super.renderWidget(context, mouseX, mouseY, delta);
-
         if (isVisible()) {
             Renderer2D.renderMiniArrow(
                     context,
@@ -48,11 +46,6 @@ public abstract class OpenableWidget extends OptionWidget {
                     isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
             );
         }
-    }
-
-
-    @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
     }
 
     @Override
@@ -71,7 +64,7 @@ public abstract class OpenableWidget extends OptionWidget {
         boolean prev = open;
         open = !open;
 
-        float target = open ? OPEN_HEIGHT : WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+        float target = open ? OPEN_HEIGHT : ScreenGlobals.OPTION_HEIGHT;
         heightAnim.setTargetValue(target);
 
         ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
@@ -80,7 +73,7 @@ public abstract class OpenableWidget extends OptionWidget {
 
     public boolean fullyClosed()
     {
-        return !this.open && Math.round(this.heightAnim.getCurrentValue()) == WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+        return !this.open && Math.round(this.heightAnim.getCurrentValue()) == ScreenGlobals.OPTION_HEIGHT;
     }
 
     protected abstract void onOpen(boolean prevValue);

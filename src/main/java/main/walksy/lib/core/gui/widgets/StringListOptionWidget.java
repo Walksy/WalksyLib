@@ -4,8 +4,8 @@ import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.TextboxSubWidget;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.utils.MainColors;
+import main.walksy.lib.core.utils.ScreenGlobals;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -35,7 +35,7 @@ public class StringListOptionWidget extends OptionWidget {
         context.drawHorizontalLine(
                 getX() + 1,
                 getX() + getWidth() - 2,
-                getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT - 1,
+                getY() + ScreenGlobals.OPTION_HEIGHT - 1,
                 isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
         );
         if (this.option.getValue().isEmpty()) {
@@ -138,7 +138,7 @@ public class StringListOptionWidget extends OptionWidget {
         int size = this.option.getValue().size();
         this.ADDITIONAL_HEIGHT = size == 0 ? 20 : size * 20 + 4;
 
-        this.setHeight(WalksyLibScreenManager.Globals.OPTION_HEIGHT + ADDITIONAL_HEIGHT);
+        this.setHeight(ScreenGlobals.OPTION_HEIGHT + ADDITIONAL_HEIGHT);
         this.update();
     }
 
@@ -146,7 +146,7 @@ public class StringListOptionWidget extends OptionWidget {
         textboxes.clear();
         removeButtons.clear();
 
-        int yOffset = getY() + WalksyLibScreenManager.Globals.OPTION_HEIGHT + 4;
+        int yOffset = getY() + ScreenGlobals.OPTION_HEIGHT + 4;
         int textboxHeight = 18;
         List<String> currentValues = option.getValue();
         for (int i = 0; i < currentValues.size(); i++) {

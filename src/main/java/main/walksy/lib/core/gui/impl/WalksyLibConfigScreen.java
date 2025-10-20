@@ -11,11 +11,11 @@ import main.walksy.lib.core.gui.utils.CategoryTab;
 import main.walksy.lib.core.gui.utils.TabLocation;
 import main.walksy.lib.core.gui.widgets.*;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.mixin.ScreenAccessor;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
+import main.walksy.lib.core.utils.ScreenGlobals;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
@@ -128,18 +128,18 @@ public class WalksyLibConfigScreen extends BaseScreen {
             int yOffset = 60;
 
             for (OptionGroup group : category.optionGroups()) {
-                int groupH = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
-                int optionHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+                int groupH = ScreenGlobals.OPTION_HEIGHT;
+                int optionHeight = ScreenGlobals.OPTION_HEIGHT;
 
                 int groupHeight = groupH;
 
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX = (int) (width * 0.75);
-                WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY = 61;
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX = width;
-                WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY = height - 120;
-                WalksyLibScreenManager.Globals.OPTION_WIDTH = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX - 30 - 22;
+                ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
+                ScreenGlobals.OPTION_PANEL_STARTY = 61;
+                ScreenGlobals.OPTION_PANEL_ENDX = width;
+                ScreenGlobals.OPTION_PANEL_ENDY = height - 120;
+                ScreenGlobals.OPTION_WIDTH = ScreenGlobals.OPTION_PANEL_STARTX - 30 - 22;
 
-                OptionGroupWidget groupWidget = new OptionGroupWidget((width - (WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX - WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX)) / 2, yOffset, 150, groupH, group, this);
+                OptionGroupWidget groupWidget = new OptionGroupWidget((width - (ScreenGlobals.OPTION_PANEL_ENDX - ScreenGlobals.OPTION_PANEL_STARTX)) / 2, yOffset, 150, groupH, group, this);
 
                 if (group.isExpanded()) {
                     int childY = yOffset + groupH;
@@ -153,8 +153,8 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
                         groupHeight += optionHeight;
                         if (i < childCount - 1) {
-                            childY += WalksyLibScreenManager.Globals.OPTION_GROUP_SEPARATION;
-                            groupHeight += WalksyLibScreenManager.Globals.OPTION_GROUP_SEPARATION;
+                            childY += ScreenGlobals.OPTION_GROUP_SEPARATION;
+                            groupHeight += ScreenGlobals.OPTION_GROUP_SEPARATION;
                         }
                     }
                 }
@@ -188,7 +188,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         for (OptionGroupWidget group : widgets) {
             if (!group.visible) continue;
 
-            int groupHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+            int groupHeight = ScreenGlobals.OPTION_HEIGHT;
 
             if (group.getGroup().isExpanded()) {
                 List<OptionWidget> children = group.getChildren();
@@ -196,7 +196,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
                     OptionWidget child = children.get(i);
                     if (!child.isVisible()) continue;
 
-                    int childHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+                    int childHeight = ScreenGlobals.OPTION_HEIGHT;
 
                     if (child instanceof OpenableWidget oW) {
                         childHeight = (int) oW.getCurrentHeight();
@@ -212,7 +212,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
                             break;
                         }
                     }
-                    if (hasNextVisible) groupHeight += WalksyLibScreenManager.Globals.OPTION_GROUP_SEPARATION;
+                    if (hasNextVisible) groupHeight += ScreenGlobals.OPTION_GROUP_SEPARATION;
                 }
             }
 
@@ -232,14 +232,14 @@ public class WalksyLibConfigScreen extends BaseScreen {
             group.setPosition((width - 150) / 2, yOffset);
 
             if (group.getGroup().isExpanded()) {
-                int childY = yOffset + WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+                int childY = yOffset + ScreenGlobals.OPTION_HEIGHT;
                 List<OptionWidget> children = group.getChildren();
 
                 for (int i = 0; i < children.size(); i++) {
                     OptionWidget child = children.get(i);
                     if (!child.isVisible()) continue;
 
-                    int childHeight = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+                    int childHeight = ScreenGlobals.OPTION_HEIGHT;
 
                     if (child instanceof OpenableWidget oW) {
                         childHeight = (int) oW.getCurrentHeight();
@@ -248,7 +248,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
                     }
                     child.setPosition(child.getX(), childY);
                     child.setHeight(childHeight);
-                    int size = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+                    int size = ScreenGlobals.OPTION_HEIGHT;
                     child.onWidgetUpdate(child.getX() + child.getWidth() - size + 22, childY);
                     childY += childHeight;
 
@@ -259,7 +259,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
                             break;
                         }
                     }
-                    if (hasNextVisible) childY += WalksyLibScreenManager.Globals.OPTION_GROUP_SEPARATION;
+                    if (hasNextVisible) childY += ScreenGlobals.OPTION_GROUP_SEPARATION;
                 }
             }
 
@@ -294,10 +294,10 @@ public class WalksyLibConfigScreen extends BaseScreen {
         context.drawHorizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
         context.drawCenteredTextWithShadow(textRenderer, configManager.get().name(), width / 2, 12 - textRenderer.fontHeight / 2, 0xFFFFFF);
 
-        WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX = (int) (width * 0.75);
-        WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY = 61;
-        WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX = width;
-        WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY = height - 120;
+        ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
+        ScreenGlobals.OPTION_PANEL_STARTY = 61;
+        ScreenGlobals.OPTION_PANEL_ENDX = width;
+        ScreenGlobals.OPTION_PANEL_ENDY = height - 120;
         this.saveButton.setEnabled(this.shouldUndoOptions());
         this.saveButton.setTooltip(!this.saveButton.active ? Tooltip.of(Text.of("No changes have occurred")) : null);
         this.resetButton.setEnabled(this.shouldResetOptions());
@@ -308,10 +308,10 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     private void renderOptionPanel(DrawContext context, Option<?> option) {
-        int startX = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX;
-        int startY = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY;
-        int endX = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX;
-        int endY = WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY;
+        int startX = ScreenGlobals.OPTION_PANEL_STARTX;
+        int startY = ScreenGlobals.OPTION_PANEL_STARTY;
+        int endX = ScreenGlobals.OPTION_PANEL_ENDX;
+        int endY = ScreenGlobals.OPTION_PANEL_ENDY;
 
         Renderer2D.fillRoundedRect(context, startX, startY, endX, endY, 2, new Color(0, 0, 0, 100).getRGB());
         Renderer2D.fillRoundedRectOutline(context, startX, startY - 1, endX, endY, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
@@ -547,21 +547,21 @@ public class WalksyLibConfigScreen extends BaseScreen {
         undoButton.setPosition(width - 58 - 110, height - 21);
         searchBar.setPosition(6, height - 21);
 
-        WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX = (int) (width * 0.75);
-        WalksyLibScreenManager.Globals.OPTION_PANEL_STARTY = 61;
-        WalksyLibScreenManager.Globals.OPTION_PANEL_ENDX = width;
-        WalksyLibScreenManager.Globals.OPTION_PANEL_ENDY = height - 120;
-        WalksyLibScreenManager.Globals.OPTION_WIDTH = WalksyLibScreenManager.Globals.OPTION_PANEL_STARTX - 30 - 22;
+        ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
+        ScreenGlobals.OPTION_PANEL_STARTY = 61;
+        ScreenGlobals.OPTION_PANEL_ENDX = width;
+        ScreenGlobals.OPTION_PANEL_ENDY = height - 120;
+        ScreenGlobals.OPTION_WIDTH = ScreenGlobals.OPTION_PANEL_STARTX - 30 - 22;
         for (OptionWidget widget : allOptionWidgets) {
-            widget.setWidth(WalksyLibScreenManager.Globals.OPTION_WIDTH);
-            int size = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+            widget.setWidth(ScreenGlobals.OPTION_WIDTH);
+            int size = ScreenGlobals.OPTION_HEIGHT;
             widget.onWidgetUpdate(widget.getWidth() - size + 15 + 22, widget.getY());
             if (widget instanceof OpenableWidget openableWidget && openableWidget.open) {
                 openableWidget.setHeight(openableWidget.OPEN_HEIGHT);
             } else if (widget instanceof StringListOptionWidget stringListOptionWidget) {
-                stringListOptionWidget.setHeight(WalksyLibScreenManager.Globals.OPTION_HEIGHT + stringListOptionWidget.ADDITIONAL_HEIGHT);
+                stringListOptionWidget.setHeight(ScreenGlobals.OPTION_HEIGHT + stringListOptionWidget.ADDITIONAL_HEIGHT);
             } else {
-                widget.setHeight(WalksyLibScreenManager.Globals.OPTION_HEIGHT);
+                widget.setHeight(ScreenGlobals.OPTION_HEIGHT);
             }
         }
     }

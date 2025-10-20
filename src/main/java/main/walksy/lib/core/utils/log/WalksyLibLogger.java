@@ -8,26 +8,20 @@ import java.util.logging.Logger;
 public class WalksyLibLogger {
     static final Logger LOGGER = Logger.getLogger("WalksyLib");
     private static final List<InternalLog> logs = new ArrayList<>();
-    private static int revision = 0;
 
-    public static void log(InternalLog log)
-    {
+    public static void log(InternalLog log) {
         logs.add(log);
-        revision++;
     }
 
-    public static void info(Object message)
-    {
+    public static void info(Object message) {
         LOGGER.info((String) message);
     }
 
-    public static void err(Object message)
-    {
+    public static void err(Object message) {
         LOGGER.info("[Error] " + message);
     }
 
-    public static List<InternalLog> getLogs()
-    {
+    public static List<InternalLog> getLogs() {
         return Collections.unmodifiableList(logs);
     }
 }

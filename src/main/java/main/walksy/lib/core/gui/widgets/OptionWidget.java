@@ -4,9 +4,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
+import main.walksy.lib.core.utils.ScreenGlobals;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.text.Text;
@@ -33,7 +33,7 @@ public abstract class OptionWidget extends AbstractWidget {
         this.changesMade = false;
         this.isHovered = false;
 
-        int size = WalksyLibScreenManager.Globals.OPTION_HEIGHT;
+        int size = ScreenGlobals.OPTION_HEIGHT;
         resetButton = new ButtonWidget(getX() + getWidth() - size + 15, getY(), size, size, false, Identifier.of("walksylib", "gui/widget/reset.png"), this::handleResetButtonClick, -1, 0);
         resetButton.setEnabled(option.hasChanged());
     }
@@ -46,7 +46,6 @@ public abstract class OptionWidget extends AbstractWidget {
 
         isHovered = (mouseX >= getX() && mouseX < (getX() + getWidth())
                 && mouseY >= getY() && mouseY < (getY() + getHeight()));
-
 
         if (isHovered)
         {
@@ -130,7 +129,7 @@ public abstract class OptionWidget extends AbstractWidget {
 
     protected int getTextYCentered() {
         int textHeight = screen.getTextRenderer().fontHeight;
-        return getY() + (WalksyLibScreenManager.Globals.OPTION_HEIGHT - textHeight) / 2;
+        return getY() + (ScreenGlobals.OPTION_HEIGHT - textHeight) / 2;
     }
 
     public boolean isHovered() {

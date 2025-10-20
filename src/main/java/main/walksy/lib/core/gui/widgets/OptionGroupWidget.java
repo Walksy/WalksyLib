@@ -1,16 +1,16 @@
 package main.walksy.lib.core.gui.widgets;
 
+import main.walksy.lib.core.config.local.Option;
+import main.walksy.lib.core.config.local.options.groups.OptionGroup;
+import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.utils.ScreenGlobals;
+import main.walksy.lib.core.utils.SearchUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.text.Text;
-import main.walksy.lib.core.config.local.Option;
-import main.walksy.lib.core.config.local.options.groups.OptionGroup;
-import main.walksy.lib.core.manager.WalksyLibScreenManager;
-import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.utils.SearchUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public class OptionGroupWidget extends AbstractWidget {
         isHovered = false;
         int yOff = y + 20;
         for (Option<?> option : group.getOptions()) {
-            OptionWidget optionWidget = option.createWidget(group, parent, 15, yOff, WalksyLibScreenManager.Globals.OPTION_WIDTH, WalksyLibScreenManager.Globals.OPTION_HEIGHT);
+            OptionWidget optionWidget = option.createWidget(group, parent, 15, yOff, ScreenGlobals.OPTION_WIDTH, ScreenGlobals.OPTION_HEIGHT);
             children.add(optionWidget);
             yOff += 30;
         }
@@ -96,7 +96,7 @@ public class OptionGroupWidget extends AbstractWidget {
         );
 
 
-        if (WalksyLibScreenManager.Globals.DEBUG) {
+        if (ScreenGlobals.DEBUG) {
             renderDebug(
                     context,
                     centerX - (textWidth / 2 + hoverPadding),

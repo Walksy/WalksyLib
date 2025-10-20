@@ -152,6 +152,6 @@ public class TextureDropPopUp extends PopUp {
 
     @Override
     protected void onClose() {
-        WindowDropCallback.unregister();
+        WindowDropCallback.unregister(MinecraftClient.getInstance().getWindow().getHandle());
     }
 }

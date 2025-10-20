@@ -23,11 +23,6 @@ public class CategoryBuilder {
         return this;
     }
 
-    public CategoryBuilder option(Option<?> option) {
-        options.add(option);
-        return this;
-    }
-
     public Category build() {
         return new Category(name, optionGroups, options);
     }

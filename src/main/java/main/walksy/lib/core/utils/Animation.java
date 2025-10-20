@@ -41,6 +41,10 @@ public class Animation {
         this.targetValue = value;
     }
 
+    public boolean isAnimating() {
+        return this.currentValue != this.targetValue;
+    }
+
     public float getTargetValue() {
         return targetValue;
     }

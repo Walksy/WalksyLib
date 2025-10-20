@@ -1,5 +1,6 @@
 package main.walksy.lib.core.callback;
 
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWDropCallback;
 
@@ -21,11 +22,14 @@ public class WindowDropCallback {
                 }
             }
         };
-        GLFW.glfwSetDropCallback(windowHandle, glfwDropCallback);
+        GLFWDropCallback rtrn = GLFW.glfwSetDropCallback(windowHandle, glfwDropCallback);
+        WalksyLibLogger.info("Attempted to register GLFW Drop Callback: " + rtrn);
     }
 
-    public static void unregister() {
+    public static void unregister(long windowHandle) {
         dropCallback = null;
+        GLFWDropCallback rtrn = GLFW.glfwSetDropCallback(windowHandle, null); //TODO Test
+        WalksyLibLogger.info("Attempted to un-register GLFW Drop Callback: " + rtrn);
     }
 
     private static void onFileDrop(String path) {
