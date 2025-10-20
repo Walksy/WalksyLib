@@ -136,15 +136,15 @@ public class WalksyLibColor {
 
     public void tick()
     {
-        if (!rainbow) return;
+        if (rainbow) {
+            float speed = (float) this.rainbowSpeed / 1000;
+            hue += speed;
+            if (hue > 1f) hue = 0f;
 
-        float speed = (float) this.rainbowSpeed / 1000;
-        hue += speed;
-        if (hue > 1f) hue = 0f;
-
-        WalksyLibColor newColor = getHSBColor(hue, saturation, brightness);
-        WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), getAlpha());
-        this.value = newColorAlpha.getRGB();
+            WalksyLibColor newColor = getHSBColor(hue, saturation, brightness);
+            WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), getAlpha());
+            this.value = newColorAlpha.getRGB();
+        }
         this.handlePulse();
     }
 

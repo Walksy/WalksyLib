@@ -23,9 +23,9 @@ public abstract class OpenableWidget extends OptionWidget {
         this.OPEN_HEIGHT = openedHeight;
         this.heightAnim = new Animation(height, 0.5f);
     }
-    
+
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         heightAnim.update(delta);
         if (!heightAnim.isAnimating()) {
             this.setHeight(ScreenGlobals.OPTION_HEIGHT);
@@ -36,6 +36,7 @@ public abstract class OpenableWidget extends OptionWidget {
             setHeight(animHeight);
             update();
         }
+        context.enableScissor(0, 49, screen.width, screen.height - 28);
         if (isVisible()) {
             Renderer2D.renderMiniArrow(
                     context,
@@ -46,6 +47,13 @@ public abstract class OpenableWidget extends OptionWidget {
                     isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
             );
         }
+        context.disableScissor();
+        super.renderWidget(context, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
+
     }
 
     @Override

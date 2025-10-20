@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
-
+//TODO Click sounds
 public class WalksyLibLogger {
     static final Logger LOGGER = Logger.getLogger("WalksyLib");
     private static final List<InternalLog> logs = new ArrayList<>();
