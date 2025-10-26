@@ -7,6 +7,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
+import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 
@@ -58,7 +59,7 @@ public class HudEditorScreen extends BaseScreen {
                 );
             }
 
-            pixelGridAnimation.render(context);
+            pixelGridAnimation.render(context, false);
 
             if (!dragging) {
                 context.getMatrices().push();
@@ -141,6 +142,29 @@ public class HudEditorScreen extends BaseScreen {
         }
         return super.mouseReleased(mouseX, mouseY, button);
     }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
+            int moveAmount = Screen.hasShiftDown() ? 5 : 1;
+
+            switch (keyCode) {
+                case GLFW.GLFW_KEY_UP -> pixelGridAnimation.addOffset(0, -moveAmount);
+                case GLFW.GLFW_KEY_DOWN -> pixelGridAnimation.addOffset(0, moveAmount);
+                case GLFW.GLFW_KEY_LEFT -> pixelGridAnimation.addOffset(-moveAmount, 0);
+                case GLFW.GLFW_KEY_RIGHT -> pixelGridAnimation.addOffset(moveAmount, 0);
+                default -> {
+                    return super.keyPressed(keyCode, scanCode, modifiers);
+                }
+            }
+
+            hudOption.setValue(pixelGridAnimation);
+            return true;
+        }
+
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
 
     @Override
     public void close() {

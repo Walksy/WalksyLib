@@ -29,18 +29,15 @@ public class MinecraftClientMixin {
 
 
     @Inject(method = "tick", at = @At("HEAD"))
-    public void onTick(CallbackInfo ci)
-    {
+    public void onTick(CallbackInfo ci) {
         if (this.currentScreen instanceof BaseScreen) {
             MarqueeUtil.tickCount++;
         }
     }
 
     @Inject(method = "setScreen", at = @At("HEAD"))
-    public void setScreen(Screen screen, CallbackInfo ci)
-    {
-        if (screen instanceof BaseScreen)
-        {
+    public void setScreen(Screen screen, CallbackInfo ci) {
+        if (screen instanceof BaseScreen) {
             MarqueeUtil.tickCount = 0;
         }
     }

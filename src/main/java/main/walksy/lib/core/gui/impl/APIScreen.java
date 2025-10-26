@@ -25,11 +25,13 @@ public class APIScreen extends BaseScreen {
     private UniversalTabWidget tabWidget;
     private LogWidget logWidget;
     private boolean wtf = false;
+    public Screen parent;
 
 
     public APIScreen(Screen parent) {
         super("APIScreen", parent);
         this.modWidgets = new ArrayList<>();
+        this.parent = parent;
         ModEntryPointList modEntryPointList = new ModEntryPointList();
         modEntryPointList.retrieve();
         int yOffset = 60;

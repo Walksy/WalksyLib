@@ -48,17 +48,17 @@ public class PixelGridAnimation {
         tickCounter = 0;
     }
 
-    public void render(DrawContext context) {
+    public void render(DrawContext context, boolean blend) {
         Point pos = getAbsolutePosition();
-        this.render(context, pos.x, pos.y);
+        this.render(context, pos.x, pos.y, blend);
     }
 
-    public void render(DrawContext context, int x, int y) {
+    public void render(DrawContext context, int x, int y, boolean blend) {
         PixelGrid frame = this.getCurrentFrame();
         if (frame != null) {
             context.getMatrices().push();
             context.getMatrices().scale(size, size, 1.0f);
-            frame.render(context, (int) (x / size), (int) (y / size));
+            frame.render(context, (int) (x / size), (int) (y / size), blend);
             context.getMatrices().pop();
         }
     }
@@ -91,7 +91,9 @@ public class PixelGridAnimation {
     }
 
     public PixelGrid getFrame(int index) {
-        return frames.get(index - 1);
+        int adjusted = index - 1;
+        if (adjusted < 0 || adjusted >= frames.size()) return null;
+        return frames.get(adjusted);
     }
 
     public void setFrame(int index, PixelGrid grid) {
@@ -121,9 +123,25 @@ public class PixelGridAnimation {
         return new Point(x, y);
     }
 
+    public PixelGridAnimation offset(int offsetX, int offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        return this;
+    }
+
+    public PixelGridAnimation animationSpeed(int speed) {
+        this.animationSpeed = speed;
+        return this;
+    }
+
     public void setOffset(int offsetX, int offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
+    }
+
+    public void addOffset(int dx, int dy) {
+        this.offsetX += dx;
+        this.offsetY += dy;
     }
 
     public int getOffsetX() {

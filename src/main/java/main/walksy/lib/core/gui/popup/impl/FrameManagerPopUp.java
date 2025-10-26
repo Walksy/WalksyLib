@@ -161,7 +161,8 @@ public class FrameManagerPopUp extends PopUp {
                         context, grid,
                         pos.x - 1,
                         (int) (pos.y - 6 - scroller.getValue()),
-                        2, 0
+                        2, 0,
+                        false
                 );
             }
         }

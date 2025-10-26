@@ -162,13 +162,11 @@ public class WalksyLibColor {
         return new WalksyLibColor(HSBtoRGB(h, s, b));
     }
 
-    public int getRGB()
-    {
+    public int getRGB() {
         return value;
     }
 
-    public int getRed()
-    {
+    public int getRed() {
         return (getRGB() >> 16) & 0xFF;
     }
 

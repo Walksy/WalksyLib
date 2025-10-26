@@ -19,8 +19,7 @@ public class ModWidget extends AbstractWidget {
     private final Mod mod;
     private final APIScreen parent;
 
-    public ModWidget(Mod mod, APIScreen parent, int x, int y)
-    {
+    public ModWidget(Mod mod, APIScreen parent, int x, int y) {
         super(x, y, 140, 34, Text.empty());
         this.mod = mod;
         this.parent = parent;
@@ -48,9 +47,8 @@ public class ModWidget extends AbstractWidget {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovered())
-        {
-            MinecraftClient.getInstance().setScreen(new WalksyLibConfigScreen(parent, this.mod.getConfig()));
+        if (isHovered()) {
+            MinecraftClient.getInstance().setScreen(new WalksyLibConfigScreen(parent.parent, this.mod.getConfig()));
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }

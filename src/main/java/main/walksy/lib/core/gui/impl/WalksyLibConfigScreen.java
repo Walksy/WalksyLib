@@ -16,7 +16,6 @@ import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
@@ -349,13 +348,15 @@ public class WalksyLibConfigScreen extends BaseScreen {
                 switch (desc.getType()) {
                     case TEXT -> {
                         String description = desc.getStringSupplier().get();
-                        int descStartX = startX + 5;
                         int descStartY = lineY + 8;
-                        int maxWidth = endX - descStartX;
+                        int maxWidth = endX - startX - 10;
 
-                        List<OrderedText> lines = MinecraftClient.getInstance().textRenderer.wrapLines(Text.of(description), maxWidth);
+                        List<OrderedText> lines = textRenderer.wrapLines(Text.of(description), maxWidth);
 
                         for (OrderedText line : lines) {
+                            int lineWidth = textRenderer.getWidth(line);
+                            int descStartX = startX + ((endX - startX) - lineWidth) / 2;
+
                             context.drawTextWithShadow(
                                     textRenderer,
                                     line,
@@ -363,12 +364,14 @@ public class WalksyLibConfigScreen extends BaseScreen {
                                     descStartY,
                                     new Color(182, 182, 182).getRGB()
                             );
+
                             descStartY += textRenderer.fontHeight + 2;
                         }
                     }
 
+
                     case RENDER -> {
-                        context.enableScissor(startX, startY, endX, endY);
+                        context.enableScissor(startX, startY, startX + endX, startY + endY);
                         desc.getRenderConsumer().accept(
                                 context,
                                 new OptionDescription.OptionPanel(startX, startY, endX, endY)

@@ -4,12 +4,10 @@ import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.builders.OptionBuilder;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 
-import java.awt.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, PixelGridAnimationOption> {
-    private Point point = new Point(-1, -1);
 
     public PixelGridAnimationOption(String name, Supplier<PixelGridAnimation> getter, PixelGridAnimation defaultValue, Consumer<PixelGridAnimation> setter) {
         super(name, getter, defaultValue, setter);
@@ -19,13 +17,8 @@ public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, 
         return new PixelGridAnimationOption(name, getter, defaultValue, setter);
     }
 
-    public PixelGridAnimationOption position(Point offsetPosition) {
-        this.point = offsetPosition;
-        return this;
-    }
-
     @Override
     public Option<PixelGridAnimation> build() {
-        return new Option<>(name, description, getter, setter, availability, PixelGridAnimation.class, null, null, null, defaultValue, null, point, onChange);
+        return new Option<>(name, description, getter, setter, availability, PixelGridAnimation.class, null, null, null, defaultValue, null, onChange);
     }
 }

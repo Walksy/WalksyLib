@@ -45,16 +45,16 @@ public class Option<T> {
     private String searchQ = "";
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, BooleanOption.Warning warning, Runnable onChange) {
-        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, warning, null, onChange);
+        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, warning, onChange);
     }
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, Runnable onChange) {
-        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, null, null, onChange);
+        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, null, onChange);
     }
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter,
                   Supplier<Boolean> availability, Class<T> type, T min, T max, T increment, T defaultValue,
-                  BooleanOption.Warning warning, Point point, Runnable onChange) {
+                  BooleanOption.Warning warning, Runnable onChange) {
         this.name = name;
         this.description = description;
         this.getter = getter;
@@ -74,9 +74,6 @@ public class Option<T> {
         this.prevValue = null;
         this.onChange = onChange;
         this.warning = warning;
-        if (point != null) {
-            this.definePosition(point);
-        }
     }
 
 
@@ -116,20 +113,7 @@ public class Option<T> {
         }
     }
 
-    //Reset is also completely broken
 
-    public boolean has2DPosition() {
-        if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            return pixelGridAnimation.getOffsetX() != -1 && pixelGridAnimation.getOffsetY() != -1;
-        }
-        return false;
-    }
-
-    public void definePosition(Point point) {
-        if (this.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            pixelGridAnimation.setOffset(point.x, point.y);
-        }
-    }
 
     public void undo()
     {

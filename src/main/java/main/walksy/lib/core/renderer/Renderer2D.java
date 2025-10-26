@@ -1,13 +1,17 @@
 package main.walksy.lib.core.renderer;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.ShaderProgramKey;
+import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.function.Function;
@@ -337,24 +341,69 @@ public class Renderer2D {
         }
     }
 
-    public static void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize) {
+    public static void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, boolean blend) {
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
                 boolean val = grid.getPixel(x, y);
 
                 int px = x1 + x * (pixelSize + gapSize);
                 int py = y1 + y * (pixelSize + gapSize);
+                float px2 = px + pixelSize;
+                float py2 = py + pixelSize;
 
                 if (val) {
-                    context.fill(
-                            px,
-                            py,
-                            px + pixelSize,
-                            py + pixelSize,
-                            Color.WHITE.getRGB()
-                    );
+                    if (blend) {
+                        drawFilledRectangle(context.getMatrices(), px, py, px2, py2, Color.WHITE, true);
+                    } else {
+                        context.fill(
+                                px,
+                                py,
+                                px + pixelSize,
+                                py + pixelSize,
+                                Color.WHITE.getRGB()
+                        );
+                    }
                 }
             }
+        }
+    }
+
+    public static void drawFilledRectangle(MatrixStack stack, float x1, float y1, float x2, float y2, Color color, boolean blend) {
+        stack.push();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader((ShaderProgramKey) ShaderProgramKeys.POSITION_COLOR);
+
+        if (blend) {
+            RenderSystem.blendFuncSeparate(
+                    (GlStateManager.SrcFactor) GlStateManager.SrcFactor.ONE_MINUS_DST_COLOR,
+                    (GlStateManager.DstFactor) GlStateManager.DstFactor.ONE_MINUS_SRC_COLOR,
+                    (GlStateManager.SrcFactor) GlStateManager.SrcFactor.ONE,
+                    (GlStateManager.DstFactor) GlStateManager.DstFactor.ZERO
+            );
+        }
+
+        setGlProperty(2848, false);
+
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        Matrix4f matrix = stack.peek().getPositionMatrix();
+
+        float[] pts = {x1, y1, x1, y2, x2, y2, x2, y1};
+        for (int i = 0; i < pts.length; i += 2) {
+            buffer.vertex(matrix, pts[i], pts[i + 1], 0)
+                    .color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+        }
+
+        BufferRenderer.drawWithGlobalProgram((BuiltBuffer) buffer.end());
+        RenderSystem.disableBlend();
+        stack.pop();
+    }
+
+    private static void setGlProperty(int property, boolean isEnabled) {
+        if (isEnabled) {
+            GL11.glEnable((int)property);
+        } else {
+            GL11.glDisable((int)property);
         }
     }
 

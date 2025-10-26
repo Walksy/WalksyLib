@@ -99,7 +99,7 @@ public class ButtonWidget extends AbstractWidget {
         }
 
         if (grid != null) {
-            Renderer2D.renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1);
+            Renderer2D.renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1, false);
         }
     }
 
