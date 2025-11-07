@@ -19,6 +19,6 @@ public class PixelGridOption extends OptionBuilder<PixelGrid, PixelGridOption> {
 
     @Override
     public Option<PixelGrid> build() {
-        return new Option<>(name, description, getter, setter, availability, PixelGrid.class, defaultValue, onChange);
+        return new Option<>(name, description, getter, setter, availability, availabilityHelp, PixelGrid.class, defaultValue, onChange);
     }
 }

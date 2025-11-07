@@ -47,9 +47,6 @@ public record LocalConfig(String name, Path path, List<Category> categories, Run
 
     @Override
     public void save() {
-        if (this.onSave != null) {
-            this.onSave.run();
-        }
         Path path = this.path();
         List<SerializableCategory> serializedCategories = new ArrayList<>();
 
@@ -63,6 +60,12 @@ public record LocalConfig(String name, Path path, List<Category> categories, Run
             Files.writeString(path, json);
         } catch (IOException e) {
             WalksyLibLogger.err("Failed to save config to " + path + ": " + e.getMessage());
+        }
+    }
+
+    public void runSave() {
+        if (this.onSave != null) {
+            this.onSave.run();
         }
     }
 

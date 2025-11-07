@@ -19,6 +19,6 @@ public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, 
 
     @Override
     public Option<PixelGridAnimation> build() {
-        return new Option<>(name, description, getter, setter, availability, PixelGridAnimation.class, null, null, null, defaultValue, null, onChange);
+        return new Option<>(name, description, getter, setter, availability, availabilityHelp, PixelGridAnimation.class, null, null, null, defaultValue, null, onChange);
     }
 }

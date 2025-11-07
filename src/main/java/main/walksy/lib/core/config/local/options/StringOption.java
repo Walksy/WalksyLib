@@ -3,7 +3,6 @@ package main.walksy.lib.core.config.local.options;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.builders.OptionBuilder;
 
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -19,6 +18,6 @@ public class StringOption extends OptionBuilder<String, StringOption> {
 
     @Override
     public Option<String> build() {
-        return new Option<>(name, description, getter, setter, availability, String.class, defaultValue, onChange);
+        return new Option<>(name, description, getter, setter, availability, availabilityHelp, String.class, defaultValue, onChange);
     }
 }

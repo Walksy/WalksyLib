@@ -6,7 +6,6 @@ import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PixelGridAnimation {
@@ -20,7 +19,11 @@ public class PixelGridAnimation {
     private float size = 1.0f;
 
     public PixelGridAnimation(PixelGrid... grids) {
-        this(Arrays.asList(grids));
+        List<PixelGrid> grids1 = new ArrayList<>(List.of(grids));
+        if (grids1.isEmpty()) {
+            grids1.add(PixelGrid.create().build());
+        }
+        frames.addAll(grids1);
     }
 
     public PixelGridAnimation(List<PixelGrid> grids) {
@@ -110,12 +113,11 @@ public class PixelGridAnimation {
 
     public Point getAbsolutePosition() {
         MinecraftClient client = MinecraftClient.getInstance();
-        double scale = client.getWindow().getScaleFactor();
-        int windowWidth = client.getWindow().getWidth();
-        int windowHeight = client.getWindow().getHeight();
+        int windowWidth = client.getWindow().getScaledWidth();
+        int windowHeight = client.getWindow().getScaledHeight();
 
-        double centerX = (windowWidth / scale / 2.0) - 8.0;
-        double centerY = (windowHeight / scale / 2.0) - 8.0;
+        double centerX = (windowWidth / 2.0) - 8.0;
+        double centerY = (windowHeight / 2.0) - 8.0;
 
         int x = (int) Math.round(centerX + offsetX);
         int y = (int) Math.round(centerY + offsetY);

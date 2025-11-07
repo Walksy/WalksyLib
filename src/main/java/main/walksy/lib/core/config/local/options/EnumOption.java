@@ -21,6 +21,6 @@ public class EnumOption<E extends Enum<E>> extends OptionBuilder<E, EnumOption<E
 
     @Override
     public Option<E> build() {
-        return new Option<>(name, description, getter, setter, availability, enumClass, defaultValue, onChange);
+        return new Option<>(name, description, getter, setter, availability, availabilityHelp, enumClass, defaultValue, onChange);
     }
 }

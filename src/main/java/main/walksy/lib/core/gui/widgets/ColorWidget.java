@@ -308,11 +308,11 @@ public class ColorWidget extends OpenableWidget {
         int hueSliderY = getY() + 21;
         int hueSliderHeight = getHeight() - 30 + 8 - 4;
         int rawHueThumbY = hueSliderY + (int) ((1f - option.getValue().getHue()) * hueSliderHeight) - 2;
-        int targetHueY = Math.max(hueSliderY, Math.min(rawHueThumbY - 1, hueSliderY + hueSliderHeight - 2));
+        int targetHueY = Math.max(hueSliderY - 1, Math.min(rawHueThumbY - 1, hueSliderY + hueSliderHeight - 2));
         int opacitySliderY = getY() + 21;
         int opacitySliderHeight = getHeight() - 30 + 8 - 4;
         int rawOpacityThumbY = opacitySliderY + (int) ((1f - (option.getValue().getAlpha() / 255f)) * opacitySliderHeight) - 2;
-        int targetOpacityY = Math.max(opacitySliderY, Math.min(rawOpacityThumbY - 1, opacitySliderY + opacitySliderHeight - 2));
+        int targetOpacityY = Math.max(opacitySliderY - 1, Math.min(rawOpacityThumbY - 1, opacitySliderY + opacitySliderHeight - 2));
         int boxX = COLOR_PICKER_STARTX;
         int boxY = getY() + 21;
         int boxWidth = getWidth() - COLOR_PICKER_STARTX + 9;

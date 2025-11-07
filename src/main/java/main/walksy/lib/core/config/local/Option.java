@@ -33,6 +33,7 @@ public class Option<T> {
     private OptionDescription description;
     private final T defaultValue;
     private final Supplier<Boolean> availability;
+    private final String availabilityHelper;
     private T prevValue;
     private final Runnable onChange;
 
@@ -44,22 +45,23 @@ public class Option<T> {
 
     private String searchQ = "";
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, BooleanOption.Warning warning, Runnable onChange) {
-        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, warning, onChange);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, String availabilityHelper, Class<T> type, T defaultValue, BooleanOption.Warning warning, Runnable onChange) {
+        this(name, description, getter, setter, availability, availabilityHelper, type, null, null, null, defaultValue, warning, onChange);
     }
 
-    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, Class<T> type, T defaultValue, Runnable onChange) {
-        this(name, description, getter, setter, availability, type, null, null, null, defaultValue, null, onChange);
+    public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter, Supplier<Boolean> availability, String availabilityHelper, Class<T> type, T defaultValue, Runnable onChange) {
+        this(name, description, getter, setter, availability, availabilityHelper, type, null, null, null, defaultValue, null, onChange);
     }
 
     public Option(String name, OptionDescription description, Supplier<T> getter, Consumer<T> setter,
-                  Supplier<Boolean> availability, Class<T> type, T min, T max, T increment, T defaultValue,
+                  Supplier<Boolean> availability, String availabilityHelper, Class<T> type, T min, T max, T increment, T defaultValue,
                   BooleanOption.Warning warning, Runnable onChange) {
         this.name = name;
         this.description = description;
         this.getter = getter;
         this.setter = setter;
         this.availability = availability;
+        this.availabilityHelper = availabilityHelper;
         this.type = type;
         this.min = min;
         this.max = max;
@@ -86,6 +88,10 @@ public class Option<T> {
     public T getIncrement() { return increment; }
 
     public OptionDescription getDescription() { return description; }
+
+    public String getAvailabilityHelper() {
+        return this.availabilityHelper;
+    }
 
     public T getValue()
     {

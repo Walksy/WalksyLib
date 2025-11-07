@@ -12,7 +12,7 @@ import net.minecraft.util.Identifier;
 
 public class BaseScreen extends Screen {
 
-    private final Screen parent;
+    public final Screen parent;
     private final Pool shaderPool;
     public int tickCount = 0;
 

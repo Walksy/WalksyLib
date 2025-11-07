@@ -7,6 +7,7 @@ import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.render.RenderLayer;
@@ -48,10 +49,23 @@ public class ModWidget extends AbstractWidget {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isHovered()) {
-            MinecraftClient.getInstance().setScreen(new WalksyLibConfigScreen(parent.parent, this.mod.getConfig()));
+            Screen currentParent = this.parent;
+            while (currentParent instanceof WalksyLibConfigScreen || currentParent instanceof APIScreen) {
+                if (currentParent instanceof WalksyLibConfigScreen walksyParent) {
+                    currentParent = walksyParent.parent;
+                } else if (currentParent instanceof APIScreen apiParent) {
+                    currentParent = apiParent.parent;
+                } else {
+                    break;
+                }
+            }
+            MinecraftClient.getInstance().setScreen(new WalksyLibConfigScreen(currentParent, this.mod.getConfig()));
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
+
+
+
 
     @Override
     protected void appendClickableNarrations(NarrationMessageBuilder builder) {

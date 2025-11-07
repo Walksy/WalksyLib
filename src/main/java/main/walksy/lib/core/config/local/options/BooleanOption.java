@@ -25,7 +25,7 @@ public class BooleanOption extends OptionBuilder<Boolean, BooleanOption> {
 
     @Override
     public Option<Boolean> build() {
-        return new Option<>(name, description, getter, setter, availability, Boolean.class, defaultValue, warning, onChange);
+        return new Option<>(name, description, getter, setter, availability, availabilityHelp, Boolean.class, defaultValue, warning, onChange);
     }
 
     public static class Warning

@@ -216,40 +216,75 @@ public class Renderer2D {
 
 
     public static void drawHueSaturationValueBox(DrawContext ctx, int x, int y, int width, int height, int radius, float hue) {
-        int right = x + width;
-        int bottom = y + height;
+        VertexConsumer vertices = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayer.getGui());
+        int x0 = x;
+        int y0 = y;
+        int x1 = x + width;
+        int y1 = y + height;
+        if (width <= 0 || height <= 0) return;
 
-        //Draw centre
-        for (int iy = 0; iy < height; iy++) {
-            for (int ix = 0; ix < width; ix++) {
-                boolean inCorner = false;
-                if (ix < radius && iy < radius) {
-                    inCorner = (ix - radius) * (ix - radius) + (iy - radius) * (iy - radius) > radius * radius;
-                } else if (ix >= width - radius && iy < radius) {
-                    inCorner = (ix - (width - radius - 1)) * (ix - (width - radius - 1)) +
-                            (iy - radius) * (iy - radius) > radius * radius;
-                } else if (ix < radius && iy >= height - radius) {
-                    inCorner = (ix - radius) * (ix - radius) +
-                            (iy - (height - radius - 1)) * (iy - (height - radius - 1)) > radius * radius;
-                } else if (ix >= width - radius && iy >= height - radius) {
-                    inCorner = (ix - (width - radius - 1)) * (ix - (width - radius - 1)) +
-                            (iy - (height - radius - 1)) * (iy - (height - radius - 1)) > radius * radius;
+        int steps = Math.max(2, height);
+        for (int i = 0; i < steps; i++) {
+            float t0 = i / (float) steps;
+            float t1 = (i + 1) / (float) steps;
+
+            float value0 = 1.0f - t0;
+            float value1 = 1.0f - t1;
+
+            int leftColor0 = Color.HSBtoRGB(hue, 0f, value0) | 0xFF000000;
+            int rightColor0 = Color.HSBtoRGB(hue, 1f, value0) | 0xFF000000;
+            int leftColor1 = Color.HSBtoRGB(hue, 0f, value1) | 0xFF000000;
+            int rightColor1 = Color.HSBtoRGB(hue, 1f, value1) | 0xFF000000;
+
+            float yStart = y0 + t0 * height;
+            float yEnd   = y0 + t1 * height;
+
+            int dy0 = (int) (yStart - y0);
+            int dy1 = (int) (yEnd - y0);
+
+            int leftX0 = x0;
+            int rightX0 = x1 - 1;
+            int leftX1 = x0;
+            int rightX1 = x1 - 1;
+
+            if (radius > 0) {
+                if (dy0 < radius) {
+                    int dd = radius - dy0;
+                    int offsetX = (int) Math.sqrt((double) radius * radius - (double) dd * dd);
+                    leftX0 = x0 + radius - offsetX;
+                    rightX0 = x1 - radius + offsetX - 1;
+                } else if (dy0 >= height - radius) { // bottom curve
+                    int dd = dy0 - (height - radius - 1);
+                    int offsetX = (int) Math.sqrt((double) radius * radius - (double) dd * dd);
+                    leftX0 = x0 + radius - offsetX;
+                    rightX0 = x1 - radius + offsetX - 1;
                 }
-                if (inCorner) continue;
 
-                float saturation = ix / (float)(width - 1);
-                float value = 1.0f - (iy / (float)(height - 1));
-
-                int color = Color.HSBtoRGB(hue, saturation, value);
-                ctx.fill(x + ix, y + iy, x + ix + 1, y + iy + 1, color);
+                if (dy1 < radius) {
+                    int dd = radius - dy1;
+                    int offsetX = (int) Math.sqrt((double) radius * radius - (double) dd * dd);
+                    leftX1 = x0 + radius - offsetX;
+                    rightX1 = x1 - radius + offsetX - 1;
+                } else if (dy1 >= height - radius) {
+                    int dd = dy1 - (height - radius - 1);
+                    int offsetX = (int) Math.sqrt((double) radius * radius - (double) dd * dd);
+                    leftX1 = x0 + radius - offsetX;
+                    rightX1 = x1 - radius + offsetX - 1;
+                }
             }
+
+            int leftX = Math.max(leftX0, leftX1);
+            int rightX = Math.min(rightX0, rightX1);
+            if (rightX <= leftX) continue;
+
+            float px0 = leftX;
+            float px1 = rightX + 1;
+
+            vertices.vertex(px0, yStart, 0).color(leftColor0);
+            vertices.vertex(px0, yEnd, 0).color(leftColor1);
+            vertices.vertex(px1, yEnd, 0).color(rightColor1);
+            vertices.vertex(px1, yStart, 0).color(rightColor0);
         }
-        //Draw edges
-        int baseColor = Color.HSBtoRGB(hue, 1.0f, 1.0f);
-        fillCircleQuarter(ctx, x + radius, y + radius, radius, Color.WHITE.getRGB(), Corner.TOP_LEFT);
-        fillCircleQuarter(ctx, right - radius - 1, y + radius, radius, baseColor, Corner.TOP_RIGHT);
-        fillCircleQuarter(ctx, x + radius, bottom - radius - 1, radius, Color.BLACK.getRGB(), Corner.BOTTOM_LEFT);
-        fillCircleQuarter(ctx, right - radius - 1, bottom - radius - 1, radius, Color.BLACK.getRGB(), Corner.BOTTOM_RIGHT);
     }
 
     public static void drawRoundedHueSlider(DrawContext ctx, int x, int y, int width, int height, int radius) {

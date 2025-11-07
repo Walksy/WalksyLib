@@ -76,7 +76,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
         super.close();
         this.configManager.cleanCache();
-        save(); //saves option group states
+        save(false); //saves option group states
     }
 
 
@@ -95,7 +95,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::close);
         allModsButton = new ButtonWidget(width - 65, 5, 57, 16, true, "WalksyLib", () -> client.setScreen(new APIScreen(this)));
 
-        saveButton = new ButtonWidget(width - 58, height - 21, 50, 16, true, "Save", this::save);
+        saveButton = new ButtonWidget(width - 58, height - 21, 50, 16, true, "Save", () -> this.save(true));
         resetButton = new ButtonWidget(width - 58 - 55, height - 21, 50, 16, true, "Reset", this::resetOptions);
         undoButton = new ButtonWidget(width - 58 - 110, height - 21, 50, 16, true, "Undo", this::undo);
 
@@ -643,10 +643,13 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     }
 
-    public void save()
+    public void save(boolean runSave)
     {
         this.setOptionPrevs();
         this.configManager.get().save();
+        if (runSave) {
+            this.configManager.get().runSave();
+        }
         this.defineOptions();
     }
 

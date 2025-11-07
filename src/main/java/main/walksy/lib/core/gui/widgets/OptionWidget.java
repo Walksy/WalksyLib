@@ -52,10 +52,23 @@ public abstract class OptionWidget extends AbstractWidget {
             screen.setFocusedOption(option);
         }
 
-        context.enableScissor(0, 49, screen.width, screen.height - 28);
+        int scissorX1 = 0;
+        int scissorY1 = 49;
+        int scissorX2 = screen.width;
+        int scissorY2 = screen.height - 28;
+
+        if (getX() + getWidth() < scissorX1 || getX() > scissorX2
+                || getY() + getHeight() < scissorY1 || getY() > scissorY2) {
+            return;
+        }
+
+        context.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
 
         if (!isAvailable()) {
             RenderSystem.setShaderColor(0.3f, 0.3f, 0.3f, 1f);
+            if (hovered) {
+                this.screen.setTooltip(Text.of(this.option.getAvailabilityHelper()));
+            }
         }
         renderBase(context);
 
