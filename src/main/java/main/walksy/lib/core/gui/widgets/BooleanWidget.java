@@ -63,7 +63,7 @@ public class BooleanWidget extends OptionWidget {
         int color = option.getValue() ? Color.WHITE.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
         float animX = toggleAnim.getCurrentValue();
 
-        Renderer2D.fillRoundedRect(context, animX, getY() + 4, 14, getHeight() - 8, 2, color);
+        Renderer2D.fillRoundedRect(context, (int) animX, getY() + 4, 14, getHeight() - 8, 2, color);
     }
 
     @Override

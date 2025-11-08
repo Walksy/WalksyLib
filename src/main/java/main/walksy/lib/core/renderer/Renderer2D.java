@@ -200,6 +200,23 @@ public class Renderer2D {
         drawCircleQuarterOutline(ctx, right - radius - 1, bottom - radius - 1, radius, thickness, color, Corner.BOTTOM_RIGHT);
     }
 
+    public static void _fillRoundedRectOutline(DrawContext ctx, int x, int y, int width, int height, int radius, int thickness, int color) {
+        int right = x + width;
+        int bottom = y + height;
+
+        fill(ctx.getMatrices(), x + radius + 1, y, right - radius - 1, y + thickness, color);
+        fill(ctx.getMatrices(), x + radius + 1, bottom - thickness, right - radius - 1, bottom, color);
+
+        fill(ctx.getMatrices(), x, y + radius + 1, x + thickness, bottom - radius - 1, color);
+        fill(ctx.getMatrices(), right - thickness, y + radius + 1, right, bottom - radius - 1, color);
+
+        _drawCircleQuarterOutline(ctx, x + radius, y + radius, radius, thickness, color, Corner.TOP_LEFT);
+        _drawCircleQuarterOutline(ctx, right - radius - 1, y + radius, radius, thickness, color, Corner.TOP_RIGHT);
+        _drawCircleQuarterOutline(ctx, x + radius, bottom - radius - 1, radius, thickness, color, Corner.BOTTOM_LEFT);
+        _drawCircleQuarterOutline(ctx, right - radius - 1, bottom - radius - 1, radius, thickness, color, Corner.BOTTOM_RIGHT);
+    }
+
+
     public static void fillRoundedRectOutline_ModWidget(DrawContext ctx, int x, int y, int width, int height, int radius, int thickness, int color) {
         int right = x + width;
         int bottom = y + height;
@@ -376,6 +393,28 @@ public class Renderer2D {
         }
     }
 
+    //Used in case this::fill needs overlapping vertices over DrawContext::fill
+    private static void _drawCircleQuarterOutline(DrawContext ctx, int centerX, int centerY, int radius, int thickness, int color, Corner corner) {
+        int outerRadiusSq = radius * radius;
+        int innerRadiusSq = (radius - thickness) * (radius - thickness);
+
+        for (int y = 0; y <= radius; y++) {
+            for (int x = 0; x <= radius; x++) {
+                int distSq = x * x + y * y;
+                if (distSq <= outerRadiusSq && distSq >= innerRadiusSq) {
+                    int drawX = centerX;
+                    int drawY = centerY;
+                    switch (corner) {
+                        case TOP_LEFT -> fill(ctx.getMatrices(), drawX - x, drawY - y, drawX - x + 1, drawY - y + 1, color);
+                        case TOP_RIGHT -> fill(ctx.getMatrices(), drawX + x, drawY - y, drawX + x + 1, drawY - y + 1, color);
+                        case BOTTOM_LEFT -> fill(ctx.getMatrices(), drawX - x, drawY + y, drawX - x + 1, drawY + y + 1, color);
+                        case BOTTOM_RIGHT -> fill(ctx.getMatrices(), drawX + x, drawY + y, drawX + x + 1, drawY + y + 1, color);
+                    }
+                }
+            }
+        }
+    }
+
     public static void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, boolean blend) {
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
@@ -533,11 +572,14 @@ public class Renderer2D {
             y2 = i;
         }
 
-        VertexConsumer vertexConsumer = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayer.getGui());
+        VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        VertexConsumer vertexConsumer = immediate.getBuffer(RenderLayer.getGui());
         vertexConsumer.vertex(matrix4f, (float)x1, (float)y1, (float)0).color(color);
         vertexConsumer.vertex(matrix4f, (float)x1, (float)y2, (float)0).color(color);
         vertexConsumer.vertex(matrix4f, (float)x2, (float)y2, (float)0).color(color);
         vertexConsumer.vertex(matrix4f, (float)x2, (float)y1, (float)0).color(color);
+
+        immediate.draw();
     }
 
 

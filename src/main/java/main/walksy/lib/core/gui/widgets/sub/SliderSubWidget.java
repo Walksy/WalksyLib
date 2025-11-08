@@ -38,13 +38,13 @@ public class SliderSubWidget<T> extends SubWidget {
         isHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
 
         Renderer2D.fillRoundedRect(context, x, y, width, height, 1, new Color(255, 255, 255, 20).getRGB());
-        Renderer2D.fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
+        Renderer2D._fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
 
         int v = isHovered ? 220 : 155;
         Renderer2D.fillRoundedRect(
                 context,
-                x + (sliderPosition * (width - 10)),
-                y + (float) (height - 10) / 2,
+                (int) (x + (sliderPosition * (width - 10))),
+                (int) (y + (float) (height - 10) / 2),
                 10, 10,
                 2,
                 new Color(v, v, v, 255).getRGB()
