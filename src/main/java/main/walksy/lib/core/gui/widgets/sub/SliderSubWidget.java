@@ -43,8 +43,8 @@ public class SliderSubWidget<T> extends SubWidget {
         int v = isHovered ? 220 : 155;
         Renderer2D.fillRoundedRect(
                 context,
-                (int) (x + (sliderPosition * (width - 10))),
-                (int) (y + (float) (height - 10) / 2),
+                (x + (sliderPosition * (width - 10))),
+                (y + (float) (height - 10) / 2),
                 10, 10,
                 2,
                 new Color(v, v, v, 255).getRGB()
