@@ -54,7 +54,7 @@ public class EnumOptionWidget<E extends Enum<E>> extends OptionWidget {
                 option.getValue().name(),
                 (int) (rectX + rectWidth / 2f),
                 textPos,
-                0xFFFFFF
+                -1
         );
 
 

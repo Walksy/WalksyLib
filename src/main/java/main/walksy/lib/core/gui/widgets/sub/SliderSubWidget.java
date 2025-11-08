@@ -55,7 +55,7 @@ public class SliderSubWidget<T> extends SubWidget {
                 adapter.format(value),
                 isRight ? x + width + 3 : x - MinecraftClient.getInstance().textRenderer.getWidth(adapter.format(adapter.getMax())) - 3,
                 y + (height - 8) / 2,
-                0xFFFFFF,
+                -1,
                 false
         );
     }

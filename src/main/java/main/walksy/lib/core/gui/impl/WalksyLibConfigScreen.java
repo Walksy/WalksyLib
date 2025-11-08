@@ -291,7 +291,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
         context.drawHorizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
         context.drawHorizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
-        context.drawCenteredTextWithShadow(textRenderer, configManager.get().name(), width / 2, 12 - textRenderer.fontHeight / 2, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, configManager.get().name(), width / 2, 12 - textRenderer.fontHeight / 2, -1);
 
         ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
         ScreenGlobals.OPTION_PANEL_STARTY = 61;

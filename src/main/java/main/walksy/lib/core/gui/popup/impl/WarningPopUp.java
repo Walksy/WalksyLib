@@ -10,9 +10,7 @@ import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 
-import java.awt.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class WarningPopUp extends PopUp {
     private final String title;
@@ -38,7 +36,7 @@ public class WarningPopUp extends PopUp {
                 title,
                 (int) ((parent.width / 2) / scale),
                 (int) ((y + 11) / scale),
-                0xFFFFFF
+                -1
         );
         context.getMatrices().pop();
 

@@ -91,13 +91,13 @@ public class APIScreen extends BaseScreen {
         //context.drawHorizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
         //context.drawHorizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
         //context.drawTexture(RenderLayer::getGuiTextured, FOOTER_SEPARATOR_TEXTURE, 0, height - 28, 0.0F, 0.0F, width, 2, 32, 2);
-        context.drawCenteredTextWithShadow(textRenderer, "WalksyLib API Screen", width / 2, 12 - textRenderer.fontHeight / 2, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, "WalksyLib API Screen", width / 2, 12 - textRenderer.fontHeight / 2, -1);
 
         if (!viewingMods()) {
             logWidget.render(context, mouseX, mouseY, delta);
         } else {
             if (this.modWidgets.isEmpty()) {
-                context.drawCenteredTextWithShadow(textRenderer, "No Mods", width / 2, height / 2, 0xFFFFFF);
+                context.drawCenteredTextWithShadow(textRenderer, "No Mods", width / 2, height / 2, -1);
             }
             for (ModWidget widget : this.modWidgets) {
                 widget.render(context, mouseX, mouseY, delta);
