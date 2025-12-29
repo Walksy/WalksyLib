@@ -3,8 +3,8 @@ package main.walksy.lib.core.config.local.options.type;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec2f;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,9 +14,11 @@ public class PixelGridAnimation {
     private int tickCounter = 0;
     private int animationSpeed = 10;
 
-    private int offsetX = 0;
-    private int offsetY = 0;
+    private double offsetX = 0.0;
+    private double offsetY = 0.0;
+
     private float size = 1.0f;
+    private boolean hasPlayedOnce = false;
 
     public PixelGridAnimation(PixelGrid... grids) {
         List<PixelGrid> grids1 = new ArrayList<>(List.of(grids));
@@ -49,32 +51,40 @@ public class PixelGridAnimation {
     public void resetAnimation() {
         currentFrame = 0;
         tickCounter = 0;
+        hasPlayedOnce = false;
     }
 
     public void render(DrawContext context, boolean blend) {
-        Point pos = getAbsolutePosition();
+        Vec2f pos = getAbsolutePosition();
         this.render(context, pos.x, pos.y, blend);
     }
 
-    public void render(DrawContext context, int x, int y, boolean blend) {
+    public void render(DrawContext context, float x, float y, boolean blend) {
         PixelGrid frame = this.getCurrentFrame();
         if (frame != null) {
             context.getMatrices().push();
             context.getMatrices().scale(size, size, 1.0f);
-            frame.render(context, (int) (x / size), (int) (y / size), blend);
+            frame.render(context, x / size, y / size, blend);
             context.getMatrices().pop();
         }
     }
 
     public void tick() {
         if (frames.isEmpty() || animationSpeed <= 0) return;
-
         tickCounter++;
         int frameDelay = Math.max(1, 21 - animationSpeed);
         if (tickCounter >= frameDelay) {
             tickCounter = 0;
+            int prevFrame = currentFrame;
             currentFrame = (currentFrame + 1) % frames.size();
+            if (currentFrame == 0 && prevFrame == frames.size() - 1) {
+                hasPlayedOnce = true;
+            }
         }
+    }
+
+    public boolean hasPlayedOnce() {
+        return hasPlayedOnce;
     }
 
     public void setAnimationSpeed(int speed) {
@@ -111,47 +121,59 @@ public class PixelGridAnimation {
         this.currentFrame = MathHelper.clamp(index, 0, frames.size() - 1);
     }
 
-    public Point getAbsolutePosition() {
+    public Vec2f getAbsolutePosition() {
         MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.getWindow() == null) return new Vec2f(0f, 0f);
+
         int windowWidth = client.getWindow().getScaledWidth();
         int windowHeight = client.getWindow().getScaledHeight();
 
-        double centerX = (windowWidth / 2.0) - 8.0;
-        double centerY = (windowHeight / 2.0) - 8.0;
+        PixelGrid frame = getCurrentFrame();
+        int frameW = frame == null ? 0 : frame.getWidth();
+        int frameH = frame == null ? 0 : frame.getHeight();
 
-        int x = (int) Math.round(centerX + offsetX);
-        int y = (int) Math.round(centerY + offsetY);
+        int renderedW = Math.round(frameW * size);
+        int renderedH = Math.round(frameH * size);
 
-        return new Point(x, y);
+        int baseX = (windowWidth - renderedW) / 2;
+        int baseY = (windowHeight - renderedH) / 2;
+
+        double rawX = baseX + offsetX;
+        double rawY = baseY + offsetY;
+
+        float x = (float) (Math.round(rawX * 2.0) / 2.0);
+        float y = (float) (Math.round(rawY * 2.0) / 2.0);
+
+        return new Vec2f(x, y);
     }
 
-    public PixelGridAnimation offset(int offsetX, int offsetY) {
+    public PixelGridAnimation offset(double offsetX, double offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         return this;
+    }
+
+    public void setOffset(double offsetX, double offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+    }
+
+    public void addOffset(double dx, double dy) {
+        this.offsetX += dx;
+        this.offsetY += dy;
+    }
+
+    public double getOffsetX() {
+        return offsetX;
+    }
+
+    public double getOffsetY() {
+        return offsetY;
     }
 
     public PixelGridAnimation animationSpeed(int speed) {
         this.animationSpeed = speed;
         return this;
-    }
-
-    public void setOffset(int offsetX, int offsetY) {
-        this.offsetX = offsetX;
-        this.offsetY = offsetY;
-    }
-
-    public void addOffset(int dx, int dy) {
-        this.offsetX += dx;
-        this.offsetY += dy;
-    }
-
-    public int getOffsetX() {
-        return offsetX;
-    }
-
-    public int getOffsetY() {
-        return offsetY;
     }
 
     public void setSize(float size) {
@@ -181,11 +203,9 @@ public class PixelGridAnimation {
         if (this.offsetX != other.offsetX || this.offsetY != other.offsetY) return false;
         if (this.size != other.size) return false;
         if (this.frames.size() != other.frames.size()) return false;
-
         for (int i = 0; i < frames.size(); i++) {
-            if (!this.frames.get(i).equals(other.frames.get(i))) return false; //deepcopy?
+            if (!this.frames.get(i).equals(other.frames.get(i))) return false;
         }
-
         return true;
     }
 }

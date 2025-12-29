@@ -33,7 +33,7 @@ public class PixelGrid {
         Renderer2D.renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, blend);
     }
 
-    public void render(DrawContext context, int x, int y, boolean blend) {
+    public void render(DrawContext context, float x, float y, boolean blend) {
         Renderer2D.renderGridTexture(context, this, x, y, 1, 0, blend);
     }
 

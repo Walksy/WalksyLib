@@ -53,7 +53,7 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
 
         if (obj.has("position")) {
             JsonObject posObj = obj.getAsJsonObject("position");
-            animation.setOffset(posObj.get("x").getAsInt(), posObj.get("y").getAsInt());
+            animation.setOffset(posObj.get("x").getAsDouble(), posObj.get("y").getAsDouble());
         }
 
         return animation;

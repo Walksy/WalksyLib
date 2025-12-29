@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgramKey;
 import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
@@ -233,7 +232,8 @@ public class Renderer2D {
 
 
     public static void drawHueSaturationValueBox(DrawContext ctx, int x, int y, int width, int height, int radius, float hue) {
-        VertexConsumer vertices = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayer.getGui());
+        VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        VertexConsumer vertices = immediate.getBuffer(RenderLayer.getGui());
         int x0 = x;
         int y0 = y;
         int x1 = x + width;
@@ -270,7 +270,7 @@ public class Renderer2D {
                     int offsetX = (int) Math.sqrt((double) radius * radius - (double) dd * dd);
                     leftX0 = x0 + radius - offsetX;
                     rightX0 = x1 - radius + offsetX - 1;
-                } else if (dy0 >= height - radius) { // bottom curve
+                } else if (dy0 >= height - radius) {
                     int dd = dy0 - (height - radius - 1);
                     int offsetX = (int) Math.sqrt((double) radius * radius - (double) dd * dd);
                     leftX0 = x0 + radius - offsetX;
@@ -302,6 +302,7 @@ public class Renderer2D {
             vertices.vertex(px1, yEnd, 0).color(rightColor1);
             vertices.vertex(px1, yStart, 0).color(rightColor0);
         }
+        immediate.draw();
     }
 
     public static void drawRoundedHueSlider(DrawContext ctx, int x, int y, int width, int height, int radius) {
@@ -415,28 +416,18 @@ public class Renderer2D {
         }
     }
 
-    public static void renderGridTexture(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, boolean blend) {
+    public static void renderGridTexture(DrawContext context, PixelGrid grid, float x1, float y1, int pixelSize, int gapSize, boolean blend) {
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
                 boolean val = grid.getPixel(x, y);
 
-                int px = x1 + x * (pixelSize + gapSize);
-                int py = y1 + y * (pixelSize + gapSize);
+                float px = x1 + x * (pixelSize + gapSize);
+                float py = y1 + y * (pixelSize + gapSize);
                 float px2 = px + pixelSize;
                 float py2 = py + pixelSize;
 
                 if (val) {
-                    if (blend) {
-                        drawFilledRectangle(context.getMatrices(), px, py, px2, py2, Color.WHITE, true);
-                    } else {
-                        context.fill(
-                                px,
-                                py,
-                                px + pixelSize,
-                                py + pixelSize,
-                                Color.WHITE.getRGB()
-                        );
-                    }
+                    drawFilledRectangle(context.getMatrices(), px, py, px2, py2, Color.WHITE, blend);
                 }
             }
         }
@@ -446,14 +437,14 @@ public class Renderer2D {
         stack.push();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader((ShaderProgramKey) ShaderProgramKeys.POSITION_COLOR);
+        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
 
         if (blend) {
             RenderSystem.blendFuncSeparate(
-                    (GlStateManager.SrcFactor) GlStateManager.SrcFactor.ONE_MINUS_DST_COLOR,
-                    (GlStateManager.DstFactor) GlStateManager.DstFactor.ONE_MINUS_SRC_COLOR,
-                    (GlStateManager.SrcFactor) GlStateManager.SrcFactor.ONE,
-                    (GlStateManager.DstFactor) GlStateManager.DstFactor.ZERO
+                    GlStateManager.SrcFactor.ONE_MINUS_DST_COLOR,
+                    GlStateManager.DstFactor.ONE_MINUS_SRC_COLOR,
+                    GlStateManager.SrcFactor.ONE,
+                    GlStateManager.DstFactor.ZERO
             );
         }
 

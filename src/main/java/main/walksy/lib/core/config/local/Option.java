@@ -181,10 +181,10 @@ public class Option<T> {
             if (oldAnim.getAnimationSpeed() != newAnim.getAnimationSpeed()) {
                 logField(config, this.getName() + "'s Speed", oldAnim.getAnimationSpeed(), newAnim.getAnimationSpeed());
             }
-            if (Float.compare(oldAnim.getOffsetX(), newAnim.getOffsetX()) != 0) {
+            if (Double.compare(oldAnim.getOffsetX(), newAnim.getOffsetX()) != 0) {
                 logField(config, this.getName() + "'s X Pos", oldAnim.getOffsetX(), newAnim.getOffsetX());
             }
-            if (Float.compare(oldAnim.getOffsetY(), newAnim.getOffsetY()) != 0) {
+            if (Double.compare(oldAnim.getOffsetY(), newAnim.getOffsetY()) != 0) {
                 logField(config, this.getName() + "'s Y Pos", oldAnim.getOffsetY(), newAnim.getOffsetY());
             }
         } else {

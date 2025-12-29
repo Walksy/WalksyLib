@@ -1,6 +1,5 @@
 package main.walksy.lib.core.mods;
 
-import com.terraformersmc.modmenu.gui.widget.entries.ModListEntry;
 import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.fabricmc.loader.api.ModContainer;
@@ -46,7 +45,7 @@ public class Mod {
                     MinecraftClient.getInstance().getTextureManager().registerTexture(identifier, tex);
                     return identifier;
                 })
-                .orElse(ModListEntry.UNKNOWN_ICON /*-> From modmenu */);
+                .orElse(Identifier.ofVanilla("textures/misc/unknown_pack.png"));
     }
 
     public ModContainer getContainer()

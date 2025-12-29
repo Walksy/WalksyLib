@@ -47,7 +47,7 @@ public class BaseScreen extends Screen {
     protected void renderBlurEffect() {
         PostEffectProcessor blur = client.getShaderLoader().loadPostEffect(Identifier.ofVanilla("blur"), DefaultFramebufferSet.MAIN_ONLY);
         if (blur != null) {
-            blur.setUniforms("Radius", 12);
+            blur.setUniforms("Radius", 15);
             blur.render(client.getFramebuffer(), shaderPool);
         }
         client.getFramebuffer().beginWrite(false);

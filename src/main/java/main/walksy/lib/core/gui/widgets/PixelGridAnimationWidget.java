@@ -58,9 +58,7 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         super.draw(context, mouseX, mouseY, delta);
         this.animationSpeedSlider.setOnChange(option.getValue()::setAnimationSpeed);
         this.frameSize.setOnChange(option.getValue()::setSize);
-        if (this.option.getValue().getOffsetX() != -1 &&  this.option.getValue().getOffsetY() != -1) {
-            this.editHudButton.render(context, mouseX, mouseY, delta);
-        }
+        this.editHudButton.render(context, mouseX, mouseY, delta);
 
         context.drawVerticalLine(
                 getX() + getWidth() - 38,
@@ -154,9 +152,8 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     @Override
     public void onMouseClick(double mouseX, double mouseY, int button) {
         super.onMouseClick(mouseX, mouseY, button);
-        if (this.option.getValue().getOffsetX() != -1 &&  this.option.getValue().getOffsetY() != -1) {
-            this.editHudButton.onClick(mouseX, mouseY);
-        }
+        this.editHudButton.onClick(mouseX, mouseY);
+
         this.editFrameButton.onClick(mouseX, mouseY);
         this.viewFrames.onClick(mouseX, mouseY);
 
@@ -232,18 +229,25 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     }
 
     private void handleViewFramesButtonClick() {
-        screen.popUp = new FrameManagerPopUp(screen, option, () ->
-        {
-            this.setupFrames(this.frameToReplace , false);
-            PixelGrid grid = this.option.getValue().getFrame(frameToReplace).copy();
-            if (grid != null) {
-                this.viewingGrid = grid;
-            } else {
-                this.viewingGrid = this.option.getValue().getFrames().get(0).copy();
-            }
-        }, grid -> {
-            this.option.getValue().setCurrentFrame(0);
-        });
+        screen.popUp = new FrameManagerPopUp(
+                screen,
+                option,
+                () -> {
+                    this.setupFrames(this.frameToReplace, false);
+
+                    PixelGrid frame = this.option.getValue().getFrame(frameToReplace);
+                    PixelGrid grid;
+
+                    if (frame != null) {
+                        grid = frame.copy();
+                    } else {
+                        grid = this.option.getValue().getFrames().get(0).copy();
+                    }
+
+                    this.viewingGrid = grid;
+                },
+                grid -> this.option.getValue().setCurrentFrame(0)
+        );
     }
 
     @Override

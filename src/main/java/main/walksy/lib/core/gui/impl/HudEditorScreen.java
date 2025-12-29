@@ -1,12 +1,14 @@
 package main.walksy.lib.core.gui.impl;
 
 import main.walksy.lib.core.config.local.Option;
+import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.renderer.Renderer2D;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec2f;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -16,7 +18,9 @@ public class HudEditorScreen extends BaseScreen {
     private static final Identifier CROSSHAIR_TEXTURE = Identifier.ofVanilla("hud/crosshair");
     private final Option<?> hudOption;
     private boolean dragging = false;
-    private int dragOffsetX = 0, dragOffsetY = 0;
+
+    private double dragOffsetX = 0;
+    private double dragOffsetY = 0;
 
     public HudEditorScreen(Screen parent, Option<?> option) {
         super("HudEditor", parent);
@@ -43,9 +47,9 @@ public class HudEditorScreen extends BaseScreen {
         );
 
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            Point pos = pixelGridAnimation.getAbsolutePosition();
-            int x = pos.x;
-            int y = pos.y;
+            Vec2f pos = pixelGridAnimation.getAbsolutePosition();
+            float x = pos.x;
+            float y = pos.y;
 
             if (this.client.world == null) {
                 context.fill(0, 0, width, height, Color.BLACK.getRGB());
@@ -68,8 +72,8 @@ public class HudEditorScreen extends BaseScreen {
                 Renderer2D.renderGridOutline(
                         context,
                         pixelGridAnimation.getCurrentFrame(),
-                        (int) (x / size),
-                        (int) (y / size),
+                        Math.round(x / size),
+                        Math.round(y / size),
                         1,
                         0
                 );
@@ -80,73 +84,109 @@ public class HudEditorScreen extends BaseScreen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            Point pos = pixelGridAnimation.getAbsolutePosition();
-            float size = pixelGridAnimation.getSize();
-            int gridWidth = (int) (pixelGridAnimation.getCurrentFrame().getWidth() * size);
-            int gridHeight = (int) (pixelGridAnimation.getCurrentFrame().getHeight() * size);
+        if (!(hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
 
-            if (mouseX >= pos.x && mouseX <= pos.x + gridWidth
-                    && mouseY >= pos.y && mouseY <= pos.y + gridHeight) {
-                dragging = true;
-                dragOffsetX = (int) (mouseX - pos.x);
-                dragOffsetY = (int) (mouseY - pos.y);
-                return true;
-            }
+        PixelGrid frame = pixelGridAnimation.getCurrentFrame();
+        int frameW = frame == null ? 0 : frame.getWidth();
+        int frameH = frame == null ? 0 : frame.getHeight();
+        float size = pixelGridAnimation.getSize();
+
+        int renderedW = Math.round(frameW * size);
+        int renderedH = Math.round(frameH * size);
+
+        int baseX = (this.client.getWindow().getScaledWidth() - renderedW) / 2;
+        int baseY = (this.client.getWindow().getScaledHeight() - renderedH) / 2;
+
+        double rawX = baseX + pixelGridAnimation.getOffsetX();
+        double rawY = baseY + pixelGridAnimation.getOffsetY();
+
+        if (mouseX >= rawX && mouseX <= rawX + renderedW
+                && mouseY >= rawY && mouseY <= rawY + renderedH) {
+            dragging = true;
+
+            dragOffsetX = mouseX - rawX;
+            dragOffsetY = mouseY - rawY;
+            return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-        if (dragging && hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            int screenWidth = this.client.getWindow().getScaledWidth();
-            int screenHeight = this.client.getWindow().getScaledHeight();
-
-            int newX = (int) mouseX - dragOffsetX;
-            int newY = (int) mouseY - dragOffsetY;
-
-            int centerX = (screenWidth / 2) - 8;
-            int centerY = (screenHeight / 2) - 8;
-            int offsetX = newX - centerX;
-            int offsetY = newY - centerY;
-
-            pixelGridAnimation.setOffset(offsetX, offsetY);
-            return true;
+        if (!(dragging && hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
+            return super.mouseDragged(mouseX, mouseY, button, dx, dy);
         }
-        return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+
+        PixelGrid frame = pixelGridAnimation.getCurrentFrame();
+        int frameW = frame == null ? 0 : frame.getWidth();
+        int frameH = frame == null ? 0 : frame.getHeight();
+        float size = pixelGridAnimation.getSize();
+
+        int renderedW = Math.round(frameW * size);
+        int renderedH = Math.round(frameH * size);
+
+        int baseX = (this.client.getWindow().getScaledWidth() - renderedW) / 2;
+        int baseY = (this.client.getWindow().getScaledHeight() - renderedH) / 2;
+
+        double newTopLeftX = mouseX - dragOffsetX;
+        double newTopLeftY = mouseY - dragOffsetY;
+
+        double offsetX = newTopLeftX - baseX;
+        double offsetY = newTopLeftY - baseY;
+
+        offsetX = Math.round(offsetX * 2.0) / 2.0;
+        offsetY = Math.round(offsetY * 2.0) / 2.0;
+
+        pixelGridAnimation.setOffset(offsetX, offsetY);
+        return true;
     }
+
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (dragging) {
-            dragging = false;
-
-            if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-                int screenWidth = this.client.getWindow().getScaledWidth();
-                int screenHeight = this.client.getWindow().getScaledHeight();
-
-                int newX = (int) mouseX - dragOffsetX;
-                int newY = (int) mouseY - dragOffsetY;
-
-                int centerX = (screenWidth / 2) - 8;
-                int centerY = (screenHeight / 2) - 8;
-
-                int offsetX = newX - centerX;
-                int offsetY = newY - centerY;
-
-                pixelGridAnimation.setOffset(offsetX, offsetY);
-                hudOption.setValue(pixelGridAnimation);
-            }
+        if (!dragging) {
+            return super.mouseReleased(mouseX, mouseY, button);
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+
+        dragging = false;
+
+        if (!(hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
+            return super.mouseReleased(mouseX, mouseY, button);
+        }
+
+        PixelGrid frame = pixelGridAnimation.getCurrentFrame();
+        int frameW = frame == null ? 0 : frame.getWidth();
+        int frameH = frame == null ? 0 : frame.getHeight();
+        float size = pixelGridAnimation.getSize();
+
+        int renderedW = Math.round(frameW * size);
+        int renderedH = Math.round(frameH * size);
+
+        int baseX = (this.client.getWindow().getScaledWidth() - renderedW) / 2;
+        int baseY = (this.client.getWindow().getScaledHeight() - renderedH) / 2;
+
+        double newTopLeftX = mouseX - dragOffsetX;
+        double newTopLeftY = mouseY - dragOffsetY;
+
+        double offsetX = newTopLeftX - baseX;
+        double offsetY = newTopLeftY - baseY;
+
+        offsetX = Math.round(offsetX * 2.0) / 2.0;
+        offsetY = Math.round(offsetY * 2.0) / 2.0;
+
+        pixelGridAnimation.setOffset(offsetX, offsetY);
+        hudOption.setValue(pixelGridAnimation);
+
+        return true;
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            int moveAmount = Screen.hasShiftDown() ? 5 : 1;
+
+            double moveAmount = Screen.hasShiftDown() ? 2.5 : 0.5;
 
             switch (keyCode) {
                 case GLFW.GLFW_KEY_UP -> pixelGridAnimation.addOffset(0, -moveAmount);
@@ -165,7 +205,6 @@ public class HudEditorScreen extends BaseScreen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-
     @Override
     public void close() {
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
@@ -175,8 +214,5 @@ public class HudEditorScreen extends BaseScreen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (this.client.world == null) {
-        }
-    }
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {}
 }
