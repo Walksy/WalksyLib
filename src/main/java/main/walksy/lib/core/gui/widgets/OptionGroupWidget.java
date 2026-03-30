@@ -6,11 +6,13 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.ScreenGlobals;
 import main.walksy.lib.core.utils.SearchUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class OptionGroupWidget extends AbstractWidget {
     public boolean isHovered;
 
     public OptionGroupWidget(int x, int y, int width, int height, OptionGroup group, WalksyLibConfigScreen parent) {
-        super(x, y, width, height, Text.of(group.getName()));
+        super(x, y, width, height, Component.literal(group.getName()));
         this.parent = parent;
         this.group = group;
         isHovered = false;
@@ -38,20 +40,20 @@ public class OptionGroupWidget extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
         context.enableScissor(0, 49, parent.width, parent.height - 28);
-        MinecraftClient client = MinecraftClient.getInstance();
-        TextRenderer textRenderer = client.textRenderer;
+        Minecraft client = Minecraft.getInstance();
+        Font textRenderer = client.font;
 
         String text = group.getName();
-        int textWidth = textRenderer.getWidth(text);
-        int fontHeight = textRenderer.fontHeight;
+        int textWidth = textRenderer.width(text);
+        int fontHeight = textRenderer.lineHeight;
 
         int centerX = getX() + textWidth / 2;
         int hoverPadding = 58;
         int hoverHeight = fontHeight + 4;
 
-        isHovered = context.scissorContains(mouseX, mouseY)
+        isHovered = context.containsPointInScissor(mouseX, mouseY)
                 && mouseY >= getY() - 2 && mouseY < getY() - 2 + hoverHeight
                 && mouseX >= centerX - (textWidth / 2 + hoverPadding)
                 && mouseX < centerX + (textWidth / 2 + hoverPadding);
@@ -72,8 +74,8 @@ public class OptionGroupWidget extends AbstractWidget {
         int textEndX = textCenterX + textWidth / 2;
 
         //LEFT
-        context.drawHorizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
-        context.drawHorizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
+        context.horizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
+        context.horizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
         Renderer2D.renderMiniArrow(
                 context,
                 textStartX - 50 - 5,
@@ -84,8 +86,8 @@ public class OptionGroupWidget extends AbstractWidget {
         );
 
         //RIGHT
-        context.drawHorizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
-        context.drawHorizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
+        context.horizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
+        context.horizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
         Renderer2D.renderMiniArrow(
                 context,
                 textEndX + 50 + 6,
@@ -106,18 +108,22 @@ public class OptionGroupWidget extends AbstractWidget {
             );
         }
 
-        context.drawTextWithShadow(textRenderer, text, getX() - textWidth / 2, getY(), bgColor);
+        context.text(textRenderer, text, getX() - textWidth / 2, getY(), bgColor);
         context.disableScissor();
     }
 
-    private void renderDebug(DrawContext context, int x1, int y1, int x2, int y2)
-    {
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput output) {
+
+    }
+
+    private void renderDebug(GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
         context.fill(x1, y1, x2, y2, 0xAAFFFFFF);
     }
 
-    public void onMouseClick(double mouseX, double mouseY, int button)
+    public void onMouseClick(MouseButtonEvent click, boolean doubled)
     {
-        if (isHovered && button == 0) {
+        if (isHovered && click.button() == 0) {
             group.toggleExpanded();
             parent.layoutGroupWidgets();
             updateVisibility();
@@ -131,9 +137,6 @@ public class OptionGroupWidget extends AbstractWidget {
             child.visible = expanded;
         }
     }
-
-    @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {}
 
     public boolean searched(boolean shouldLevenshtein) {
         if (searchQuery.isEmpty()) return true;

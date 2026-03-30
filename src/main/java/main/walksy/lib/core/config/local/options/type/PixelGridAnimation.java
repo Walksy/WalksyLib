@@ -1,9 +1,9 @@
 package main.walksy.lib.core.config.local.options.type;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,18 +54,18 @@ public class PixelGridAnimation {
         hasPlayedOnce = false;
     }
 
-    public void render(DrawContext context, boolean blend) {
-        Vec2f pos = getAbsolutePosition();
+    public void render(GuiGraphicsExtractor context, boolean blend) {
+        Vec2 pos = getAbsolutePosition();
         this.render(context, pos.x, pos.y, blend);
     }
 
-    public void render(DrawContext context, float x, float y, boolean blend) {
+    public void render(GuiGraphicsExtractor context, float x, float y, boolean blend) {
         PixelGrid frame = this.getCurrentFrame();
         if (frame != null) {
-            context.getMatrices().push();
-            context.getMatrices().scale(size, size, 1.0f);
+            context.pose().pushMatrix();
+            context.pose().scale(size, size);
             frame.render(context, x / size, y / size, blend);
-            context.getMatrices().pop();
+            context.pose().popMatrix();
         }
     }
 
@@ -88,7 +88,7 @@ public class PixelGridAnimation {
     }
 
     public void setAnimationSpeed(int speed) {
-        this.animationSpeed = MathHelper.clamp(speed, 1, 100);
+        this.animationSpeed = Mth.clamp(speed, 1, 100);
     }
 
     public int getAnimationSpeed() {
@@ -118,15 +118,15 @@ public class PixelGridAnimation {
     }
 
     public void setCurrentFrame(int index) {
-        this.currentFrame = MathHelper.clamp(index, 0, frames.size() - 1);
+        this.currentFrame = Mth.clamp(index, 0, frames.size() - 1);
     }
 
-    public Vec2f getAbsolutePosition() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.getWindow() == null) return new Vec2f(0f, 0f);
+    public Vec2 getAbsolutePosition() {
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.getWindow() == null) return new Vec2(0f, 0f);
 
-        int windowWidth = client.getWindow().getScaledWidth();
-        int windowHeight = client.getWindow().getScaledHeight();
+        int windowWidth = client.getWindow().getScreenWidth();
+        int windowHeight = client.getWindow().getScreenHeight();
 
         PixelGrid frame = getCurrentFrame();
         int frameW = frame == null ? 0 : frame.getWidth();
@@ -144,7 +144,7 @@ public class PixelGridAnimation {
         float x = (float) (Math.round(rawX * 2.0) / 2.0);
         float y = (float) (Math.round(rawY * 2.0) / 2.0);
 
-        return new Vec2f(x, y);
+        return new Vec2(x, y);
     }
 
     public PixelGridAnimation offset(double offsetX, double offsetY) {
@@ -177,7 +177,7 @@ public class PixelGridAnimation {
     }
 
     public void setSize(float size) {
-        this.size = MathHelper.clamp(size, 0.1f, 10.0f);
+        this.size = Mth.clamp(size, 0.1f, 10.0f);
     }
 
     public float getSize() {

@@ -1,22 +1,22 @@
 package main.walksy.lib.core.config.local;
 
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public class OptionDescription {
     private final OptionType type;
-    private final BiConsumer<DrawContext, OptionPanel> renderConsumer;
+    private final BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer;
     private final Supplier<String> textSupplier;
 
-    private OptionDescription(OptionType type, BiConsumer<DrawContext, OptionPanel> renderConsumer, Supplier<String> textSupplier) {
+    private OptionDescription(OptionType type, BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer, Supplier<String> textSupplier) {
         this.type = type;
         this.renderConsumer = renderConsumer;
         this.textSupplier = textSupplier;
     }
 
-    public static OptionDescription ofRender2D(BiConsumer<DrawContext, OptionPanel> renderConsumer) {
+    public static OptionDescription ofRender2D(BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer) {
         return new OptionDescription(OptionType.RENDER, renderConsumer, null);
     }
 
@@ -28,7 +28,7 @@ public class OptionDescription {
         return type;
     }
 
-    public BiConsumer<DrawContext, OptionPanel> getRenderConsumer() {
+    public BiConsumer<GuiGraphicsExtractor, OptionPanel> getRenderConsumer() {
         return renderConsumer;
     }
 

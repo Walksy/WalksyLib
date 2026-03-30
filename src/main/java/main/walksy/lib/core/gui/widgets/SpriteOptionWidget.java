@@ -1,20 +1,21 @@
 package main.walksy.lib.core.gui.widgets;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.impl.TextureDropPopUp;
 import main.walksy.lib.core.utils.IdentifierWrapper;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,8 +41,8 @@ public class SpriteOptionWidget extends OptionWidget {
 
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.editTextureButton.render(context, mouseX, mouseY, delta);
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        this.editTextureButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
         if (image == null) return;
 
         int padding = 6;
@@ -54,11 +55,11 @@ public class SpriteOptionWidget extends OptionWidget {
         float drawX = getX() + getWidth() - visibleWidth * scaleX - padding;
         float drawY = getY() + (getHeight() - visibleHeight * scaleY) / 2f;
 
-        context.getMatrices().push();
-        context.getMatrices().scale(scaleX, scaleY, 1f);
+        context.pose().pushMatrix();
+        context.pose().scale(scaleX, scaleY);
 
-        context.drawTexture(
-                RenderLayer::getGuiTextured,
+        context.blit(
+                RenderPipelines.GUI_TEXTURED,
                 option.getValue().getIdentifier(),
                 (int)(drawX / scaleX),
                 (int)(drawY / scaleY),
@@ -67,20 +68,20 @@ public class SpriteOptionWidget extends OptionWidget {
                 image.getWidth(), image.getHeight()
         );
 
-        context.getMatrices().pop();
+        context.pose().popMatrix();
 
         if (isHoveringImage(mouseX, mouseY))
         {
-            this.setTooltip(Tooltip.of(Text.of(this.option.getValue().getIdentifier().getNamespace() + ": " + this.option.getValue().getIdentifier().getPath())));
+            this.setTooltip(Tooltip.create(Component.literal(this.option.getValue().getIdentifier().getNamespace() + ": " + this.option.getValue().getIdentifier().getPath())));
         } else {
             this.setTooltip(null);
         }
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        super.onMouseClick(mouseX, mouseY, button);
-        this.editTextureButton.onClick(mouseX, mouseY);
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        super.onMouseClick(click, doubled);
+        this.editTextureButton.onClick(click, doubled);
     }
 
     @Override
@@ -120,13 +121,13 @@ public class SpriteOptionWidget extends OptionWidget {
         Identifier id = option.getValue().getIdentifier();
         AtomicReference<NativeImage> tempImage = new AtomicReference<>();
 
-        TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
-        if (textureManager.getTexture(id) instanceof NativeImageBackedTexture nativeTexture) {
-            tempImage.set(nativeTexture.getImage());
+        TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+        if (textureManager.getTexture(id) instanceof DynamicTexture nativeTexture) {
+            tempImage.set(nativeTexture.getPixels());
         } else {
-            ResourceManager manager = MinecraftClient.getInstance().getResourceManager();
+            ResourceManager manager = Minecraft.getInstance().getResourceManager();
             manager.getResource(id).ifPresent(resource -> {
-                try (InputStream stream = resource.getInputStream()) {
+                try (InputStream stream = resource.open()) {
                     tempImage.set(NativeImage.read(stream));
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -144,7 +145,7 @@ public class SpriteOptionWidget extends OptionWidget {
 
             for (int y1 = 0; y1 < image.getHeight(); y1++) {
                 for (int x1 = 0; x1 < image.getWidth(); x1++) {
-                    int alpha = image.getColorArgb(x1, y1) >>> 24;
+                    int alpha = image.getPixel(x1, y1) >>> 24;
                     if (alpha != 0) {
                         if (x1 < minX) minX = x1;
                         if (y1 < minY) minY = y1;

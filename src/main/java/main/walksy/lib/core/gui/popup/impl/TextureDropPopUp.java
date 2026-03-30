@@ -1,22 +1,24 @@
 package main.walksy.lib.core.gui.popup.impl;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.callback.WindowDropCallback;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
 import main.walksy.lib.core.utils.MainColors;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.CommonColors;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -46,22 +48,22 @@ public class TextureDropPopUp extends PopUp {
                     parent.popUp.close();
                 });
 
-        WindowDropCallback.register(MinecraftClient.getInstance().getWindow().getHandle(), this::onFileDropped);
+        WindowDropCallback.register(this::onFileDropped);
     }
 
     @Override
-    public void render(DrawContext context, double mouseX, double mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
-        context.drawCenteredTextWithShadow(parent.getTextRenderer(), subText, x + width / 2, y + 10, -1);
-        context.drawHorizontalLine(x + 2, x + width - 3, y + 23, MainColors.OUTLINE_WHITE.getRGB());
+        context.centeredText(parent.getFont(), subText, x + width / 2, y + 10, -1);
+        context.horizontalLine(x + 2, x + width - 3, y + 23, MainColors.OUTLINE_WHITE.getRGB());
 
         if (selectedTexture != null) {
-            TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
-            NativeImageBackedTexture nativeTexture = (NativeImageBackedTexture) textureManager.getTexture(selectedTexture);
+            TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+            DynamicTexture nativeTexture = (DynamicTexture) textureManager.getTexture(selectedTexture);
 
             if (nativeTexture != null) {
-                NativeImage image = nativeTexture.getImage();
+                NativeImage image = nativeTexture.getPixels();
                 if (image != null) {
                     int imgW = image.getWidth();
                     int imgH = image.getHeight();
@@ -77,8 +79,8 @@ public class TextureDropPopUp extends PopUp {
                     int drawX = x + width / 2 - scaledWidth / 2;
                     int drawY = y + height / 2 - scaledHeight / 2;
 
-                    context.drawTexture(
-                            RenderLayer::getGuiTextured,
+                    context.blit(
+                            RenderPipelines.GUI_TEXTURED,
                             selectedTexture,
                             drawX,
                             drawY,
@@ -92,53 +94,90 @@ public class TextureDropPopUp extends PopUp {
                 }
             }
         } else {
-            context.drawCenteredTextWithShadow(parent.getTextRenderer(), "Drop a .png image file", x + width / 2, y + height / 2, 0xAAAAAA);
+            context.centeredText(parent.getFont(), "Drop a .png image file", x + width / 2, y + height / 2, CommonColors.GRAY);
         }
 
-        this.doneButton.render(context, (int) mouseX, (int) mouseY, delta);
+        this.doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
     }
 
 
 
     @Override
-    public void onClick(double mouseX, double mouseY, int button) {
-        this.doneButton.onClick(mouseX, mouseY);
+    public void onClick(MouseButtonEvent click, boolean doubled) {
+        this.doneButton.onClick(click, doubled);
     }
 
 
-    private void onFileDropped(String filePath) { //TODO TEST
+    private void onFileDropped(String filePath) {
         File file = new File(filePath);
+        System.out.println("File dropped: " + filePath);
         if (!file.exists() || !file.isFile()) return;
 
         String name = file.getName();
         String trueName = name;
-        if (!name.toLowerCase().endsWith(".png")) return;
+        String lowerName = name.toLowerCase();
+
+        if (!lowerName.matches(".*\\.(png|jpg|jpeg|bmp|webp|gif)$")) {
+            System.err.println("Unsupported file extension: " + name);
+            return;
+        }
 
         try {
+            if (file.length() == 0) {
+                System.err.println("Dropped file is 0 bytes. It might still be downloading!");
+                return;
+            }
+
+            byte[] fileBytes = Files.readAllBytes(file.toPath());
+
             int dotIndex = name.lastIndexOf('.');
             if (dotIndex > 0) {
                 name = name.substring(0, dotIndex);
             }
-
             name = name.toLowerCase().replaceAll("[^a-z0-9._-]", "_");
 
-            try (InputStream stream = new FileInputStream(file)) {
-                NativeImage image = NativeImage.read(stream);
-                NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
-
-                String dynamicId = "dropped/" + name;
-                Identifier textureId = Identifier.of("walksylib", dynamicId);
-                MinecraftClient.getInstance().getTextureManager().registerTexture(textureId, texture);
-
-                Path destDir = WalksyLibConfigManager.getCachedImageDir();
-                Path destPath = destDir.resolve(trueName);
-                Files.copy(file.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
-
-                this.selectedTexture = textureId;
-                this.fileName = trueName;
+            NativeImage image = loadFlexibleImage(fileBytes);
+            if (image == null) {
+                System.err.println("Failed to decode image data for: " + trueName);
+                return;
             }
+
+            DynamicTexture texture = new DynamicTexture(() -> filePath, image);
+            String dynamicId = "dropped/" + name;
+            Identifier textureId = Identifier.fromNamespaceAndPath("walksylib", dynamicId);
+
+            Minecraft.getInstance().getTextureManager().release(textureId);
+            Minecraft.getInstance().getTextureManager().register(textureId, texture);
+
+            Path destDir = WalksyLibConfigManager.getCachedImageDir();
+            Path destPath = destDir.resolve(trueName);
+            Files.copy(file.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
+
+            this.selectedTexture = textureId;
+            this.fileName = trueName;
+
         } catch (Exception e) {
+            System.err.println("Failed to process dropped file: " + filePath);
             e.printStackTrace();
+        }
+    }
+
+    private NativeImage loadFlexibleImage(byte[] imageBytes) {
+        try {
+            return NativeImage.read(new ByteArrayInputStream(imageBytes));
+        } catch (Exception e) {
+            try {
+                BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                if (bufferedImage == null) return null;
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(bufferedImage, "png", baos);
+                byte[] pngBytes = baos.toByteArray();
+
+                return NativeImage.read(new ByteArrayInputStream(pngBytes));
+            } catch (Exception ex) {
+                return null;
+            }
         }
     }
 
@@ -152,6 +191,6 @@ public class TextureDropPopUp extends PopUp {
 
     @Override
     protected void onClose() {
-        WindowDropCallback.unregister(MinecraftClient.getInstance().getWindow().getHandle());
+        WindowDropCallback.unregister();
     }
 }

@@ -1,0 +1,70 @@
+package main.walksy.lib.core.manager;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import net.fabricmc.loader.api.FabricLoader;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class WalksyLibTeamManager {
+
+    private static final Map<String, Team> PLAYER_TEAMS = new LinkedHashMap<>();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    private static final Path DEST_DIR = FabricLoader.getInstance().getConfigDir().resolve("WalksyLib");
+    private static final Path FILE_PATH = DEST_DIR.resolve("global_teams.json");
+    private static final File FILE = FILE_PATH.toFile();
+
+    static {
+        load();
+    }
+
+    public static void addToTeam(String player, Team team) {
+        PLAYER_TEAMS.put(player, team);
+        save();
+    }
+
+    public static void removeFromRegistry(String player) {
+        PLAYER_TEAMS.remove(player);
+        save();
+    }
+
+    public static Team getPlayerTeam(String player) {
+        return PLAYER_TEAMS.getOrDefault(player, Team.None);
+    }
+
+    public static Map<String, Team> getTeams() {
+        return PLAYER_TEAMS;
+    }
+
+    public static void save() {
+        try {
+            if (!Files.exists(DEST_DIR)) {
+                Files.createDirectories(DEST_DIR);
+            }
+            try (Writer writer = new FileWriter(FILE)) {
+                GSON.toJson(PLAYER_TEAMS, writer);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void load() {
+        if (!Files.exists(FILE_PATH)) return;
+        try (Reader reader = new FileReader(FILE)) {
+            Map<String, Team> loaded = GSON.fromJson(reader, new TypeToken<Map<String, Team>>(){}.getType());
+            if (loaded != null) {
+                PLAYER_TEAMS.clear();
+                PLAYER_TEAMS.putAll(loaded);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

@@ -16,8 +16,14 @@
 	"icon": "assets/walksylib/icon.png",
 	"environment": "client",
 	"entrypoints": {
+		"main": [
+			"test.Main"
+		],
 		"modmenu": [
 			"main.walksy.lib.core.integration.ModMenuIntegration"
+		],
+		"walksylib": [
+			"test.WalksyLibIntegration"
 		]
 	},
 	"mixins": [
@@ -26,8 +32,7 @@
 	"depends": {
 		"fabricloader": "*",
 		"minecraft": "*",
-		"java": ">=17",
-		"fabric-api": "*"
+		"java": ">=17"
 	},
 	"custom": {
 		"modmenu": {

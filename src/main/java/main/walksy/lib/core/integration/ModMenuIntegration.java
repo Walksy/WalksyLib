@@ -3,7 +3,10 @@ package main.walksy.lib.core.integration;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import main.walksy.lib.api.WalksyLibApi;
+import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.gui.impl.APIScreen;
+import main.walksy.lib.core.gui.impl.BaseScreen;
+import main.walksy.lib.core.gui.impl.ConflictedConfigScreen;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -23,10 +26,24 @@ public class ModMenuIntegration implements ModMenuApi {
     @Override
     public Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
         return FabricLoader.getInstance().getEntrypointContainers("walksylib", WalksyLibApi.class).stream()
-                .filter(c -> c.getEntrypoint().getConfig() != null)
                 .collect(Collectors.toMap(
                         c -> c.getProvider().getMetadata().getId(),
-                        c -> parent -> new WalksyLibConfigScreen(parent, c.getEntrypoint().getConfig())
+                        c -> parent -> {
+                            WalksyLibApi entryPoint = c.getEntrypoint();
+                            BaseScreen overridableScreen = entryPoint.getOverridableScreen(parent);
+                            LocalConfig config = entryPoint.getConfig();
+
+                            if (overridableScreen != null && config != null) {
+                                WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(parent, config);
+                                return new ConflictedConfigScreen("Choose Screen", parent, overridableScreen, configScreen, entryPoint.getConflictedConfigButtonTitles());
+                            }
+
+                            if (overridableScreen == null && config != null) {
+                                return new WalksyLibConfigScreen(parent, config);
+                            }
+
+                            return overridableScreen;
+                        }
                 ));
     }
 }

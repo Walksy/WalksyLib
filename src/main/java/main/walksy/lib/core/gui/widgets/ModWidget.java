@@ -5,13 +5,15 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
 
 import java.awt.*;
 
@@ -21,33 +23,34 @@ public class ModWidget extends AbstractWidget {
     private final APIScreen parent;
 
     public ModWidget(Mod mod, APIScreen parent, int x, int y) {
-        super(x, y, 140, 34, Text.empty());
+        super(x, y, 140, 34, Component.empty());
         this.mod = mod;
         this.parent = parent;
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
         Renderer2D.fillRoundedRectOutline_ModWidget(context, getX(), getY(), width, height, 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
 
         Renderer2D.fillRoundedRectOutline_ModWidget(context, getX() - 1, getY() - 1, width + 2, height + 2, 2, 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
-        //context.drawVerticalLine(getX() + 33, getY(), getY() + getHeight() - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        //context.verticalLine(getX() + 33, getY(), getY() + getHeight() - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
 
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, mod.getContainer().getMetadata().getName(), getX() + 38, getY() + (height / 2) - MinecraftClient.getInstance().textRenderer.fontHeight / 2, -1);
-        context.drawTexture(RenderLayer::getGuiTextured, mod.getModIcon(), getX() + 1, getY() + 1, 0, 0, 32, 32, 32, 32);
+        context.text(Minecraft.getInstance().font, mod.getContainer().getMetadata().getName(), getX() + 38, getY() + (height / 2) - Minecraft.getInstance().font.lineHeight / 2, -1, true);
+        context.blit(RenderPipelines.GUI_TEXTURED, mod.getModIcon(), getX() + 1, getY() + 1, 0, 0, 32, 32, 32, 32);
 
         if (isHovered())
         {
             String modDescription = mod.getContainer().getMetadata().getDescription();
             if (!modDescription.isEmpty()) {
-                this.setTooltip(Tooltip.of(Text.of(modDescription)));
+                this.setTooltip(Tooltip.create(Component.literal(modDescription)));
             }
         }
     }
+    
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (isHovered()) {
             Screen currentParent = this.parent;
             while (currentParent instanceof WalksyLibConfigScreen || currentParent instanceof APIScreen) {
@@ -59,16 +62,13 @@ public class ModWidget extends AbstractWidget {
                     break;
                 }
             }
-            MinecraftClient.getInstance().setScreen(new WalksyLibConfigScreen(currentParent, this.mod.getConfig()));
+            Minecraft.getInstance().setScreen(new WalksyLibConfigScreen(currentParent, this.mod.getConfig()));
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
-
-
-
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void updateWidgetNarration(NarrationElementOutput output) {
 
     }
 }

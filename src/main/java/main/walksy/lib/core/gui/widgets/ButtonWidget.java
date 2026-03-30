@@ -3,14 +3,16 @@ package main.walksy.lib.core.gui.widgets;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.awt.*;
 
@@ -28,7 +30,7 @@ public class ButtonWidget extends AbstractWidget {
     private int textureOffsetX = 1, textureOffsetY = 1;
 
     public ButtonWidget(int x, int y, int width, int height, boolean background, String name, @Nullable Runnable action) {
-        super(x, y, width, height, Text.of(name));
+        super(x, y, width, height, Component.literal(name));
         this.action = action;
         this.background = background;
         this.grid = null;
@@ -36,7 +38,7 @@ public class ButtonWidget extends AbstractWidget {
     }
 
     public ButtonWidget(int x, int y, int width, int height, boolean background, Identifier texture, @Nullable Runnable action) {
-        super(x, y, width, height, Text.of(texture.getPath()));
+        super(x, y, width, height, Component.literal(texture.getPath()));
         this.action = action;
         this.background = background;
         this.grid = null;
@@ -44,7 +46,7 @@ public class ButtonWidget extends AbstractWidget {
     }
 
     public ButtonWidget(int x, int y, int width, int height, boolean background, Identifier texture, @Nullable Runnable action, int offsetX, int offsetY) {
-        super(x, y, width, height, Text.of(texture.getPath()));
+        super(x, y, width, height, Component.literal(texture.getPath()));
         this.action = action;
         this.background = background;
         this.grid = null;
@@ -61,10 +63,10 @@ public class ButtonWidget extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         int drawX = getX();
         int drawY = getY() - (int) scrollY;
-        h = ctx.scissorContains(mouseX, mouseY) && mouseX >= this.getX() && mouseY >= drawY && mouseX < this.getX() + this.width && mouseY < drawY + this.height;
+        h = ctx.containsPointInScissor(mouseX, mouseY) && mouseX >= this.getX() && mouseY >= drawY && mouseX < this.getX() + this.width && mouseY < drawY + this.height;
         if (background) {
             ctx.fill(drawX, drawY, drawX + getWidth(), drawY + getHeight(),
                     this.active ? new Color(0, 0, 0, 100).getRGB() : new Color(50, 50, 50, 100).getRGB());
@@ -89,13 +91,13 @@ public class ButtonWidget extends AbstractWidget {
 
         if (texture == null && grid == null) {
             String text = getMessage().getString();
-            int textX = drawX + ((width - MinecraftClient.getInstance().textRenderer.getWidth(text)) / 2) + 1;
-            int textY = drawY + ((height - MinecraftClient.getInstance().textRenderer.fontHeight) / 2) + 1;
+            int textX = drawX + ((width - Minecraft.getInstance().font.width(text)) / 2) + 1;
+            int textY = drawY + ((height - Minecraft.getInstance().font.lineHeight) / 2) + 1;
 
-            ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, text, text.equals("-") ? textX - 1 : textX, textY,
+            ctx.text(Minecraft.getInstance().font, text, text.equals("-") ? textX - 1 : textX, textY,
                     this.active ? ((isHovered() || overrideHover) ? 0xFFCCCCCC : 0xFF888888) : 0xFF555555);
         } else if (grid == null) {
-            ctx.drawTexture(RenderLayer::getGuiTextured, texture, drawX + 3 + this.textureOffsetX, drawY + 3 + this.textureOffsetY, 0, 0, 16, 16, 16, 16, 16, 16, this.active ? -1 : Color.GRAY.getRGB());
+            ctx.blit(RenderPipelines.GUI_TEXTURED, texture, drawX + 3 + this.textureOffsetX, drawY + 3 + this.textureOffsetY, 0, 0, 16, 16, 16, 16, 16, 16, this.active ? -1 : Color.GRAY.getRGB());
         }
 
         if (grid != null) {
@@ -104,18 +106,14 @@ public class ButtonWidget extends AbstractWidget {
     }
 
 
-
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {}
-
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        super.onClick(mouseX, mouseY);
+    public void onClick(@NonNull MouseButtonEvent click, boolean doubled) {
+        super.onClick(click, doubled);
         if (isHovered()) {
             if (action != null) {
                 action.run();
             }
-            ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+            playButtonClickSound(Minecraft.getInstance().getSoundManager());
         }
 
     }
@@ -123,6 +121,11 @@ public class ButtonWidget extends AbstractWidget {
     @Override
     public boolean isHovered() {
         return this.h && hovered;
+    }
+
+    @Override
+    protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {
+
     }
 
     public void setListener(Runnable runnable)

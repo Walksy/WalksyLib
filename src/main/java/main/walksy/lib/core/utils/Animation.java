@@ -1,6 +1,6 @@
 package main.walksy.lib.core.utils;
 
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 public class Animation {
     private float currentValue;
@@ -15,10 +15,12 @@ public class Animation {
 
     public void update(float delta, Runnable onAnimating) {
         float t = 1.0f - (float) Math.exp(-speed * delta);
-        float newValue = MathHelper.lerp(t, currentValue, targetValue);
+        float newValue = Mth.lerp(t, currentValue, targetValue);
 
         if (Math.abs(newValue - targetValue) > 0.001f) {
-            if (onAnimating != null) onAnimating.run();
+            if (onAnimating != null) {
+                onAnimating.run();
+            }
         }
 
         currentValue = newValue;
@@ -42,7 +44,7 @@ public class Animation {
     }
 
     public boolean isAnimating() {
-        return this.currentValue != this.targetValue;
+        return Math.round(this.currentValue) != Math.round(this.targetValue);
     }
 
     public float getTargetValue() {

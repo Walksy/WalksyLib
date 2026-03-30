@@ -7,8 +7,9 @@ import main.walksy.lib.core.gui.widgets.ButtonWidget;
 import main.walksy.lib.core.utils.Clipboard;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Scroller;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 import java.util.*;
@@ -89,33 +90,35 @@ public class GridEditorPopUp extends PopUp {
     }
 
     @Override
-    public void render(DrawContext context, double mouseX, double mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, "Editing Frame: " + index, (parent.width) / 2, y + 8, -1);
+        context.centeredText(Minecraft.getInstance().font, "Editing Frame: " + index, (parent.width) / 2, y + 8, -1);
         context.enableScissor(x, y + 20, x + width, y + height - 25);
         if (this.renderGridOutline(context, this.currentGrid, x + 6, (int) (y + 21 - scroller.getValue()), 16, 2, MainColors.OUTLINE_WHITE.getRGB(), true, mouseX, mouseY)) {
             scroller.active = false;
         }
         context.disableScissor();
         handleDrag(mouseX, mouseY);
-        context.drawHorizontalLine(x + 2, x + width - 3, y + height - 25, MainColors.OUTLINE_WHITE.getRGB());
-        doneButton.render(context, (int) mouseX, (int) mouseY, delta);
-        undoButton.render(context, (int) mouseX, (int) mouseY, delta);
-        undoAllButton.render(context, (int) mouseX, (int) mouseY, delta);
-        clearButton.render(context, (int) mouseX, (int) mouseY, delta);
-        copyButton.render(context, (int) mouseX, (int) mouseY, delta);
-        pasteButton.render(context, (int) mouseX, (int) mouseY, delta);
+        context.horizontalLine(x + 2, x + width - 3, y + height - 25, MainColors.OUTLINE_WHITE.getRGB());
+        doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        undoButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        undoAllButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        clearButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        copyButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        pasteButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
         pasteButton.setEnabled(Clipboard.grid != null);
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY, int button) {
+    public void onClick(MouseButtonEvent click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
         if (copyButton.isHovered()) {
-            copyButton.onClick(mouseX, mouseY);
+            copyButton.onClick(click, doubled);
             return;
         }
         if (pasteButton.isHovered()) {
-            pasteButton.onClick(mouseX, mouseY);
+            pasteButton.onClick(click, doubled);
             return;
         }
         if (undoButton.isHovered()) {
@@ -133,8 +136,8 @@ public class GridEditorPopUp extends PopUp {
             return;
         }
 
-        doneButton.onClick(mouseX, mouseY);
-        clearButton.onClick(mouseX, mouseY);
+        doneButton.onClick(click, doubled);
+        clearButton.onClick(click, doubled);
 
         int pixelSize = 16;
         int gapSize = 2;
@@ -160,7 +163,7 @@ public class GridEditorPopUp extends PopUp {
     }
 
     @Override
-    public void onMouseRelease(double mouseX, double mouseY, int button) {
+    public void onMouseRelease(MouseButtonEvent click) {
         isMouseDown = false;
         modifiedCells.clear();
     }
@@ -219,7 +222,7 @@ public class GridEditorPopUp extends PopUp {
         }
     }
 
-    private boolean renderGridOutline(DrawContext context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, int outlineColor, boolean markCenter, double mouseX, double mouseY) {
+    private boolean renderGridOutline(GuiGraphicsExtractor context, PixelGrid grid, int x1, int y1, int pixelSize, int gapSize, int outlineColor, boolean markCenter, double mouseX, double mouseY) {
         boolean rtrn = true;
         if (markCenter) {
             int centerX = grid.getWidth() / 2;
@@ -236,7 +239,7 @@ public class GridEditorPopUp extends PopUp {
             for (int x = 0; x < grid.getWidth(); x++) {
                 int px = x1 + x * (pixelSize + gapSize);
                 int py = y1 + y * (pixelSize + gapSize);
-                if (!context.scissorContains(px, py)) {
+                if (!context.containsPointInScissor(px, py)) {
                     rtrn = false;
                 }
 

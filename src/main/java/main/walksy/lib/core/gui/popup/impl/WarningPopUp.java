@@ -4,11 +4,13 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
 import main.walksy.lib.core.utils.MainColors;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.TooltipComponent;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FormattedCharSequence;
 
 import java.util.List;
 
@@ -17,8 +19,7 @@ public class WarningPopUp extends PopUp {
     public final ButtonWidget yesButton;
     public final ButtonWidget noButton;
 
-    public WarningPopUp(WalksyLibConfigScreen parent, String title, String message, Runnable yesAction, Runnable noAction)
-    {
+    public WarningPopUp(WalksyLibConfigScreen parent, String title, String message, Runnable yesAction, Runnable noAction) {
         super(parent, message);
         this.title = title;
         this.yesButton = new ButtonWidget((x + width) - 60, (y + height) - 33, 50, 20, false, "Yes", yesAction);
@@ -26,49 +27,48 @@ public class WarningPopUp extends PopUp {
     }
 
     @Override
-    public void render(DrawContext context, double mouseX, double mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.getMatrices().push();
+        context.pose().pushMatrix();
         float scale = 1.5F;
-        context.getMatrices().scale(scale, scale, 1.0f);
-        context.drawCenteredTextWithShadow(
-                parent.getTextRenderer(),
+        context.pose().scale(scale, scale);
+        context.centeredText(
+                parent.getFont(),
                 title,
                 (int) ((parent.width / 2) / scale),
                 (int) ((y + 11) / scale),
                 -1
         );
-        context.getMatrices().pop();
+        context.pose().popMatrix();
 
-        context.drawHorizontalLine(x + 2, x + width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
+        context.horizontalLine(x + 2, x + width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
 
-        List<OrderedText> orderedTexts = parent.getTextRenderer().wrapLines(Text.of(subText), this.width - 20);
-        List<TooltipComponent> tooltipComponents = orderedTexts.stream().map(TooltipComponent::of).toList();
+        List<FormattedCharSequence> orderedTexts = parent.getFont().split(Component.literal(subText), this.width - 20);
+        List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
         int totalTextHeight = tooltipComponents.stream()
-                .mapToInt(tc -> tc.getHeight(parent.getTextRenderer()))
+                .mapToInt(tc -> tc.getHeight(parent.getFont()))
                 .sum();
         int yOffset = this.y + (this.height / 2) - (totalTextHeight / 2);
 
-        for (TooltipComponent tooltipComponent : tooltipComponents) {
-            int lineHeight = tooltipComponent.getHeight(parent.getTextRenderer());
-            tooltipComponent.drawText(
-                    parent.getTextRenderer(),
-                    (this.x + (this.width / 2)) - tooltipComponent.getWidth(parent.getTextRenderer()) / 2,
-                    yOffset,
-                    context.getMatrices().peek().getPositionMatrix(),
-                    MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers()
+        for (ClientTooltipComponent tooltipComponent : tooltipComponents) {
+            int lineHeight = tooltipComponent.getHeight(parent.getFont());
+            tooltipComponent.extractText(
+                    context,
+                    parent.getFont(),
+                    (this.x + (this.width / 2)) - tooltipComponent.getWidth(parent.getFont()) / 2,
+                    yOffset
             );
             yOffset += lineHeight;
         }
-        yesButton.render(context, (int)mouseX, (int)mouseY, delta);
-        noButton.render(context, (int)mouseX, (int)mouseY, delta);
+        yesButton.extractRenderState(context, (int)mouseX, (int)mouseY, delta);
+        noButton.extractRenderState(context, (int)mouseX, (int)mouseY, delta);
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY, int button)
+    public void onClick(MouseButtonEvent click, boolean doubled)
     {
-        yesButton.onClick(mouseX, mouseY);
-        noButton.onClick(mouseX, mouseY);
+        yesButton.onClick(click, doubled);
+        noButton.onClick(click, doubled);
     }
 
     @Override
@@ -85,14 +85,12 @@ public class WarningPopUp extends PopUp {
         }
     }
 
-    public int getHeightOffset()
-    {
-        List<OrderedText> orderedTexts = parent.getTextRenderer().wrapLines(Text.of(subText), this.width - 20);
-        List<TooltipComponent> tooltipComponents = orderedTexts.stream().map(TooltipComponent::of).toList();
+    public int getHeightOffset() {
+        List<FormattedCharSequence> orderedTexts = parent.getFont().split(Component.literal(subText), this.width - 20);
+        List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
         int height = 0;
-        for (TooltipComponent tooltipComponent : tooltipComponents)
-        {
-            height+=tooltipComponent.getHeight(parent.getTextRenderer());
+        for (ClientTooltipComponent tooltipComponent : tooltipComponents) {
+            height += tooltipComponent.getHeight(parent.getFont());
         }
         return height;
     }

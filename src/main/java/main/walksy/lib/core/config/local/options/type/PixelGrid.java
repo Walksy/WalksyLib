@@ -1,7 +1,7 @@
 package main.walksy.lib.core.config.local.options.type;
 
 import main.walksy.lib.core.renderer.Renderer2D;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -24,8 +24,7 @@ public class PixelGrid {
         }
     }
 
-    public void render(DrawContext context, Supplier<Point> position, boolean blend)
-    {
+    public void render(GuiGraphicsExtractor context, Supplier<Point> position, boolean blend) {
         if (position == null || (position.get().x == -1) && (position.get().y == -1))
         {
             return;
@@ -33,7 +32,7 @@ public class PixelGrid {
         Renderer2D.renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, blend);
     }
 
-    public void render(DrawContext context, float x, float y, boolean blend) {
+    public void render(GuiGraphicsExtractor context, float x, float y, boolean blend) {
         Renderer2D.renderGridTexture(context, this, x, y, 1, 0, blend);
     }
 

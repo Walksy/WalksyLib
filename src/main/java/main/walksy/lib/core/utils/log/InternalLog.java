@@ -1,6 +1,6 @@
 package main.walksy.lib.core.utils.log;
 
-import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.client.gui.components.Tooltip;
 
 public class InternalLog {
     private final String text;

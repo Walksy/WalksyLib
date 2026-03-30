@@ -2,7 +2,7 @@ package main.walksy.lib.core.config.serialization.adapters;
 
 import com.google.gson.*;
 import main.walksy.lib.core.utils.IdentifierWrapper;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 import java.lang.reflect.Type;
 

@@ -2,6 +2,7 @@ package main.walksy.lib.core.manager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.config.impl.LocalConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
@@ -20,13 +21,15 @@ import main.walksy.lib.core.config.serialization.adapters.PixelGridAnimationAdap
 import main.walksy.lib.core.utils.IdentifierWrapper;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -179,8 +182,6 @@ public class WalksyLibConfigManager {
                 }
             });
         }
-
-
     }
 
     public static void applyOptionValues(Option<?> option, SerializableOption serialized) {
@@ -188,20 +189,7 @@ public class WalksyLibConfigManager {
             OptionConverter.setOptionValue(option, serialized.value);
         } catch (Exception e) {
             System.err.println("Failed to set value for option '" + option.getName() + "': " + e.getMessage());
-            return;
         }
-
-        /*
-        option.setRainbow(serialized.rainbow);
-        option.setHue(serialized.hue);
-        option.setSaturation(serialized.saturation);
-        option.setBrightness(serialized.brightness);
-        option.setAlpha(serialized.alpha);
-        option.setRainbowSpeed(serialized.rainbowSpeed);
-        option.setPulseSpeed(serialized.pulseSpeed);
-        option.setPulse(serialized.pulse);
-
-         */
     }
 
     public static Path getCachedImageDir() {
@@ -221,19 +209,26 @@ public class WalksyLibConfigManager {
         Path imagePath = getCachedImageDir().resolve(fileName);
         if (!Files.exists(imagePath)) return null;
 
-        try (InputStream stream = Files.newInputStream(imagePath)) {
-            NativeImage image = NativeImage.read(stream);
-            NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
+        try {
+            byte[] fileBytes = Files.readAllBytes(imagePath);
+            if (fileBytes.length == 0) return null;
 
+            NativeImage image = loadFlexibleImage(fileBytes);
+            if (image == null) {
+                WalksyLibLogger.err("Failed to decode cached image data for: " + fileName);
+                return null;
+            }
+
+            DynamicTexture texture = new DynamicTexture(() -> fileName, image);
             String name = fileName;
             int dotIndex = name.lastIndexOf('.');
             if (dotIndex > 0) name = name.substring(0, dotIndex);
 
             name = name.toLowerCase().replaceAll("[^a-z0-9._-]", "_");
             String dynamicId = "dropped/" + name;
-            Identifier textureId = Identifier.of("walksylib", dynamicId);
+            Identifier textureId = Identifier.fromNamespaceAndPath("walksylib", dynamicId);
 
-            MinecraftClient.getInstance().getTextureManager().registerTexture(textureId, texture);
+            Minecraft.getInstance().getTextureManager().register(textureId, texture);
             return textureId;
         } catch (Exception e) {
             e.printStackTrace();
@@ -241,5 +236,23 @@ public class WalksyLibConfigManager {
         }
     }
 
+    public static NativeImage loadFlexibleImage(byte[] imageBytes) {
+        try {
+            return NativeImage.read(new ByteArrayInputStream(imageBytes));
+        } catch (Exception e) {
+            try {
+                BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                if (bufferedImage == null) return null;
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(bufferedImage, "png", baos);
+                byte[] pngBytes = baos.toByteArray();
+
+                return NativeImage.read(new ByteArrayInputStream(pngBytes));
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+    }
 
 }

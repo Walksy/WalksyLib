@@ -9,7 +9,8 @@ import main.walksy.lib.core.gui.widgets.ButtonWidget;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Scroller;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -139,7 +140,7 @@ public class FrameManagerPopUp extends PopUp {
     }
 
     @Override
-    public void render(DrawContext context, double mouseX, double mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         context.enableScissor(x, y + 2, x + width, y + height - 25);
         for (ButtonWidget btn : buttons) {
@@ -148,7 +149,7 @@ public class FrameManagerPopUp extends PopUp {
             {
                 btn.setEnabled(option.getValue().getFrames().size() != 1);
             }
-            btn.render(context, (int) mouseX, (int) mouseY, delta);
+            btn.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
         }
 
         List<PixelGrid> frames = option.getValue().getFrames();
@@ -167,20 +168,20 @@ public class FrameManagerPopUp extends PopUp {
             }
         }
         context.disableScissor();
-        context.drawHorizontalLine(x + 2, x + width - 3, y + height - 25, MainColors.OUTLINE_WHITE.getRGB());
-        doneButton.render(context, (int) mouseX, (int) mouseY, delta);
-        undoButton.render(context, (int) mouseX, (int) mouseY, delta);
-        undoAllButton.render(context, (int) mouseX, (int) mouseY, delta);
+        context.horizontalLine(x + 2, x + width - 3, y + height - 25, MainColors.OUTLINE_WHITE.getRGB());
+        doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        undoButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        undoAllButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY, int button) {
+    public void onClick(MouseButtonEvent click, boolean doubled) {
         for (ButtonWidget btn : buttons) {
-            btn.onClick(mouseX, mouseY);
+            btn.onClick(click, doubled);
         }
-        undoButton.onClick(mouseX, mouseY);
-        undoAllButton.onClick(mouseX, mouseY);
-        doneButton.onClick(mouseX, mouseY);
+        undoButton.onClick(click, doubled);
+        undoAllButton.onClick(click, doubled);
+        doneButton.onClick(click, doubled);
     }
 
     @Override

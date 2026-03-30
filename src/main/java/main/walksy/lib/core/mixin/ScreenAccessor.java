@@ -1,7 +1,7 @@
 package main.walksy.lib.core.mixin;
 
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -10,6 +10,6 @@ import java.util.List;
 @Mixin(Screen.class)
 public interface ScreenAccessor {
 
-    @Accessor("drawables")
-    List<Drawable> getDrawables();
+    @Accessor("renderables")
+    List<Renderable> getDrawables();
 }

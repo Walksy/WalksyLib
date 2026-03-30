@@ -6,7 +6,10 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.TextboxSubWidget;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -30,9 +33,9 @@ public class StringListOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.addButton.render(context, mouseX, mouseY, delta);
-        context.drawHorizontalLine(
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        this.addButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        context.horizontalLine(
                 getX() + 1,
                 getX() + getWidth() - 2,
                 getY() + ScreenGlobals.OPTION_HEIGHT - 1,
@@ -40,10 +43,10 @@ public class StringListOptionWidget extends OptionWidget {
         );
         if (this.option.getValue().isEmpty()) {
             int cX = this.getWidth() / 2;
-            context.drawCenteredTextWithShadow(
-                    screen.getTextRenderer(),
+            context.centeredText(
+                    screen.getFont(),
                     "No Entries",
-                    cX + screen.getTextRenderer().getWidth("No Entries") / 2,
+                    cX + screen.getFont().width("No Entries") / 2,
                     getTextYCentered() + 1 + this.ADDITIONAL_HEIGHT,
                     -1
             );
@@ -51,26 +54,26 @@ public class StringListOptionWidget extends OptionWidget {
 
         for (int i = 0; i < textboxes.size(); i++) {
             TextboxSubWidget textBox = textboxes.get(i);
-            int width = screen.getTextRenderer().getWidth(String.valueOf(i + 1));
+            int width = screen.getFont().width(String.valueOf(i + 1));
             int off = -1;
-            context.drawTextWithShadow(screen.getTextRenderer(), String.valueOf(i + 1), getX() + 5, textBox.getPos().y + 6 + off, -1);
-            context.drawVerticalLine(getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
+            context.text(screen.getFont(), String.valueOf(i + 1), getX() + 5, textBox.getPos().y + 6 + off, -1, true);
+            context.verticalLine(getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
             textBox.render(context, mouseX, mouseY, delta);
-            removeButtons.get(i).render(context, mouseX, mouseY, delta);
+            removeButtons.get(i).extractWidgetRenderState(context, mouseX, mouseY, delta);
         }
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        this.addButton.onClick(mouseX, mouseY);
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        this.addButton.onClick(click, doubled);
 
         for (TextboxSubWidget textbox : textboxes) {
             textbox.setFocus(false);
-            textbox.onClick((int) mouseX, (int) mouseY, button);
+            textbox.onClick(click, doubled);
         }
 
         for (int i = 0; i < removeButtons.size(); i++) {
-            removeButtons.get(i).onClick(mouseX, mouseY);
+            removeButtons.get(i).onClick(click, doubled);
         }
 
         if (pendingRemovalIndex >= 0) {
@@ -83,7 +86,7 @@ public class StringListOptionWidget extends OptionWidget {
             pendingRemovalIndex = -1;
         }
 
-        super.onMouseClick(mouseX, mouseY, button);
+        super.onMouseClick(click, doubled);
     }
 
     @Override
@@ -91,7 +94,7 @@ public class StringListOptionWidget extends OptionWidget {
         addButton.setPosition(getX() + width - 37, getY() + 3);
 
         for (int i = 0; i < textboxes.size(); i++) {
-            int labelWidth = screen.getTextRenderer().getWidth(String.valueOf(i + 1));
+            int labelWidth = screen.getFont().width(String.valueOf(i + 1));
             textboxes.get(i).setPos(new Point(getX() + labelWidth + 10, getY() + 25 + i * 20));
             textboxes.get(i).setWidth(getWidth() - (labelWidth + 44));
             removeButtons.get(i).setPosition(getX() + getWidth() - 26, getY() + 25 + i * 20 + 1);
@@ -99,19 +102,19 @@ public class StringListOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void onKeyPress(int keyCode, int scanCode, int modifiers) {
+    public void onKeyPress(KeyEvent input) {
         for (TextboxSubWidget textbox : textboxes) {
-            textbox.onKeyPress(keyCode, scanCode, modifiers);
+            textbox.onKeyPress(input);
         }
-        super.onKeyPress(keyCode, scanCode, modifiers);
+        super.onKeyPress(input);
     }
 
     @Override
-    public void onCharTyped(char chr, int modifiers) {
+    public void onCharTyped(CharacterEvent input) {
         for (TextboxSubWidget textbox : textboxes) {
-            textbox.onCharTyped(chr, modifiers);
+            textbox.onCharTyped(input);
         }
-        super.onCharTyped(chr, modifiers);
+        super.onCharTyped(input);
     }
 
     @Override

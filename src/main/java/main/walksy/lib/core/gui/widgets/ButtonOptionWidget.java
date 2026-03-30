@@ -5,9 +5,10 @@ import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class ButtonOptionWidget extends OptionWidget {
 
@@ -22,22 +23,22 @@ public class ButtonOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         hoveredButton = mouseX >= getWidth() - 30 && mouseX <= getWidth() - 30 + 38 &&
                 mouseY >= getY() + 3 && mouseY <= getY() + 3 + getHeight() - 6;
         Renderer2D.fillRoundedRectOutline(context, getWidth() - 31, getY() + 2, 40, getHeight() - 4, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         Renderer2D.fillRoundedRectOutline(context, getWidth() - 30, getY() + 3, 38, getHeight() - 6, 2, 1, hoveredButton ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        context.drawTextWithShadow(screen.getTextRenderer(), "Press", getWidth() - 29 + (38 - screen.getTextRenderer().getWidth("Press")) / 2, getTextYCentered() + 1, -1);
+        context.text(screen.getFont(), "Press", getWidth() - 29 + (38 - screen.getFont().width("Press")) / 2, getTextYCentered() + 1, -1, true);
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        if (hoveredButton && button == 0) {
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        if (hoveredButton && click.button() == 0) {
             if (this.option.getValue() == null) return;
             this.option.getValue().run();
-            ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+            AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
         }
-        super.onMouseClick(mouseX, mouseY, button);
+        super.onMouseClick(click, doubled);
     }
 
 

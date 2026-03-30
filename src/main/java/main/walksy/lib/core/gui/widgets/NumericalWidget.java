@@ -8,9 +8,10 @@ import main.walksy.lib.core.gui.widgets.sub.adaptor.FloatSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 
@@ -37,23 +38,23 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     }
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         this.slider.render(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        this.slider.onClick((int) mouseX, (int) mouseY, button);
-        ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        this.slider.onClick(click, doubled);
+        AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
     }
 
     @Override
-    public void onMouseRelease(double mouseX, double mouseY, int button) {
+    public void onMouseRelease(MouseButtonEvent click) {
         this.slider.release();
     }
 
     @Override
-    public void onMouseDrag(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public void onMouseDrag(MouseButtonEvent click, double deltaX, double deltaY) {
         this.slider.onDrag((int) mouseX);
     }
 

@@ -4,18 +4,20 @@ import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.renderer.Renderer2D;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.Vec2;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 
 public class HudEditorScreen extends BaseScreen {
 
-    private static final Identifier CROSSHAIR_TEXTURE = Identifier.ofVanilla("hud/crosshair");
+    private static final Identifier CROSSHAIR_TEXTURE = Identifier.withDefaultNamespace("hud/crosshair");
     private final Option<?> hudOption;
     private boolean dragging = false;
 
@@ -28,18 +30,17 @@ public class HudEditorScreen extends BaseScreen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-
-        context.drawCenteredTextWithShadow(
-                this.textRenderer,
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
+        super.extractRenderState(context, mouseX, mouseY, a);
+        context.centeredText(
+                this.font,
                 "Currently Editing: " + this.hudOption.getName(),
                 this.width / 2,
                 10,
                 -1
         );
-        context.drawCenteredTextWithShadow(
-                this.textRenderer,
+        context.centeredText(
+                this.font,
                 "(ESC to leave)",
                 this.width / 2,
                 20,
@@ -47,17 +48,17 @@ public class HudEditorScreen extends BaseScreen {
         );
 
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
-            Vec2f pos = pixelGridAnimation.getAbsolutePosition();
-            float x = pos.x;
-            float y = pos.y;
+            Vec2 pos = pixelGridAnimation.getAbsolutePosition();
+            double x = pos.x;
+            double y = pos.y;
 
-            if (this.client.world == null) {
+            if (this.minecraft.level == null) {
                 context.fill(0, 0, width, height, Color.BLACK.getRGB());
-                context.drawGuiTexture(
-                        RenderLayer::getCrosshair,
+                context.blitSprite(
+                        RenderPipelines.GUI_TEXTURED,
                         CROSSHAIR_TEXTURE,
-                        (context.getScaledWindowWidth() - 15) / 2,
-                        (context.getScaledWindowHeight() - 15) / 2,
+                        (context.guiWidth() - 15) / 2,
+                        (context.guiHeight() - 15) / 2,
                         15,
                         15
                 );
@@ -66,26 +67,30 @@ public class HudEditorScreen extends BaseScreen {
             pixelGridAnimation.render(context, false);
 
             if (!dragging) {
-                context.getMatrices().push();
+                context.pose().pushMatrix();
                 float size = pixelGridAnimation.getSize();
-                context.getMatrices().scale(size, size, size);
+                context.pose().scale(size, size);
                 Renderer2D.renderGridOutline(
                         context,
                         pixelGridAnimation.getCurrentFrame(),
-                        Math.round(x / size),
-                        Math.round(y / size),
+                        (int) Math.round(x / size),
+                        (int) Math.round(y / size),
                         1,
                         0
                 );
-                context.getMatrices().pop();
+
+                context.pose().popMatrix();
             }
         }
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+
         if (!(hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
-            return super.mouseClicked(mouseX, mouseY, button);
+            return super.mouseClicked(click, doubled);
         }
 
         PixelGrid frame = pixelGridAnimation.getCurrentFrame();
@@ -96,8 +101,8 @@ public class HudEditorScreen extends BaseScreen {
         int renderedW = Math.round(frameW * size);
         int renderedH = Math.round(frameH * size);
 
-        int baseX = (this.client.getWindow().getScaledWidth() - renderedW) / 2;
-        int baseY = (this.client.getWindow().getScaledHeight() - renderedH) / 2;
+        int baseX = (this.minecraft.getWindow().getGuiScaledWidth() - renderedW) / 2;
+        int baseY = (this.minecraft.getWindow().getGuiScaledHeight() - renderedH) / 2;
 
         double rawX = baseX + pixelGridAnimation.getOffsetX();
         double rawY = baseY + pixelGridAnimation.getOffsetY();
@@ -110,13 +115,17 @@ public class HudEditorScreen extends BaseScreen {
             dragOffsetY = mouseY - rawY;
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+    public boolean mouseDragged(MouseButtonEvent click, double oX, double oY) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+
         if (!(dragging && hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
-            return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+            return super.mouseDragged(click, oX, oY);
         }
 
         PixelGrid frame = pixelGridAnimation.getCurrentFrame();
@@ -127,8 +136,8 @@ public class HudEditorScreen extends BaseScreen {
         int renderedW = Math.round(frameW * size);
         int renderedH = Math.round(frameH * size);
 
-        int baseX = (this.client.getWindow().getScaledWidth() - renderedW) / 2;
-        int baseY = (this.client.getWindow().getScaledHeight() - renderedH) / 2;
+        int baseX = (this.minecraft.getWindow().getGuiScaledWidth() - renderedW) / 2;
+        int baseY = (this.minecraft.getWindow().getGuiScaledHeight() - renderedH) / 2;
 
         double newTopLeftX = mouseX - dragOffsetX;
         double newTopLeftY = mouseY - dragOffsetY;
@@ -143,17 +152,19 @@ public class HudEditorScreen extends BaseScreen {
         return true;
     }
 
-
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent click) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+
         if (!dragging) {
-            return super.mouseReleased(mouseX, mouseY, button);
+            return super.mouseReleased(click);
         }
 
         dragging = false;
 
         if (!(hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
-            return super.mouseReleased(mouseX, mouseY, button);
+            return super.mouseReleased(click);
         }
 
         PixelGrid frame = pixelGridAnimation.getCurrentFrame();
@@ -164,8 +175,8 @@ public class HudEditorScreen extends BaseScreen {
         int renderedW = Math.round(frameW * size);
         int renderedH = Math.round(frameH * size);
 
-        int baseX = (this.client.getWindow().getScaledWidth() - renderedW) / 2;
-        int baseY = (this.client.getWindow().getScaledHeight() - renderedH) / 2;
+        int baseX = (this.minecraft.getWindow().getGuiScaledWidth() - renderedW) / 2;
+        int baseY = (this.minecraft.getWindow().getGuiScaledHeight() - renderedH) / 2;
 
         double newTopLeftX = mouseX - dragOffsetX;
         double newTopLeftY = mouseY - dragOffsetY;
@@ -182,19 +193,19 @@ public class HudEditorScreen extends BaseScreen {
         return true;
     }
 
+
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent input) {
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
+            double moveAmount = 0.5;
 
-            double moveAmount = Screen.hasShiftDown() ? 2.5 : 0.5;
-
-            switch (keyCode) {
+            switch (input.key()) {
                 case GLFW.GLFW_KEY_UP -> pixelGridAnimation.addOffset(0, -moveAmount);
                 case GLFW.GLFW_KEY_DOWN -> pixelGridAnimation.addOffset(0, moveAmount);
                 case GLFW.GLFW_KEY_LEFT -> pixelGridAnimation.addOffset(-moveAmount, 0);
                 case GLFW.GLFW_KEY_RIGHT -> pixelGridAnimation.addOffset(moveAmount, 0);
                 default -> {
-                    return super.keyPressed(keyCode, scanCode, modifiers);
+                    return super.keyPressed(input);
                 }
             }
 
@@ -202,17 +213,20 @@ public class HudEditorScreen extends BaseScreen {
             return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         if (hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation) {
             hudOption.setValue(pixelGridAnimation);
         }
-        super.close();
+        super.onClose();
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {}
+    protected void renderBackgroundLayer(GuiGraphicsExtractor context, float delta) {
+        if (this.minecraft.level == null) {
+        }
+    }
 }

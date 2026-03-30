@@ -6,19 +6,24 @@ import main.walksy.lib.core.gui.utils.TabLocation;
 import main.walksy.lib.core.mixin.ScreenAccessor;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.MarqueeUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.tab.TabManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.tabs.TabManager;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScrollableTabWidget extends AbstractWidget {
+
+    public static final Identifier ARROW = Identifier.fromNamespaceAndPath("walksylib", "gui/arrow.png");
 
     private List<CategoryTab> tabs;
     private final TabManager tabManager;
@@ -32,18 +37,17 @@ public class ScrollableTabWidget extends AbstractWidget {
     private float targetScrollOffset = 0;
 
     public ScrollableTabWidget(int x, int y, int width, int height, List<CategoryTab> tabs, TabManager tabManager, TabLocation location, WalksyLibConfigScreen parent) {
-        super(x, y, width, height, null);
+        super(x, y, width, height, Component.empty());
         this.tabs = tabs;
         this.tabManager = tabManager;
         this.location = location;
         this.parent = parent;
     }
 
-
     @Override
-    public void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        currentScrollOffset = MathHelper.lerp(0.2f, currentScrollOffset, targetScrollOffset);
+    protected void extractWidgetRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float a) {
+        Minecraft client = Minecraft.getInstance();
+        currentScrollOffset = Mth.lerp(0.2f, currentScrollOffset, targetScrollOffset);
 
         if (location == TabLocation.TOP || location == TabLocation.BOTTOM) {
             if (tabs.isEmpty()) return;
@@ -52,10 +56,9 @@ public class ScrollableTabWidget extends AbstractWidget {
             final int tabCount = tabs.size();
             final int totalWidth = tabCount * (TAB_WIDTH + 4) - 4;
             final int baseX = totalWidth <= this.width
-                ? this.getX() + (this.width - totalWidth) / 2
-                : this.getX() - (int) currentScrollOffset;
+                    ? this.getX() + (this.width - totalWidth) / 2
+                    : this.getX() - (int) currentScrollOffset;
 
-            //cache (ish) stuff
             int[] tabXs = new int[tabCount];
             boolean[] hoveredTabs = new boolean[tabCount];
             boolean[] selectedTabs = new boolean[tabCount];
@@ -79,14 +82,15 @@ public class ScrollableTabWidget extends AbstractWidget {
                 int tabX = tabXs[i];
                 if (tabX + TAB_WIDTH < this.getX() || tabX > this.getX() + this.width) continue;
 
-                String fullText = tabs.get(i).getTitle().getString();
+                String fullText = tabs.get(i).getTabTitle().getString();
                 String text = MarqueeUtil.get(fullText, TAB_WIDTH - 10, 10);
 
                 int color = selectedTabs[i] ? 0xFFFFFFFF : hoveredTabs[i] ? 0xFFCCCCCC : 0xFF888888;
-                ctx.drawTextWithShadow(client.textRenderer, text,
-                    tabX + (TAB_WIDTH - client.textRenderer.getWidth(text)) / 2,
-                    this.getY() + (TAB_HEIGHT - 8) / 2,
-                    color);
+                ctx.text(client.font, text,
+                        tabX + (TAB_WIDTH - client.font.width(text)) / 2,
+                        this.getY() + (TAB_HEIGHT - 8) / 2,
+                        color,
+                        true);
             }
 
             //Draw base lines
@@ -94,8 +98,8 @@ public class ScrollableTabWidget extends AbstractWidget {
             int startX = baseX;
             int endX = baseX + totalWidth;
 
-            ctx.drawHorizontalLine(startX, endX, y, MainColors.OUTLINE_WHITE.getRGB());
-            ctx.drawHorizontalLine(startX - 2, endX + 2, y + 1, MainColors.OUTLINE_BLACK.getRGB());
+            ctx.horizontalLine(startX, endX, y, MainColors.OUTLINE_WHITE.getRGB());
+            ctx.horizontalLine(startX - 2, endX + 2, y + 1, MainColors.OUTLINE_BLACK.getRGB());
 
             int leftAlpha;
             if (selectedTabs[0]) leftAlpha = 255;
@@ -108,16 +112,16 @@ public class ScrollableTabWidget extends AbstractWidget {
             else rightAlpha = 51;
 
             //LEFT vertical lines
-            ctx.drawVerticalLine(startX - 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, leftAlpha).getRGB()); //this
-            ctx.drawVerticalLine(startX - 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
+            ctx.verticalLine(startX - 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, leftAlpha).getRGB()); //this
+            ctx.verticalLine(startX - 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
             if ((tabCount - 1) * TAB_WIDTH <= parent.width) {
-                ctx.drawHorizontalLine(0, startX - 3, 27, new Color(0, 0, 0, 191).getRGB());
+                ctx.horizontalLine(0, startX - 3, 27, new Color(0, 0, 0, 191).getRGB());
             }
 
             //RIGHT vertical lines
-            ctx.drawVerticalLine(endX + 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, rightAlpha).getRGB()); //this
-            ctx.drawVerticalLine(endX + 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
-            ctx.drawHorizontalLine(this.getWidth(), endX + 3, 27, new Color(0, 0, 0, 191).getRGB());
+            ctx.verticalLine(endX + 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, rightAlpha).getRGB()); //this
+            ctx.verticalLine(endX + 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
+            ctx.horizontalLine(this.getWidth(), endX + 3, 27, new Color(0, 0, 0, 191).getRGB());
 
             //Draw bottom highlight for hovered or selected tabs
             for (int i = 0; i < tabCount; i++) {
@@ -139,48 +143,48 @@ public class ScrollableTabWidget extends AbstractWidget {
         }
     }
 
-    private void renderArrowIndicator(DrawContext ctx) {
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput output) {
+        
+    }
+
+    private void renderArrowIndicator(GuiGraphicsExtractor ctx) {
         MaxOffset offset = getMaxOffsetDirection();
         if (offset == null) return;
 
-        ctx.getMatrices().push();
+        ctx.pose().pushMatrix();
 
         double offsetX = 0; //(Math.sin((parent.tickCount % 60) / 60.0 * 2 * Math.PI) * 0.5 + 0.5) * 6.0
         int fadeAlpha = (int) ((Math.sin((parent.tickCount % 60) / 60.0 * 2 * Math.PI) * 0.5 + 0.5) * 255.0);
         fadeAlpha = Math.min(Math.max(fadeAlpha, 0), 255);
 
         if (offset != MaxOffset.RIGHT) {
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate((getX() + getWidth()) - 25 + offsetX, (getY() + getHeight()) / 2.0 + 2.5, 0);
-            ctx.getMatrices().scale(2.0F, 2.0F, 1.0F);
-            ctx.getMatrices().translate(1.0, 1.0, 0);
+            ctx.pose().pushMatrix();
+            ctx.pose().translate((float) ((getX() + getWidth()) - 25 + offsetX), (float) ((getY() + getHeight()) / 2.0 + 2.5));
+            ctx.pose().scale(2.0F, 2.0F);
+            ctx.pose().translate(1.0F, 1.0F);
 
-            ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, Identifier.of("walksylib", "gui/arrow.png"),
+            ctx.blit(RenderPipelines.GUI_TEXTURED, ARROW,
                 -1, -1, 0.0F, 0.0F, 8, 8, 8, 16, new Color(255, 255, 255, fadeAlpha).getRGB());
 
-            ctx.getMatrices().pop();
+            ctx.pose().popMatrix();
         }
 
         if (offset != MaxOffset.LEFT) {
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(getX() + 25 - offsetX, (getY() + getHeight()) / 2.0 + 2.5, 0);
-            ctx.getMatrices().scale(2.0F, 2.0F, 1.0F);
-            ctx.getMatrices().translate(-9.0, 1.0, 0);
+            ctx.pose().pushMatrix();
+            ctx.pose().translate((float) (getX() + 25 - offsetX), (float) ((getY() + getHeight()) / 2.0 + 2.5));
+            ctx.pose().scale(2.0F, 2.0F);
+            ctx.pose().translate(-9.0F, 1.0F);
 
-            ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, Identifier.of("walksylib", "gui/arrow.png"),
+            ctx.blit(RenderPipelines.GUI_TEXTURED, ARROW,
                 1, -1, 0.0F, 8F, 8, 8, 8, 16, new Color(255, 255, 255, fadeAlpha).getRGB());
 
-            ctx.getMatrices().pop();
+            ctx.pose().popMatrix();
         }
 
-        ctx.getMatrices().pop();
+        ctx.pose().popMatrix();
     }
 
-
-
-
-    @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {}
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
@@ -196,7 +200,9 @@ public class ScrollableTabWidget extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
         if (location == TabLocation.TOP || location == TabLocation.BOTTOM) {
             for (int i = 0; i < tabs.size(); i++) {
                 int tabX = (tabs.size() * (TAB_WIDTH + 4) - 4 <= this.width
@@ -206,7 +212,7 @@ public class ScrollableTabWidget extends AbstractWidget {
                 if (mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT) {
                     if (tabManager.getCurrentTab() != tabs.get(i)) {
                         selectTab(i, true);
-                        //MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                        //Minecraft.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                     }
                     return true;
                 }

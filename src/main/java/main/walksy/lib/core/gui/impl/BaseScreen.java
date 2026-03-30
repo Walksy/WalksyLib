@@ -1,25 +1,18 @@
 package main.walksy.lib.core.gui.impl;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.render.DefaultFramebufferSet;
-import net.minecraft.client.util.Pool;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class BaseScreen extends Screen {
 
     public final Screen parent;
-    private final Pool shaderPool;
     public int tickCount = 0;
 
     protected BaseScreen(String title, Screen parent) {
-        super(Text.of(title));
+        super(Component.literal(title));
         this.parent = parent;
-        this.shaderPool = new Pool(3);
     }
 
     @Override
@@ -28,9 +21,8 @@ public class BaseScreen extends Screen {
     }
 
     @Override
-    public void close() {
-        super.close();
-        MinecraftClient.getInstance().setScreen(parent);
+    public void onClose() {
+        this.minecraft.setScreen(parent);
     }
 
     @Override
@@ -39,24 +31,16 @@ public class BaseScreen extends Screen {
         tickCount++;
     }
 
-    public void addWidget(ClickableWidget widget)
-    {
-        this.addDrawableChild(widget);
+    public void addWidget(AbstractWidget widget) {
+        this.addRenderableWidget(widget);
     }
 
-    protected void renderBlurEffect() {
-        PostEffectProcessor blur = client.getShaderLoader().loadPostEffect(Identifier.ofVanilla("blur"), DefaultFramebufferSet.MAIN_ONLY);
-        if (blur != null) {
-            blur.setUniforms("Radius", 15);
-            blur.render(client.getFramebuffer(), shaderPool);
-        }
-        client.getFramebuffer().beginWrite(false);
-    }
 
-    protected void renderBackgroundLayer(DrawContext context, float delta) {
-        if (this.client.world == null) {
-            this.renderPanoramaBackground(context, delta);
+    protected void renderBackgroundLayer(GuiGraphicsExtractor context, float delta) {
+        if (this.minecraft.level == null) {
+            this.extractPanorama(context, delta);
         }
-        this.renderDarkening(context);
+        this.extractBlurredBackground(context);
+        this.extractMenuBackground(context);
     }
 }

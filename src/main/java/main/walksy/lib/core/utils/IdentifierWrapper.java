@@ -1,6 +1,6 @@
 package main.walksy.lib.core.utils;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
@@ -14,8 +14,7 @@ public class IdentifierWrapper {
         this(identifier, "");
     }
 
-    public IdentifierWrapper(Identifier identifier, String fileName)
-    {
+    public IdentifierWrapper(Identifier identifier, String fileName) {
         this.identifier = identifier;
         this.fileName = fileName;
     }
@@ -25,8 +24,7 @@ public class IdentifierWrapper {
         return this.identifier;
     }
 
-    public void setIdentifier(Identifier identifier)
-    {
+    public void setIdentifier(Identifier identifier) {
         this.identifier = identifier;
     }
 

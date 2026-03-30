@@ -9,10 +9,12 @@ import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.sound.SoundManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.sounds.SoundManager;
 
 import java.awt.*;
 
@@ -53,7 +55,7 @@ public class BooleanWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         if (ScreenGlobals.DEBUG) renderDebug(context);
 
         Renderer2D.fillRoundedRect(context, getWidth() - 16, getY() + 3, 25, getHeight() - 6, 2, new Color(255, 255, 255, 20).getRGB());
@@ -67,9 +69,9 @@ public class BooleanWidget extends OptionWidget {
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        if (isHovered() && button == 0) {
-            ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        if (isHovered() && click.button() == 0) {
+            AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
 
             if (this.warningPopUp != null && !this.warningPopUp.visible && !this.option.getValue()) {
                 this.screen.popUp = this.warningPopUp;
@@ -94,7 +96,7 @@ public class BooleanWidget extends OptionWidget {
     @Override
     public void playDownSound(SoundManager soundManager) {}
 
-    private void renderDebug(DrawContext context) {
+    private void renderDebug(GuiGraphicsExtractor context) {
         context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), new Color(255, 255, 255, 150).getRGB());
     }
 

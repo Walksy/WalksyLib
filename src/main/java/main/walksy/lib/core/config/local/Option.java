@@ -11,8 +11,8 @@ import main.walksy.lib.core.utils.IdentifierWrapper;
 import main.walksy.lib.core.utils.SearchUtils;
 import main.walksy.lib.core.utils.log.InternalLog;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.network.chat.Component;
 
 import java.awt.*;
 import java.time.LocalTime;
@@ -212,7 +212,7 @@ public class Option<T> {
         InternalLog.ToolTip toolTip = null;
         if (this.warning != null)
         {
-            toolTip = new InternalLog.ToolTip(Tooltip.of(Text.of("Option has warning: " + this.warning.message)), Color.RED.getRGB());
+            toolTip = new InternalLog.ToolTip(Tooltip.create(Component.literal("Option has warning: " + this.warning.message)), Color.RED.getRGB());
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         WalksyLibLogger.log(InternalLog.of("[" + time + "]: " + "[" + configName + "] " + "-> " + "[" + name + "], " + "[" + oldVal + "] to " + "[" + newVal + "]", toolTip));
@@ -294,7 +294,7 @@ public class Option<T> {
             return new NumericalWidget<Double>(parent, screen, x, y, width, height, (Option<Double>) this);
         } else if (type == Float.class) {
             return new NumericalWidget<Float>(parent, screen, x, y, width, height, (Option<Float>) this);
-        } else if (type == java.awt.Color.class || type == WalksyLibColor.class) {
+        } else if (type == Color.class || type == WalksyLibColor.class) {
             return new ColorWidget(parent, screen, x, y, width, height, (Option<WalksyLibColor>) this);
         } else if (type == PixelGridAnimation.class) {
             return new PixelGridAnimationWidget(parent, screen, x, y, width, height, (Option<PixelGridAnimation>) this);

@@ -1,16 +1,21 @@
 package main.walksy.lib.core.gui.widgets;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+
+import java.awt.*;
 
 public abstract class OptionWidget extends AbstractWidget {
 
@@ -24,8 +29,9 @@ public abstract class OptionWidget extends AbstractWidget {
     public boolean changesMade;
     public int mouseX, mouseY;
 
+
     public OptionWidget(OptionGroup parent, WalksyLibConfigScreen screen, Option<?> option, int x, int y, int width, int height, String name) {
-        super(x, y, width, height, Text.of(name));
+        super(x, y, width, height, Component.literal(name));
         this.setPosition(x, y);
         this.parent = parent;
         this.option = option;
@@ -34,12 +40,12 @@ public abstract class OptionWidget extends AbstractWidget {
         this.isHovered = false;
 
         int size = ScreenGlobals.OPTION_HEIGHT;
-        resetButton = new ButtonWidget(getX() + getWidth() - size + 15, getY(), size, size, false, Identifier.of("walksylib", "gui/widget/reset.png"), this::handleResetButtonClick, -1, 0);
+        resetButton = new ButtonWidget(getX() + getWidth() - size + 15, getY(), size, size, false, Identifier.fromNamespaceAndPath("walksylib", "gui/widget/reset.png"), this::handleResetButtonClick, -1, 0);
         resetButton.setEnabled(option.hasChanged());
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         if (!isVisible()) return;
         this.mouseX = mouseX;
         this.mouseY = mouseY;
@@ -47,8 +53,7 @@ public abstract class OptionWidget extends AbstractWidget {
         isHovered = (mouseX >= getX() && mouseX < (getX() + getWidth())
                 && mouseY >= getY() && mouseY < (getY() + getHeight()));
 
-        if (isHovered)
-        {
+        if (isHovered) {
             screen.setFocusedOption(option);
         }
 
@@ -64,35 +69,32 @@ public abstract class OptionWidget extends AbstractWidget {
 
         context.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
 
-        if (!isAvailable()) {
-            RenderSystem.setShaderColor(0.3f, 0.3f, 0.3f, 1f);
-            if (hovered) {
-                this.screen.setTooltip(Text.of(this.option.getAvailabilityHelper()));
-            }
-        }
         renderBase(context);
 
-
         resetButton.setEnabled(option.hasChanged() && isAvailable());
-        resetButton.render(context, mouseX, mouseY, delta);
+        resetButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
         context.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight() - 1);
         this.draw(context, isAvailable() ? mouseX : 0, isAvailable() ? mouseY : 0, delta);
         context.disableScissor();
         this.drawOutsideScissor(context, isAvailable() ? mouseX : 0, isAvailable() ? mouseY : 0, delta);
 
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-
+        if (!isAvailable()) {
+            Renderer2D.fillRoundedRect(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, new Color(0, 0, 0, 180).getRGB());
+            if (isHovered) {
+                context.setTooltipForNextFrame(Component.literal(this.option.getAvailabilityHelper()), mouseX, mouseY);
+            }
+        }
         context.disableScissor();
     }
 
-    public void onMouseClick(double mouseX, double mouseY, int button) {}
-    public void onMouseRelease(double mouseX, double mouseY, int button) {}
-    public void onMouseDrag(double mouseX, double mouseY, int button, double deltaX, double deltaY) {}
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {}
+    public void onMouseRelease(MouseButtonEvent click) {}
+    public void onMouseDrag(MouseButtonEvent click, double offsetX, double offsetY) {}
     public void onMouseMove(double mouseX, double mouseY) {}
     public void onMouseScroll(double mouseX, double mouseY, double verticalAmount) {}
     public void tick() {}
-    public void onKeyPress(int keyCode, int scanCode, int modifiers) {}
-    public void onCharTyped(char chr, int modifiers) {}
+    public void onKeyPress(KeyEvent input) {}
+    public void onCharTyped(CharacterEvent input) {}
     public void onWidgetUpdate(int x, int y)
     {
         this.resetButton.setPosition(x, y);
@@ -101,12 +103,11 @@ public abstract class OptionWidget extends AbstractWidget {
 
     public abstract void onWidgetUpdate();
 
-    public abstract void draw(DrawContext context, int mouseX, int mouseY, float delta);
+    public abstract void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta);
 
-    public void drawOutsideScissor(DrawContext context, int mouseX, int mouseY, float delta) {}
+    public void drawOutsideScissor(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {}
 
-    private void renderBase(DrawContext context)
-    {
+    private void renderBase(GuiGraphicsExtractor context) {
         Renderer2D.fillRoundedRectOutline(context, getX(), getY(), getWidth(), getHeight(), 2, 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
         Renderer2D.fillRoundedRectOutline(context, getX() - 1, getY() - 1, getWidth() + 2, getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         renderName(context);
@@ -117,31 +118,24 @@ public abstract class OptionWidget extends AbstractWidget {
         return option.isAvailable();
     }
 
-    protected void renderName(DrawContext context)
-    {
-        context.drawTextWithShadow(screen.getTextRenderer(),
-                option.getName(),
-                getX() + 5,
-                getTextYCentered() + 1,
-                -1);
+    protected void renderName(GuiGraphicsExtractor context) {
+        context.text(screen.getFont(), option.getName(), getX() + 5, getTextYCentered() + 1, -1);
     }
 
 
-    protected void handleResetButtonClick()
-    {
+    protected void handleResetButtonClick() {
         this.option.reset();
         this.onThirdPartyChange(this.option.getDefaultValue());
     }
 
-    protected void renderHoverBackground(DrawContext context, int hoverLeft, int hoverRight) {
+    protected void renderHoverBackground(GuiGraphicsExtractor context, int hoverLeft, int hoverRight) {
         if (isHovered()) {
             context.fill(hoverLeft, getY(), hoverRight, getY() + getHeight(), 0x64FFFFFF);
         }
     }
 
-
     protected int getTextYCentered() {
-        int textHeight = screen.getTextRenderer().fontHeight;
+        int textHeight = screen.getFont().lineHeight;
         return getY() + (ScreenGlobals.OPTION_HEIGHT - textHeight) / 2;
     }
 
@@ -174,8 +168,7 @@ public abstract class OptionWidget extends AbstractWidget {
         screen.onChangesMade(option);
     }
 
-    public <V> void onThirdPartyChange(V value)
-    {
+    public <V> void onThirdPartyChange(V value) {
     }
 
     public OptionGroup getParent() {
@@ -187,7 +180,7 @@ public abstract class OptionWidget extends AbstractWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void updateWidgetNarration(NarrationElementOutput output) {
 
     }
 }

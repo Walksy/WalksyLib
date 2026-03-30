@@ -1,25 +1,30 @@
 package main.walksy.lib.core.mixin;
 
 import main.walksy.lib.core.gui.impl.BaseScreen;
+import main.walksy.lib.core.manager.WalksyLibTeamManager;
 import main.walksy.lib.core.mods.ModEntryPointList;
 import main.walksy.lib.core.utils.MarqueeUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.RunArgs;
-import net.minecraft.client.gui.screen.Screen;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.main.GameConfig;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import test.Main;
 
-@Mixin(MinecraftClient.class)
+@Mixin(Minecraft.class)
 public class MinecraftClientMixin {
 
-    @Shadow @Nullable public Screen currentScreen;
+    @Shadow
+    @Nullable
+    public Screen screen;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    public void onInitFinished(RunArgs args, CallbackInfo ci) {
+    public void onInitFinished(GameConfig gameConfig, CallbackInfo ci) {
+        WalksyLibTeamManager.load();
         ModEntryPointList modEntryPointList = new ModEntryPointList();
         modEntryPointList.retrieve();
         modEntryPointList.get().forEach(mod -> {
@@ -30,9 +35,10 @@ public class MinecraftClientMixin {
 
     @Inject(method = "tick", at = @At("HEAD"))
     public void onTick(CallbackInfo ci) {
-        if (this.currentScreen instanceof BaseScreen) {
+        if (this.screen instanceof BaseScreen) {
             MarqueeUtil.tickCount++;
         }
+        Main.tick();
     }
 
     @Inject(method = "setScreen", at = @At("HEAD"))

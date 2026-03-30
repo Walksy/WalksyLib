@@ -1,30 +1,29 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
-import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
-import java.util.function.Consumer;
 
 public abstract class SubWidget {
 
     protected int x, y, width, height;
-    public SubWidget(int x, int y, int width, int height)
-    {
+    public SubWidget(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
     }
 
-    public abstract void render(DrawContext context, int mouseX, int mouseY, float delta);
-    public abstract void onClick(int mouseX, int mouseY, int button);
+    public abstract void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta);
+    public abstract void onClick(MouseButtonEvent click, boolean doubled);
     public abstract void onDrag(int mouseX);
-    public void onKeyPress(int keyCode, int scanCode, int modifiers) {}
-    public void onCharTyped(char chr, int modifiers) {}
+    public void onKeyPress(KeyEvent input) {}
+    public void onCharTyped(CharacterEvent input) {}
 
-    public void setPos(Point pos)
-    {
+    public void setPos(Point pos) {
         this.x = pos.x;
         this.y = pos.y;
     }

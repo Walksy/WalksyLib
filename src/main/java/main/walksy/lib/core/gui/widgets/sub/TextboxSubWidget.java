@@ -1,103 +1,115 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.mixin.TextFieldWidgetAccessor;
-import main.walksy.lib.core.renderer.Renderer2D;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
+import main.walksy.lib.core.mixin.EditBoxAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 import java.awt.*;
 import java.util.function.Consumer;
 
-public class TextboxSubWidget extends SubWidget { //TODO Fix selection issue with field width
+public class TextboxSubWidget extends SubWidget {
 
-    private final TextFieldWidget field;
+    private final EditBox field;
     private final WalksyLibConfigScreen parent;
     public boolean hovered = false;
     private boolean centered;
     private int scrollWidth;
+    private Runnable onFocusLost = null;
 
     public TextboxSubWidget(WalksyLibConfigScreen parent, int x, int y, int width, int scrollWidth, int height, String defaultV, Consumer<String> onChange, boolean centered) {
         super(x, y, width, height);
         this.parent = parent;
         this.scrollWidth = scrollWidth;
-        this.field = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, x, y, width, height, Text.of(defaultV));
-        this.field.setChangedListener(onChange);
-        this.field.setText(defaultV);
+        this.field = new EditBox(Minecraft.getInstance().font, x, y, width, height, Component.literal(defaultV));
+        this.field.setResponder(onChange);
+        this.field.setValue(defaultV);
         this.field.active = true;
         this.centered = centered;
     }
 
     public int getScrollOffset() {
-        var tr = MinecraftClient.getInstance().textRenderer;
-        int textWidth = tr.getWidth(field.getText());
+        var tr = Minecraft.getInstance().font;
+        int textWidth = tr.width(field.getValue());
         return Math.max(0, textWidth - this.scrollWidth);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         if (!field.isVisible()) return;
 
         hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
 
-        int color = (hovered || field.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB();
-        TextRenderer tr = MinecraftClient.getInstance().textRenderer;
-        String text = field.getText();
+
+        Font tr = Minecraft.getInstance().font;
+        String text = field.getValue();
         int scrollOffset = getScrollOffset();
+        int color = (hovered || field.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB();
 
         if (text.isEmpty() && !field.isFocused()) {
-            context.drawTextWithShadow(tr, "...", x + 3, y + 1 + tr.fontHeight / 2, color);
+            context.text(tr, "...", x + 3, y + (tr.lineHeight) / 2, Color.GRAY.getRGB(), true);
+            return;
         }
+
+        var accessor = (EditBoxAccessor) field;
 
         if (field.isFocused() && (parent.tickCount % 20) < 10) {
-            var accessor = (TextFieldWidgetAccessor) field;
-            int cursor = MathHelper.clamp(field.getCursor() - accessor.getFirstCharacterIndex(), 0, text.length());
-            String visible = MinecraftClient.getInstance().textRenderer.trimToWidth(text.substring(accessor.getFirstCharacterIndex()), field.getInnerWidth());
-            int caretX = x + 4 + MinecraftClient.getInstance().textRenderer.getWidth(visible.substring(0, MathHelper.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
-            Renderer2D.drawVerticalLine(context, caretX, y + tr.fontHeight / 2 - 1, y + tr.fontHeight + 5, -1);
+            int cursor = Mth.clamp(field.getCursorPosition() - accessor.getDisplayPosition(), 0, text.length());
+            String visible = tr.plainSubstrByWidth(text.substring(accessor.getDisplayPosition()), field.getInnerWidth());
+            int caretX = x + 4 + tr.width(visible.substring(0, Mth.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
+            context.verticalLine(caretX, y + tr.lineHeight / 2 - 2, y + tr.lineHeight + 4, -1);
         }
 
-
-
         if (centered) {
-            String trimmed = tr.trimToWidth(text, field.getInnerWidth());
-            context.drawTextWithShadow(tr, trimmed, x + width / 2 - tr.getWidth(trimmed) / 2, y + 1 + tr.fontHeight / 2, color);
+            String trimmed = tr.plainSubstrByWidth(text, field.getInnerWidth());
+            context.text(tr, trimmed, x + width / 2 - tr.width(trimmed) / 2, y + 1 + tr.lineHeight / 2, color);
         } else {
-            context.drawTextWithShadow(tr, text, x + 3 - scrollOffset, y + 1 + tr.fontHeight / 2, color);
+            context.text(tr, text, x + 3 - scrollOffset, y + 1 + tr.lineHeight / 2, color, true);
         }
 
         int textX = x + 4 - scrollOffset;
-        int textY = y + 1 + tr.fontHeight / 2;
+        int textY = y + 1 + tr.lineHeight / 2;
 
-        int firstCharIndex = ((TextFieldWidgetAccessor) field).getFirstCharacterIndex();
-        String visibleText = tr.trimToWidth(text.substring(firstCharIndex), field.getInnerWidth());
+        int firstCharIndex = accessor.getDisplayPosition();
+        String visibleText = tr.plainSubstrByWidth(text.substring(firstCharIndex), field.getInnerWidth());
 
-        int selectionStart = MathHelper.clamp(((TextFieldWidgetAccessor) field).getSelectionStart(), 0, text.length());
-        int selectionEnd = MathHelper.clamp(((TextFieldWidgetAccessor) field).getSelectionEnd(), 0, text.length());
+        int selectionStart = Mth.clamp(this.getSelectionStart(accessor), 0, text.length());
+        int selectionEnd = Mth.clamp(this.getSelectionEnd(accessor), 0, text.length());
 
-        int visibleSelectionStart = MathHelper.clamp(selectionStart - firstCharIndex, 0, visibleText.length());
-        int visibleSelectionEnd = MathHelper.clamp(selectionEnd - firstCharIndex, 0, visibleText.length());
+        int visibleSelectionStart = Mth.clamp(selectionStart - firstCharIndex, 0, visibleText.length());
+        int visibleSelectionEnd = Mth.clamp(selectionEnd - firstCharIndex, 0, visibleText.length());
 
         if (visibleSelectionStart != visibleSelectionEnd) {
-            int highlightStartX = textX + tr.getWidth(visibleText.substring(0, visibleSelectionStart));
-            int highlightEndX = textX + tr.getWidth(visibleText.substring(0, visibleSelectionEnd));
+            int highlightStartX = textX + tr.width(visibleText.substring(0, visibleSelectionStart));
+            int highlightEndX = textX + tr.width(visibleText.substring(0, visibleSelectionEnd));
             drawSelectionHighlight(context, highlightStartX - 1, textY - 1, highlightEndX - 1, textY + 9);
         }
     }
 
+    private int getSelectionStart(EditBoxAccessor editBox) {
+        return Math.min(this.field.getCursorPosition(), editBox.getHighlightPos());
+    }
+
+    private int getSelectionEnd(EditBoxAccessor editBox) {
+        return Math.max(this.field.getCursorPosition(), editBox.getHighlightPos());
+    }
+
     @Override
-    public void onClick(int mouseX, int mouseY, int button) {
+    public void onClick(MouseButtonEvent click, boolean doubled) {
         if (hovered) {
-            field.onClick(mouseX, mouseY);
-            field.setCursorToEnd(false);
+            field.onClick(click, doubled);
+            field.moveCursorToEnd(false);
             this.setFocus(true);
-            ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+            AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
         } else {
             this.setFocus(false);
         }
@@ -107,19 +119,26 @@ public class TextboxSubWidget extends SubWidget { //TODO Fix selection issue wit
     public void onDrag(int mouseX) {}
 
     @Override
-    public void onKeyPress(int keyCode, int scanCode, int modifiers) {
-        field.keyPressed(keyCode, scanCode, modifiers);
-        super.onKeyPress(keyCode, scanCode, modifiers);
+    public void onKeyPress(KeyEvent input) {
+        field.keyPressed(input);
+        super.onKeyPress(input);
     }
 
     @Override
-    public void onCharTyped(char chr, int modifiers) {
-        field.charTyped(chr, modifiers);
-        super.onCharTyped(chr, modifiers);
+    public void onCharTyped(CharacterEvent input) {
+        field.charTyped(input);
+        super.onCharTyped(input);
+    }
+
+    public void setOnFocusLost(Runnable onFocusLost) {
+        this.onFocusLost = onFocusLost;
     }
 
     public void setFocus(boolean focus) {
         this.field.setFocused(focus);
+        if (!focus && onFocusLost != null) {
+            onFocusLost.run();
+        }
     }
 
     public boolean isFocused() {
@@ -127,15 +146,15 @@ public class TextboxSubWidget extends SubWidget { //TODO Fix selection issue wit
     }
 
     public String getText() {
-        return this.field.getText();
+        return this.field.getValue();
     }
 
     public void setText(String text)
     {
-        this.field.setText(text);
+        this.field.setValue(text);
     }
 
-    private void drawSelectionHighlight(DrawContext context, int x1, int y1, int x2, int y2) {
+    private void drawSelectionHighlight(GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
         if (x1 < x2) {
             int i = x1;
             x1 = x2;
@@ -151,6 +170,6 @@ public class TextboxSubWidget extends SubWidget { //TODO Fix selection issue wit
         if (x2 > x + this.width) x2 = x + this.width;
         if (x1 > x + this.width) x1 = x + this.width;
 
-        context.fill(RenderLayer.getGuiTextHighlight(), x1, y1, x2, y2, -16776961);
+        context.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, -16776961);
     }
 }

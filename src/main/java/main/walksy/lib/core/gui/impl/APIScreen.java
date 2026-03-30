@@ -3,72 +3,63 @@ package main.walksy.lib.core.gui.impl;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.gui.utils.CategoryTab;
 import main.walksy.lib.core.gui.utils.TabLocation;
-import main.walksy.lib.core.gui.widgets.*;
+import main.walksy.lib.core.gui.widgets.ButtonWidget;
+import main.walksy.lib.core.gui.widgets.LogWidget;
+import main.walksy.lib.core.gui.widgets.ModWidget;
+import main.walksy.lib.core.gui.widgets.UniversalTabWidget;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.mods.ModEntryPointList;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.log.InternalLog;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tab.TabManager;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.tabs.TabManager;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class APIScreen extends BaseScreen {
 
-    private final TabManager tabManager = new TabManager(this::addDrawableChild, this::remove);
+    private final TabManager tabManager = new TabManager(this::addRenderableWidget, this::removeWidget);
     private final List<ModWidget> modWidgets;
-    private ButtonWidget backButton;
+    private final ModEntryPointList entryPointList;
     private UniversalTabWidget tabWidget;
     private LogWidget logWidget;
-    private boolean wtf = false;
+    private boolean loaded = false;
     public Screen parent;
-
 
     public APIScreen(Screen parent) {
         super("APIScreen", parent);
         this.modWidgets = new ArrayList<>();
         this.parent = parent;
-        ModEntryPointList modEntryPointList = new ModEntryPointList();
-        modEntryPointList.retrieve();
-        int yOffset = 60;
-        int xOffset = 13;
-
-        int count = 0;
-        for (Mod mod : modEntryPointList.get()) {
-            modWidgets.add(new ModWidget(mod, this, xOffset, yOffset));
-            count++;
-            if (count % 4 == 0) {
-                xOffset = 13;
-                yOffset += 47;
-            } else {
-                xOffset += 158;
-            }
-        }
+        this.entryPointList = new ModEntryPointList();
+        this.entryPointList.retrieve();
     }
 
     @Override
     protected void init() {
         super.init();
-        backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::close);
-        addDrawableChild(backButton);
+        ButtonWidget backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::onClose);
+        addRenderableWidget(backButton);
 
         List<CategoryTab> tabList = new ArrayList<>();
         Category modCategory = new Category("Mods", null, null);
         Category logCategory = new Category("Logs", null, null);
         tabList.add(new CategoryTab(modCategory, null));
         tabList.add(new CategoryTab(logCategory, null));
-        if (!wtf) {
+        if (!loaded) {
             tabWidget = new UniversalTabWidget(0, 27, this.width, 24, tabList, tabManager, TabLocation.TOP, this);
             tabWidget.selectTab(0, true);
         }
-        wtf = true;
-        addDrawableChild(tabWidget);
+        loaded = true;
+        addRenderableWidget(tabWidget);
         logWidget = new LogWidget("Logs", this, 40, 60, width - 80, height - 90);
         this.refreshLogs(logWidget);
+
+        this.setupModWidgets();
     }
 
     public void refreshLogs(LogWidget widget)
@@ -79,41 +70,40 @@ public class APIScreen extends BaseScreen {
         }
     }
 
+
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         renderBackgroundLayer(context, delta);
-        renderBlurEffect();
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
-        context.drawHorizontalLine(0, width, 25, MainColors.OUTLINE_BLACK.getRGB());
-        context.drawHorizontalLine(0, width, 26, MainColors.OUTLINE_WHITE.getRGB());
+        context.horizontalLine(0, width, 25, MainColors.OUTLINE_BLACK.getRGB());
+        context.horizontalLine(0, width, 26, MainColors.OUTLINE_WHITE.getRGB());
 
-        //context.drawHorizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
-        //context.drawHorizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
-        //context.drawTexture(RenderLayer::getGuiTextured, FOOTER_SEPARATOR_TEXTURE, 0, height - 28, 0.0F, 0.0F, width, 2, 32, 2);
-        context.drawCenteredTextWithShadow(textRenderer, "WalksyLib API Screen", width / 2, 12 - textRenderer.fontHeight / 2, -1);
+        //context.horizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
+        //context.horizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
+        //context.drawTexture(RenderPipelines.GUI_TEXTURED, FOOTER_SEPARATOR_TEXTURE, 0, height - 28, 0.0F, 0.0F, width, 2, 32, 2);
+        context.centeredText(font, "WalksyLib API Screen", width / 2, 12 - font.lineHeight / 2, -1);
 
         if (!viewingMods()) {
-            logWidget.render(context, mouseX, mouseY, delta);
+            logWidget.extractRenderState(context, mouseX, mouseY, delta);
         } else {
             if (this.modWidgets.isEmpty()) {
-                context.drawCenteredTextWithShadow(textRenderer, "No Mods", width / 2, height / 2, -1);
+                context.centeredText(font, "No Mods", width / 2, height / 2, -1);
             }
             for (ModWidget widget : this.modWidgets) {
-                widget.render(context, mouseX, mouseY, delta);
+                widget.extractRenderState(context, mouseX, mouseY, delta);
             }
         }
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        for (ModWidget widget : this.modWidgets)
-        {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        for (ModWidget widget : this.modWidgets) {
             if (this.viewingMods()) {
-                widget.mouseClicked(mouseX, mouseY, button);
+                widget.mouseClicked(click, doubled);
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
@@ -124,27 +114,42 @@ public class APIScreen extends BaseScreen {
 
     private boolean viewingMods()
     {
-        return this.tabManager.getCurrentTab().getTitle().getString().equals("Mods");
+        return this.tabManager.getCurrentTab().getTabTitle().getString().equals("Mods");
+    }
+
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+
     }
 
     @Override
-    protected void applyBlur() {}
-
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {}
-
-    @Override
-    protected void refreshWidgetPositions() {
-        super.refreshWidgetPositions();
+    protected void rebuildWidgets() {
+        super.rebuildWidgets();
         if (tabWidget != null) {
             tabWidget.setWidth(this.width);
             tabWidget.setPosition(0, 27);
-            int i = tabWidget.getNavigationFocus().getBottom();
-            ScreenRect screenRect = new ScreenRect(0, i, width, height - 36 - i);
+            int i = tabWidget.getRectangle().bottom();
+            ScreenRectangle screenRect = new ScreenRectangle(0, i, width, height - 36 - i);
             tabManager.setTabArea(screenRect);
         }
         this.logWidget.setPosition(20, 60);
         this.logWidget.setWidth(width - 40);
         this.logWidget.setHeight(height - 80);
+        this.setupModWidgets();
+    }
+
+    private void setupModWidgets() {
+        this.modWidgets.clear();
+        int x = 13, y = 60;
+
+        for (Mod mod : this.entryPointList.get()) {
+            if (x + 140 + 13 > this.width) { //140 mod widget width
+                x = 13;
+                y += 47;
+            }
+            this.modWidgets.add(new ModWidget(mod, this, x, y));
+            x += 158;
+        }
     }
 }

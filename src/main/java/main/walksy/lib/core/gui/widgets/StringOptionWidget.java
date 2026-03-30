@@ -5,7 +5,10 @@ import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.TextboxSubWidget;
 import main.walksy.lib.core.utils.MainColors;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 
@@ -21,28 +24,28 @@ public class StringOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawVerticalLine(getWidth() - 33 - this.textbox.getScrollOffset(), getY(), getY() + height - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        context.verticalLine(getWidth() - 33 - this.textbox.getScrollOffset(), getY(), getY() + height - 1, isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
         this.textbox.render(context, mouseX, mouseY, delta);
         this.textbox.hovered = this.isHovered();
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        super.onMouseClick(mouseX, mouseY, button);
-        this.textbox.onClick((int) mouseX, (int) mouseY, button);
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        super.onMouseClick(click, doubled);
+        this.textbox.onClick(click, doubled);
     }
 
     @Override
-    public void onKeyPress(int keyCode, int scanCode, int modifiers) {
-        super.onKeyPress(keyCode, scanCode, modifiers);
-        this.textbox.onKeyPress(keyCode, scanCode, modifiers);
+    public void onKeyPress(KeyEvent input) {
+        super.onKeyPress(input);
+        this.textbox.onKeyPress(input);
     }
 
     @Override
-    public void onCharTyped(char chr, int modifiers) {
-        super.onCharTyped(chr, modifiers);
-        this.textbox.onCharTyped(chr, modifiers);
+    public void onCharTyped(CharacterEvent input) {
+        super.onCharTyped(input);
+        this.textbox.onCharTyped(input);
     }
 
     @Override

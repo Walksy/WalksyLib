@@ -7,9 +7,10 @@ import main.walksy.lib.core.renderer.Renderer2D;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public abstract class OpenableWidget extends OptionWidget {
 
@@ -24,12 +25,14 @@ public abstract class OpenableWidget extends OptionWidget {
         this.heightAnim = new Animation(height, 0.5f);
     }
 
+    public OpenableWidget(OptionGroup parent, WalksyLibConfigScreen screen, Option<?> option, int x, int y, int width, int height, String name) {
+        super(parent, screen, option, x, y, width, height, name);
+        this.heightAnim = new Animation(height, 0.5f);
+    }
+
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         heightAnim.update(delta);
-        if (!heightAnim.isAnimating()) {
-            this.setHeight(ScreenGlobals.OPTION_HEIGHT);
-        }
         float currentAnimated = heightAnim.getCurrentValue();
         if (Math.abs(currentAnimated - this.height) >= 1f) {
             int animHeight = Math.round(currentAnimated);
@@ -48,17 +51,20 @@ public abstract class OpenableWidget extends OptionWidget {
             );
         }
         context.disableScissor();
-        super.renderWidget(context, mouseX, mouseY, delta);
+        if (!heightAnim.isAnimating() && !this.open) {
+            this.setHeight(ScreenGlobals.OPTION_HEIGHT);
+        }
+        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public void draw(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 
     }
 
     @Override
-    public void onMouseClick(double mouseX, double mouseY, int button) {
-        if (isHovered() && button == 0) {
+    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+        if (isHovered() && click.button() == 0) {
             toggleOpen();
         }
     }
@@ -75,12 +81,11 @@ public abstract class OpenableWidget extends OptionWidget {
         float target = open ? OPEN_HEIGHT : ScreenGlobals.OPTION_HEIGHT;
         heightAnim.setTargetValue(target);
 
-        ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+        AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
         this.onOpen(prev);
     }
 
-    public boolean fullyClosed()
-    {
+    public boolean fullyClosed() {
         return !this.open && Math.round(this.heightAnim.getCurrentValue()) == ScreenGlobals.OPTION_HEIGHT;
     }
 

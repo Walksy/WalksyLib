@@ -5,12 +5,13 @@ import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.MarqueeUtil;
 import main.walksy.lib.core.utils.Scroller;
 import main.walksy.lib.core.utils.log.InternalLog;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class LogWidget extends AbstractWidget {
     private final Scroller scroller = new Scroller(0, 12);
 
     public LogWidget(String name, Screen parent, int x, int y, int width, int height) {
-        super(x, y, width, height, Text.of(name));
+        super(x, y, width, height, Component.literal(name));
         this.parent = parent;
     }
 
@@ -41,7 +42,7 @@ public class LogWidget extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
         int offset = 10;
 
         Renderer2D.fillRoundedRect(
@@ -57,7 +58,7 @@ public class LogWidget extends AbstractWidget {
                 MainColors.OUTLINE_WHITE.getRGB()
         );
 
-        hovered = mouseX >= getX() &&
+        isHovered = mouseX >= getX() &&
                 mouseX <= getX() + width &&
                 mouseY >= getY() + offset &&
                 mouseY <= getY() + height;
@@ -65,7 +66,7 @@ public class LogWidget extends AbstractWidget {
         context.enableScissor(getX(), getY() + offset + 2, getX() + width, getY() + height + 5);
 
         if (!logLines.isEmpty()) {
-            TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+            Font textRenderer = Minecraft.getInstance().font;
             int rowHeight = 12;
             int yTop = getY() + offset + 5;
 
@@ -85,14 +86,14 @@ public class LogWidget extends AbstractWidget {
                 }
 
                 String entry = MarqueeUtil.get(logLines.get(i).getText(), width - 10, 10);
-                context.drawText(textRenderer, entry, getX() + 6, y, c, false);
+                context.text(textRenderer, entry, getX() + 6, y, c, false);
             }
         }
 
         context.disableScissor();
 
-        context.drawCenteredTextWithShadow(
-                MinecraftClient.getInstance().textRenderer,
+        context.centeredText(
+                Minecraft.getInstance().font,
                 this.getMessage(),
                 parent.width / 2,
                 getY() - 4,
@@ -127,6 +128,7 @@ public class LogWidget extends AbstractWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void updateWidgetNarration(NarrationElementOutput output) {
+
     }
 }
