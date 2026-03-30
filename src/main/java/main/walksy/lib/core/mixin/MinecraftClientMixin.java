@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import test.Main;
 
 @Mixin(Minecraft.class)
 public class MinecraftClientMixin {
@@ -38,7 +37,6 @@ public class MinecraftClientMixin {
         if (this.screen instanceof BaseScreen) {
             MarqueeUtil.tickCount++;
         }
-        Main.tick();
     }
 
     @Inject(method = "setScreen", at = @At("HEAD"))
