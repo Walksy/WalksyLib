@@ -1,5 +1,6 @@
 package main.walksy.lib.core.config.local.options.type;
 
+import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
@@ -63,8 +64,9 @@ public class PixelGridAnimation {
         PixelGrid frame = this.getCurrentFrame();
         if (frame != null) {
             context.pose().pushMatrix();
-            context.pose().scale(size, size);
-            frame.render(context, x / size, y / size, blend);
+            context.pose().translate(x, y);
+            context.pose().scale(this.size, this.size);
+            frame.render(context, 0, 0, blend);
             context.pose().popMatrix();
         }
     }
@@ -122,31 +124,12 @@ public class PixelGridAnimation {
     }
 
     public Vec2 getAbsolutePosition() {
-        Minecraft client = Minecraft.getInstance();
-        if (client == null || client.getWindow() == null) return new Vec2(0f, 0f);
+        Window window = Minecraft.getInstance().getWindow();
+        float drawW = (frames.isEmpty() ? 0 : frames.get(0).getWidth()) * size;
+        float drawH = (frames.isEmpty() ? 0 : frames.get(0).getHeight()) * size;
 
-        int windowWidth = client.getWindow().getScreenWidth();
-        int windowHeight = client.getWindow().getScreenHeight();
-
-        PixelGrid frame = getCurrentFrame();
-        int frameW = frame == null ? 0 : frame.getWidth();
-        int frameH = frame == null ? 0 : frame.getHeight();
-
-        int renderedW = Math.round(frameW * size);
-        int renderedH = Math.round(frameH * size);
-
-        int baseX = (windowWidth - renderedW) / 2;
-        int baseY = (windowHeight - renderedH) / 2;
-
-        double rawX = baseX + offsetX;
-        double rawY = baseY + offsetY;
-
-        float x = (float) (Math.round(rawX * 2.0) / 2.0);
-        float y = (float) (Math.round(rawY * 2.0) / 2.0);
-
-        return new Vec2(x, y);
+        return new Vec2((float)((window.getGuiScaledWidth() - drawW) / 2.0 + offsetX), (float)((window.getGuiScaledHeight() - drawH) / 2.0 + offsetY));
     }
-
     public PixelGridAnimation offset(double offsetX, double offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;

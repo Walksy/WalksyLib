@@ -25,8 +25,7 @@ public class PixelGrid {
     }
 
     public void render(GuiGraphicsExtractor context, Supplier<Point> position, boolean blend) {
-        if (position == null || (position.get().x == -1) && (position.get().y == -1))
-        {
+        if (position == null || (position.get().x == -1) && (position.get().y == -1)) {
             return;
         }
         Renderer2D.renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, blend);

@@ -225,6 +225,11 @@ public class HudEditorScreen extends BaseScreen {
     }
 
     @Override
+    protected void extractBlurredBackground(GuiGraphicsExtractor graphics) {
+
+    }
+
+    @Override
     protected void renderBackgroundLayer(GuiGraphicsExtractor context, float delta) {
         if (this.minecraft.level == null) {
         }
