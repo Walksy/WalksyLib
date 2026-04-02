@@ -73,7 +73,6 @@ public class APIScreen extends BaseScreen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        renderBackgroundLayer(context, delta);
         super.extractRenderState(context, mouseX, mouseY, delta);
 
         context.horizontalLine(0, width, 25, MainColors.OUTLINE_BLACK.getRGB());

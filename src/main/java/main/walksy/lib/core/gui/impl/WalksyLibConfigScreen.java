@@ -266,7 +266,6 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     @Override
     public void extractRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        renderBackgroundLayer(context, delta);
         super.extractRenderState(context, popUp == null ? mouseX : 0, popUp == null ? mouseY : 0, delta);
         this.render(context);
         this.scrollAnim.update(delta, this::layoutGroupWidgets); //this could cause some performance issues
@@ -556,11 +555,6 @@ public class WalksyLibConfigScreen extends BaseScreen {
         for (OptionWidget widget : allOptionWidgets) {
             widget.tick();
         }
-    }
-
-    @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-
     }
 
     public void showWidgetsForCategory(Category category) {

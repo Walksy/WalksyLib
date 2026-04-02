@@ -35,12 +35,23 @@ public class BaseScreen extends Screen {
         this.addRenderableWidget(widget);
     }
 
+    @Override
+    protected void extractBlurredBackground(final GuiGraphicsExtractor graphics) {
+        graphics.blurBeforeThisStratum();
+    }
 
-    protected void renderBackgroundLayer(GuiGraphicsExtractor context, float delta) {
-        if (this.minecraft.level == null) {
-            this.extractPanorama(context, delta);
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        if (this.isInGameUi()) {
+            this.extractTransparentBackground(graphics);
+        } else {
+            if (this.minecraft.level == null) {
+                this.extractPanorama(graphics, a);
+            }
+
+            this.extractBlurredBackground(graphics);
         }
-        this.extractBlurredBackground(context);
-        this.extractMenuBackground(context);
+
+        this.minecraft.gui.extractDeferredSubtitles();
     }
 }
