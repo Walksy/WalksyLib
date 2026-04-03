@@ -15,34 +15,29 @@ public class WalksyLibTeamManager {
 
     private static final Map<String, Team> PLAYER_TEAMS = new LinkedHashMap<>();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     private static final Path DEST_DIR = FabricLoader.getInstance().getConfigDir().resolve("WalksyLib");
     private static final Path FILE_PATH = DEST_DIR.resolve("global_teams.json");
     private static final File FILE = FILE_PATH.toFile();
 
-    static {
-        load();
-    }
-
-    public static void addToTeam(String player, Team team) {
+    public void addToTeam(String player, Team team) {
         PLAYER_TEAMS.put(player, team);
-        save();
+        this.save();
     }
 
-    public static void removeFromRegistry(String player) {
+    public void removeFromRegistry(String player) {
         PLAYER_TEAMS.remove(player);
-        save();
+        this.save();
     }
 
-    public static Team getPlayerTeam(String player) {
+    public Team getPlayerTeam(String player) {
         return PLAYER_TEAMS.getOrDefault(player, Team.None);
     }
 
-    public static Map<String, Team> getTeams() {
+    public Map<String, Team> getTeams() {
         return PLAYER_TEAMS;
     }
 
-    public static void save() {
+    public void save() {
         try {
             if (!Files.exists(DEST_DIR)) {
                 Files.createDirectories(DEST_DIR);
@@ -55,7 +50,7 @@ public class WalksyLibTeamManager {
         }
     }
 
-    public static void load() {
+    public void load() {
         if (!Files.exists(FILE_PATH)) return;
         try (Reader reader = new FileReader(FILE)) {
             Map<String, Team> loaded = GSON.fromJson(reader, new TypeToken<Map<String, Team>>(){}.getType());

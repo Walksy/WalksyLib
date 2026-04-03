@@ -1,5 +1,6 @@
 package main.walksy.lib.core.mixin;
 
+import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.gui.impl.BaseScreen;
 import main.walksy.lib.core.manager.WalksyLibTeamManager;
 import main.walksy.lib.core.mods.ModEntryPointList;
@@ -23,12 +24,8 @@ public class MinecraftClientMixin {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     public void onInitFinished(GameConfig gameConfig, CallbackInfo ci) {
-        WalksyLibTeamManager.load();
-        ModEntryPointList modEntryPointList = new ModEntryPointList();
-        modEntryPointList.retrieve();
-        modEntryPointList.get().forEach(mod -> {
-            mod.getConfig().load();
-        });
+        WalksyLib walksyLib = new WalksyLib();
+        walksyLib.load();
     }
 
 
@@ -36,6 +33,9 @@ public class MinecraftClientMixin {
     public void onTick(CallbackInfo ci) {
         if (this.screen instanceof BaseScreen) {
             MarqueeUtil.tickCount++;
+        }
+        if (WalksyLib.getInstance() != null) {
+            WalksyLib.getInstance().tick();
         }
     }
 

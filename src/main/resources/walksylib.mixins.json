@@ -3,6 +3,10 @@
 	"package": "main.walksy.lib.core.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
+		"mods.ClientPacketListenerMixin",
+		"mods.LivingEntityMixin",
+		"mods.LocalPlayerMixin",
+		"mods.MultiPlayerGameModeMixin",
 		"ScreenAccessor",
 		"MinecraftClientMixin",
 		"GameRendererMixin",

@@ -1,6 +1,6 @@
 package main.walksy.lib.core.config.local.options.type;
 
-public class WalksyLibColor {
+public class WalksyLibColor implements Tickable {
 
     private int value;
     private float hue = 0f;
@@ -134,8 +134,8 @@ public class WalksyLibColor {
         setPulseSpeed(additions.pulseSpeed);
     }
 
-    public void tick()
-    {
+    @Override
+    public void tick() {
         if (rainbow) {
             float speed = (float) this.rainbowSpeed / 1000;
             hue += speed;

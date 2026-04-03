@@ -9,7 +9,7 @@ import net.minecraft.world.phys.Vec2;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PixelGridAnimation {
+public class PixelGridAnimation implements Tickable {
     private final List<PixelGrid> frames = new ArrayList<>();
     private int currentFrame = 0;
     private int tickCounter = 0;
@@ -70,6 +70,7 @@ public class PixelGridAnimation {
         }
     }
 
+    @Override
     public void tick() {
         if (frames.isEmpty() || animationSpeed <= 0) return;
         tickCounter++;

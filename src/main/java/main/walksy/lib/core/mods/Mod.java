@@ -19,8 +19,7 @@ public class Mod {
     private final Identifier modIcon;
     private final LocalConfig config;
 
-    public Mod(ModContainer container, LocalConfig config)
-    {
+    public Mod(ModContainer container, LocalConfig config) {
         this.container = container;
         this.config = config;
         /**
