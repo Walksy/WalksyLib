@@ -214,6 +214,7 @@ public class UniversalTabWidget extends AbstractWidget {
             if (mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT) {
                 if (tabManager.getCurrentTab() != tabs.get(i)) {
                     tabManager.setCurrentTab(tabs.get(i), false);
+                    AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
                 }
                 return true;
             }

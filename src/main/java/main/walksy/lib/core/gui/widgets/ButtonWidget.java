@@ -113,7 +113,6 @@ public class ButtonWidget extends AbstractWidget {
             if (action != null) {
                 action.run();
             }
-            playButtonClickSound(Minecraft.getInstance().getSoundManager());
         }
 
     }

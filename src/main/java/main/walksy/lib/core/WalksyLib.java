@@ -33,10 +33,10 @@ public class WalksyLib {
     public void load() {
         this.modEntryPointList.get().forEach(mod -> mod.getConfig().load());
         this.teamManager.load();
+        this.retrieveTickableOptions();
     }
 
     public void tick() {
-        this.retrieveTickableOptions();
         for (Tickable tickable : this.tickableOptions) {
             tickable.tick();
         }

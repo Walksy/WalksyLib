@@ -13,6 +13,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 
 import java.awt.*;
@@ -39,8 +40,7 @@ public class ModWidget extends AbstractWidget {
         context.text(Minecraft.getInstance().font, mod.getContainer().getMetadata().getName(), getX() + 38, getY() + (height / 2) - Minecraft.getInstance().font.lineHeight / 2, -1, true);
         context.blit(RenderPipelines.GUI_TEXTURED, mod.getModIcon(), getX() + 1, getY() + 1, 0, 0, 32, 32, 32, 32);
 
-        if (isHovered())
-        {
+        if (isHovered()) {
             String modDescription = mod.getContainer().getMetadata().getDescription();
             if (!modDescription.isEmpty()) {
                 this.setTooltip(Tooltip.create(Component.literal(modDescription)));
@@ -65,6 +65,11 @@ public class ModWidget extends AbstractWidget {
             Minecraft.getInstance().setScreen(new WalksyLibConfigScreen(currentParent, this.mod.getConfig()));
         }
         return super.mouseClicked(click, doubled);
+    }
+
+    @Override
+    public void playDownSound(SoundManager soundManager) {
+
     }
 
     @Override

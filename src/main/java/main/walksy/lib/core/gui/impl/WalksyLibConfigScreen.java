@@ -395,9 +395,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         if (popUp != null) {
             popUp.onClick(click, doubled);
         } else if (!tabWidget.isHoveringOverAnyTab(click.x(), click.y())) {
-            if (!searchBar.isHovered()) {
-                searchBar.setFocused(false);
-            }
+            searchBar.setFocused(searchBar.isHovered());
 
             ((ScreenAccessor) this).getDrawables().forEach(w -> {
                 if (w instanceof OptionGroupWidget optionGroupWidget) {

@@ -62,8 +62,7 @@ public class APIScreen extends BaseScreen {
         this.setupModWidgets();
     }
 
-    public void refreshLogs(LogWidget widget)
-    {
+    public void refreshLogs(LogWidget widget) {
         widget.clearLogs();
         for (InternalLog log : WalksyLibLogger.getLogs()) {
             widget.addLog(log);
@@ -116,11 +115,6 @@ public class APIScreen extends BaseScreen {
         return this.tabManager.getCurrentTab().getTabTitle().getString().equals("Mods");
     }
 
-
-    @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-
-    }
 
     @Override
     protected void rebuildWidgets() {

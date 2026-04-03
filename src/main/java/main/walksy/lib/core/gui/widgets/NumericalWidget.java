@@ -45,7 +45,6 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     @Override
     public void onMouseClick(MouseButtonEvent click, boolean doubled) {
         this.slider.onClick(click, doubled);
-        AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
     }
 
     @Override

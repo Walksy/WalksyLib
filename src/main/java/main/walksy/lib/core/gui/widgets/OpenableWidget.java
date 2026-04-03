@@ -80,8 +80,6 @@ public abstract class OpenableWidget extends OptionWidget {
 
         float target = open ? OPEN_HEIGHT : ScreenGlobals.OPTION_HEIGHT;
         heightAnim.setTargetValue(target);
-
-        AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
         this.onOpen(prev);
     }
 

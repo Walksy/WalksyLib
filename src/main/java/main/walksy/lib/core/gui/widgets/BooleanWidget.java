@@ -71,8 +71,6 @@ public class BooleanWidget extends OptionWidget {
     @Override
     public void onMouseClick(MouseButtonEvent click, boolean doubled) {
         if (isHovered() && click.button() == 0) {
-            AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
-
             if (this.warningPopUp != null && !this.warningPopUp.visible && !this.option.getValue()) {
                 this.screen.popUp = this.warningPopUp;
                 return;

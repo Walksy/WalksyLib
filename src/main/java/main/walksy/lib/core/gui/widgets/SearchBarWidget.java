@@ -7,9 +7,11 @@ import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.util.Mth;
 
@@ -108,6 +110,14 @@ public class SearchBarWidget extends EditBox {
                 drawSelectionHighlight(context, highlightStartX - 1, highlightTop, highlightEndX - 1, highlightBottom);
             }
         }
+    }
+
+    @Override
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        if (this.isHovered()) {
+            AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
+        }
+        super.onClick(event, doubleClick);
     }
 
     @Override
