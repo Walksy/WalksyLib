@@ -15,11 +15,10 @@ import java.util.List;
 
 public class WalksyLib {
     static WalksyLib instance;
-
     private final WalksyLibShieldStateManager shieldStateManager;
     private final WalksyLibTeamManager teamManager;
     private final ModEntryPointList modEntryPointList;
-    private final List<Tickable> tickableOptions = new ArrayList<>();
+    private Tickable[] tickableOptions = new Tickable[0];
 
     public WalksyLib() {
         if (instance == null) {
@@ -34,29 +33,31 @@ public class WalksyLib {
     public void load() {
         this.modEntryPointList.get().forEach(mod -> mod.getConfig().load());
         this.teamManager.load();
-        this.retrieveTickableOptions();
     }
 
     public void tick() {
+        this.retrieveTickableOptions();
         for (Tickable tickable : this.tickableOptions) {
             tickable.tick();
         }
     }
 
     public void retrieveTickableOptions() {
-        this.tickableOptions.clear();
+        List<Tickable> tickables = new ArrayList<>();
 
         for (Mod mod : this.modEntryPointList.get()) {
             for (Category category : mod.getConfig().categories()) {
                 for (OptionGroup group : category.optionGroups()) {
                     for (Option<?> option : group.getOptions()) {
                         if (option.getValue() instanceof Tickable tickable) {
-                            this.tickableOptions.add(tickable);
+                            tickables.add(tickable);
                         }
                     }
                 }
             }
         }
+
+        this.tickableOptions = tickables.toArray(new Tickable[0]);
     }
 
     public static WalksyLib getInstance() {
