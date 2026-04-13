@@ -27,11 +27,11 @@ public class WalksyLib {
         this.shieldStateManager = new WalksyLibShieldStateManager();
         this.teamManager = new WalksyLibTeamManager();
         this.modEntryPointList = new ModEntryPointList();
-        this.modEntryPointList.retrieve();
     }
 
     public void load() {
-        this.modEntryPointList.get().forEach(mod -> mod.getConfig().load());
+        this.modEntryPointList.retrieve();
+        this.modEntryPointList.loadModConfigs();
         this.teamManager.load();
         this.retrieveTickableOptions();
     }
@@ -46,6 +46,9 @@ public class WalksyLib {
         List<Tickable> tickables = new ArrayList<>();
 
         for (Mod mod : this.modEntryPointList.get()) {
+            if (!mod.hasConfig()) {
+                continue;
+            }
             for (Category category : mod.getConfig().categories()) {
                 for (OptionGroup group : category.optionGroups()) {
                     for (Option<?> option : group.getOptions()) {

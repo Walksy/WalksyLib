@@ -11,6 +11,7 @@ import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ModMenuIntegration implements ModMenuApi {
@@ -20,30 +21,33 @@ public class ModMenuIntegration implements ModMenuApi {
         return APIScreen::new;
     }
 
-    /**
-     * Provides config screens for mods that use WalksyLib as a dependency
-     */
     @Override
     public Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
-        return FabricLoader.getInstance().getEntrypointContainers("walksylib", WalksyLibApi.class).stream()
-                .collect(Collectors.toMap(
-                        c -> c.getProvider().getMetadata().getId(),
-                        c -> parent -> {
-                            WalksyLibApi entryPoint = c.getEntrypoint();
-                            BaseScreen overridableScreen = entryPoint.getOverridableScreen(parent);
-                            LocalConfig config = entryPoint.getConfig();
+        return FabricLoader.getInstance()
+                .getEntrypointContainers("walksylib", WalksyLibApi.class)
+                .stream()
+                .map(c -> {
+                    WalksyLibApi entryPoint = c.getEntrypoint();
+                    BaseScreen overridableScreen = entryPoint.getOverridableScreen(null);
+                    LocalConfig config = entryPoint.getConfig();
+                    if (overridableScreen == null && config == null) {
+                        return null;
+                    }
 
-                            if (overridableScreen != null && config != null) {
-                                WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(parent, config);
-                                return new ConflictedConfigScreen("Choose Screen", parent, overridableScreen, configScreen, entryPoint.getConflictedConfigButtonTitles());
+                    return Map.entry(c.getProvider().getMetadata().getId(), (ConfigScreenFactory<?>) parent -> { //TODO overriableconfigscreen
+                                BaseScreen screen = entryPoint.getOverridableScreen(parent);
+                                if (screen != null && config != null) {
+                                    WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(parent, config, c.getProvider().getMetadata().getName());
+                                    return new ConflictedConfigScreen("Choose Screen", parent, screen, configScreen, entryPoint.getConflictedConfigButtonTitles());
+                                }
+                                if (screen == null && config != null) {
+                                    return new WalksyLibConfigScreen(parent, config, c.getProvider().getMetadata().getName());
+                                }
+                                return screen;
                             }
-
-                            if (overridableScreen == null && config != null) {
-                                return new WalksyLibConfigScreen(parent, config);
-                            }
-
-                            return overridableScreen;
-                        }
-                ));
+                    );
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

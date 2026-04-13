@@ -22,12 +22,15 @@ public class MinecraftClientMixin {
     @Nullable
     public Screen screen;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    public void onInitFinished(GameConfig gameConfig, CallbackInfo ci) {
-        WalksyLib walksyLib = new WalksyLib();
-        walksyLib.load();
+    @Inject(method = "<init>", at = @At("HEAD"))
+    private static void onInit(GameConfig gameConfig, CallbackInfo ci) {
+        new WalksyLib();
     }
 
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private static void onInitFinished(GameConfig gameConfig, CallbackInfo ci) {
+        WalksyLib.getInstance().load();
+    }
 
     @Inject(method = "tick", at = @At("HEAD"))
     public void onTick(CallbackInfo ci) {

@@ -37,6 +37,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private final List<OptionWidget> allOptionWidgets = new ArrayList<>();
     private final List<CategoryTab> allTabs = new ArrayList<>();
     public final Animation scrollAnim = new Animation(0, 0.5F);
+    private final String name;
     private final WalksyLibConfigManager configManager;
     private ScrollableTabWidget tabWidget;
     private ButtonWidget backButton, allModsButton, saveButton, resetButton, undoButton;
@@ -46,8 +47,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private int maxScroll = 0;
     public boolean scroll = true;
 
-    public WalksyLibConfigScreen(Screen parent, LocalConfig config) {
-        super(config.name() + " Config Screen", parent);
+    public WalksyLibConfigScreen(Screen parent, LocalConfig config, String title) {
+        super(title + " Config Screen", parent);
+        this.name = title;
         this.configManager = new WalksyLibConfigManager(config);
         this.focusedOption = null;
     }
@@ -285,7 +287,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
         context.horizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
         context.horizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
-        context.centeredText(this.font, configManager.get().name(), width / 2, 12 - this.font.lineHeight / 2, -1);
+        context.centeredText(this.font, this.name, width / 2, 12 - this.font.lineHeight / 2, -1);
 
         ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
         ScreenGlobals.OPTION_PANEL_STARTY = 61;
@@ -622,7 +624,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     public void setOptionPrevs() {
-        this.configManager.get().categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(option -> option.setPrev(configManager.get()))));
+        this.configManager.get().categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(option -> option.setPrev(this.name))));
     }
 
     private boolean shouldResetOptions() {

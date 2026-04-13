@@ -9,14 +9,9 @@ import java.util.List;
 
 public class LocalConfigBuilder {
 
-    private final String configName;
     private final List<Category> categories = new ArrayList<>();
     private Path path;
     private Runnable onSave;
-
-    public LocalConfigBuilder(String configName) {
-        this.configName = configName;
-    }
 
     public LocalConfigBuilder path(Path path) {
         this.path = path;
@@ -39,13 +34,13 @@ public class LocalConfigBuilder {
                 [WalksyLib] LocalConfigBuilder error: Missing required .path()!
                 You must call .path(Path) before build().
                 Example:
-                    new LocalConfigBuilder("example")
-                        .path(FabricLoader.getInstance().getConfigDir().resolve("example.json"))
+                    new LocalConfigBuilder()
+                        .path(PathUtils.ofConfigDir("example"))
                         .build();
                 """);
         }
 
-        return new LocalConfig(configName, path, categories, onSave);
+        return new LocalConfig(path, categories, onSave);
     }
 }
 

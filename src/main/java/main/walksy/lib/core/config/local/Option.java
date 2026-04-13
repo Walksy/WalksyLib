@@ -150,7 +150,7 @@ public class Option<T> {
         return this.availability.get();
     }
 
-    public void setPrev(LocalConfig config) {
+    public void setPrev(String config) {
         if (Objects.equals(getValue(), screenInstanceValue)) return;
 
         this.prevValue = screenInstanceValue;
@@ -207,11 +207,9 @@ public class Option<T> {
         return str;
     }
 
-    private <V> void logField(LocalConfig config, String name, V oldVal, V newVal) {
-        String configName = config.name();
+    private <V> void logField(String configName, String name, V oldVal, V newVal) {
         InternalLog.ToolTip toolTip = null;
-        if (this.warning != null)
-        {
+        if (this.warning != null) {
             toolTip = new InternalLog.ToolTip(Tooltip.create(Component.literal("Option has warning: " + this.warning.message)), Color.RED.getRGB());
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));

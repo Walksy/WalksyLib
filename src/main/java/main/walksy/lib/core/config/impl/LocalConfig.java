@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public record LocalConfig(String name, Path path, List<Category> categories, Runnable onSave) implements Config {
+public record LocalConfig(Path path, List<Category> categories, Runnable onSave) implements Config {
 
     @Override
     public void load() {
@@ -69,7 +69,11 @@ public record LocalConfig(String name, Path path, List<Category> categories, Run
         }
     }
 
-    public static LocalConfigBuilder createBuilder(String name) {
-        return new LocalConfigBuilder(name);
+    public static LocalConfigBuilder createBuilder() {
+        return new LocalConfigBuilder();
+    }
+
+    public static LocalConfigBuilder createBuilder(String ignored) {
+        return new LocalConfigBuilder();
     }
 }

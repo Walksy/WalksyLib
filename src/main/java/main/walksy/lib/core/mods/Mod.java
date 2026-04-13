@@ -2,9 +2,11 @@ package main.walksy.lib.core.mods;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.config.impl.LocalConfig;
+import main.walksy.lib.core.gui.impl.BaseScreen;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 
@@ -13,15 +15,20 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class Mod {
     private final ModContainer container;
     private final Identifier modIcon;
     private final LocalConfig config;
+    private final Function<Screen, BaseScreen> overridableScreenFactory;
+    private final String[] conflictedButtonTitles;
 
-    public Mod(ModContainer container, LocalConfig config) {
+    public Mod(ModContainer container, LocalConfig config, Function<Screen, BaseScreen> overridableScreenFactory, String[] conflictedButtonTitles) {
         this.container = container;
         this.config = config;
+        this.overridableScreenFactory = overridableScreenFactory;
+        this.conflictedButtonTitles = conflictedButtonTitles;
         /**
          * Credit to uku for this code:
          * https://github.com/uku3lig/ukulib/blob/de3c36f921f3dba6401601eb05912337d2c602ee/src/main/java/net/uku3lig/ukulib/config/impl/EntrypointList.java#L67
@@ -54,6 +61,18 @@ public class Mod {
 
     public LocalConfig getConfig() {
         return this.config;
+    }
+
+    public BaseScreen getOverridableConfigScreen(Screen parent) {
+        return this.overridableScreenFactory.apply(parent);
+    }
+
+    public String[] getConflictedButtonTitles() {
+        return this.conflictedButtonTitles;
+    }
+
+    public boolean hasConfig() {
+        return this.config != null;
     }
 
     public Identifier getModIcon()
