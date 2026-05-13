@@ -5,13 +5,8 @@ import main.walksy.lib.core.gui.impl.BaseScreen;
 import net.minecraft.client.gui.screens.Screen;
 
 public interface WalksyLibApi {
-    
-    /**
-     * Used to populate option widgets inside {@link main.walksy.lib.core.gui.impl.WalksyLibConfigScreen}.
-     * Return null if a config is not required or if an overridable screen will be used instead.
-     */
-    LocalConfig getConfig();
 
+    LocalConfig getConfig();
 
     default BaseScreen getOverridableScreen(Screen parent) {
         return null;

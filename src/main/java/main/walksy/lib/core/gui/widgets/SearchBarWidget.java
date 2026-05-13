@@ -36,15 +36,11 @@ public class SearchBarWidget extends EditBox {
     }
 
     private int getSelectionStart() {
-        return Math.min(getCursorPosition(), getHighlightPos());
+        return Math.min(getCursorPosition(), ((EditBoxAccessor)this).getHighlightPos());
     }
 
     private int getSelectionEnd() {
-        return Math.max(getCursorPosition(), getHighlightPos());
-    }
-
-    private int getHighlightPos() {
-        return ((EditBoxAccessor)this).getHighlightPos();
+        return Math.max(getCursorPosition(), ((EditBoxAccessor)this).getHighlightPos());
     }
 
     @Override
