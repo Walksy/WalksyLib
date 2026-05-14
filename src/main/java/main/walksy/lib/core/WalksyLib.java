@@ -4,7 +4,6 @@ import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.config.local.options.type.Tickable;
-import main.walksy.lib.core.config.local.options.type.WalksyLibColor;
 import main.walksy.lib.core.manager.WalksyLibShieldStateManager;
 import main.walksy.lib.core.manager.WalksyLibTeamManager;
 import main.walksy.lib.core.mods.Mod;
@@ -14,16 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WalksyLib {
-    static WalksyLib instance;
-    private final WalksyLibShieldStateManager shieldStateManager;
-    private final WalksyLibTeamManager teamManager;
-    private final ModEntryPointList modEntryPointList;
+    private static WalksyLib instance;
+    private WalksyLibShieldStateManager shieldStateManager;
+    private WalksyLibTeamManager teamManager;
+    private ModEntryPointList modEntryPointList;
     private Tickable[] tickableOptions = new Tickable[0];
 
-    public WalksyLib() {
-        if (instance == null) {
-            instance = this;
-        }
+    public void setup() {
         this.shieldStateManager = new WalksyLibShieldStateManager();
         this.teamManager = new WalksyLibTeamManager();
         this.modEntryPointList = new ModEntryPointList();
@@ -64,6 +60,9 @@ public class WalksyLib {
     }
 
     public static WalksyLib getInstance() {
+        if (instance == null) {
+            instance = new WalksyLib();
+        }
         return instance;
     }
 
@@ -73,5 +72,9 @@ public class WalksyLib {
 
     public WalksyLibTeamManager getTeamManager() {
         return this.teamManager;
+    }
+
+    private WalksyLib() {
+
     }
 }

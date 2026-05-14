@@ -18,7 +18,6 @@ public class WalksyLibShieldStateManager {
 
     private final Map<Player, Integer> shieldUseTicks;
     private final Map<Player, AttackEntry> attackedPlayerEntries;
-    private final Minecraft client;
     private final ShieldCooldownManager cooldownManager;
     private final HashMap<String, Consumer<Player>> onDisableEvents;
     private int localShieldCooldownTicks;
@@ -28,7 +27,6 @@ public class WalksyLibShieldStateManager {
     public WalksyLibShieldStateManager() {
         this.shieldUseTicks = new HashMap<>();
         this.attackedPlayerEntries = new HashMap<>();
-        this.client = Minecraft.getInstance();
         this.cooldownManager = new ShieldCooldownManager();
         this.onDisableEvents = new HashMap<>();
         this.localShieldCooldownTicks = 0;
@@ -56,9 +54,12 @@ public class WalksyLibShieldStateManager {
 
     public void tick() {
         long now = System.currentTimeMillis();
-        if (this.client.level == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null) {
+            return;
+        }
         this.currentTick++;
-        for (Player player : this.client.level.players()) {
+        for (Player player : client.level.players()) {
             if (this.isHoldingUsableShield(player) && player.isUsingItem()) {
                 int current = this.shieldUseTicks.getOrDefault(player, 0);
                 this.shieldUseTicks.put(player, current + 1);
@@ -66,13 +67,13 @@ public class WalksyLibShieldStateManager {
                 this.shieldUseTicks.put(player, 0);
             }
         }
-        if (this.client.player != null && this.client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD))) {
+        if (client.player != null && client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD))) {
             this.localShieldCooldownTicks++;
         } else {
             this.localShieldCooldownTicks = 0;
         }
         if (this.pendingBreak != null && this.currentTick - this.pendingBreak.createdTick() >= 1) {
-            if (this.client.player == null || !this.client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD))) {
+            if (client.player == null || !client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD))) {
                 this.disable(this.pendingBreak.target());
             }
             this.pendingBreak = null;
@@ -82,8 +83,9 @@ public class WalksyLibShieldStateManager {
     }
 
     public void handleSoundPacket(double x, double y, double z) {
-        if (this.client.level == null || this.client.player == null) return;
-        LocalPlayer local = this.client.player;
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null || client.player == null) return;
+        LocalPlayer local = client.player;
         long now = System.currentTimeMillis();
         if (this.localShieldCooldownTicks > 2) {
             this.disable(this.nearestPlayerToSound(x, y, z, local));
@@ -134,9 +136,10 @@ public class WalksyLibShieldStateManager {
     }
 
     private Player nearestPlayerToSound(double x, double y, double z, LocalPlayer local) {
+        Minecraft client = Minecraft.getInstance();
         Player nearest = null;
         double nearestDistSq = Double.POSITIVE_INFINITY;
-        for (Player player : this.client.level.players()) {
+        for (Player player : client.level.players()) {
             if (player == local) continue;
             double dx = player.getX() - x;
             double dy = player.getY() - y;
@@ -151,19 +154,21 @@ public class WalksyLibShieldStateManager {
     }
 
     public void handleEntityStatus(Player player, byte status) {
-        if (status == SHIELD_DISABLE_STATUS && player != this.client.player) {
+        Minecraft client = Minecraft.getInstance();
+        if (status == SHIELD_DISABLE_STATUS && player != client.player) {
             this.disable(player);
         }
     }
 
     public void handlePlayerAttack(Player target) {
+        Minecraft client = Minecraft.getInstance();
         boolean estBlocking = this.shieldUseTicks.getOrDefault(target, 0) >= 3;
-        if (this.client.player == null) return;
-        if (this.disablesShield(this.client.player)) {
+        if (client.player == null) return;
+        if (this.disablesShield(client.player)) {
             this.attackedPlayerEntries.put(
                     target,
                     new AttackEntry(
-                            this.client.player.position(),
+                            client.player.position(),
                             target.position(),
                             System.currentTimeMillis(),
                             estBlocking
@@ -173,16 +178,20 @@ public class WalksyLibShieldStateManager {
     }
 
     public boolean isCoolingDown(Player player) {
-        if (player == this.client.player) {
-            return this.client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD));
+        Minecraft client = Minecraft.getInstance();
+        if (player == client.player) {
+            return client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD));
         }
         return this.cooldownManager.isCoolingDown(player);
     }
 
     public float getCooldownProgress(Player player) {
-        if (player == null) return 0.0f;
-        if (player == this.client.player) {
-            return this.client.player.getCooldowns().getCooldownPercent(new ItemStack(Items.SHIELD), 0);
+        if (player == null) {
+            return 0.0f;
+        }
+        Minecraft client = Minecraft.getInstance();
+        if (player == client.player) {
+            return client.player.getCooldowns().getCooldownPercent(new ItemStack(Items.SHIELD), 0);
         }
         int remaining = this.cooldownManager.getRemainingTicks(player);
         if (remaining <= 0) return 0.0f;

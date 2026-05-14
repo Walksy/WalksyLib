@@ -24,7 +24,7 @@ public class MinecraftClientMixin {
 
     @Inject(method = "<init>", at = @At("HEAD"))
     private static void onInit(GameConfig gameConfig, CallbackInfo ci) {
-        new WalksyLib();
+        WalksyLib.getInstance().setup();
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
