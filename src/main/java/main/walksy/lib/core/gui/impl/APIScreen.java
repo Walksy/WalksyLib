@@ -9,6 +9,7 @@ import main.walksy.lib.core.gui.widgets.ModWidget;
 import main.walksy.lib.core.gui.widgets.UniversalTabWidget;
 import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.mods.ModEntryPointList;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.log.InternalLog;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
@@ -29,12 +30,10 @@ public class APIScreen extends BaseScreen {
     private UniversalTabWidget tabWidget;
     private LogWidget logWidget;
     private boolean loaded = false;
-    public Screen parent;
 
-    public APIScreen(Screen parent) {
+    public APIScreen(final Screen parent) {
         super("APIScreen", parent);
         this.modWidgets = new ArrayList<>();
-        this.parent = parent;
         this.entryPointList = new ModEntryPointList();
         this.entryPointList.retrieve();
     }
@@ -42,61 +41,53 @@ public class APIScreen extends BaseScreen {
     @Override
     protected void init() {
         super.init();
-        ButtonWidget backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::onClose);
-        addRenderableWidget(backButton);
-
-        List<CategoryTab> tabList = new ArrayList<>();
-        Category modCategory = new Category("Mods", null, null);
-        Category logCategory = new Category("Logs", null, null);
+        final ButtonWidget backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::onClose);
+        this.addRenderableWidget(backButton);
+        final List<CategoryTab> tabList = new ArrayList<>();
+        final Category modCategory = new Category("Mods", null, null);
+        final Category logCategory = new Category("Logs", null, null);
         tabList.add(new CategoryTab(modCategory, null));
         tabList.add(new CategoryTab(logCategory, null));
-        if (!loaded) {
-            tabWidget = new UniversalTabWidget(0, 27, this.width, 24, tabList, tabManager, TabLocation.TOP, this);
-            tabWidget.selectTab(0, true);
+        if (!this.loaded) {
+            this.tabWidget = new UniversalTabWidget(0, 27, this.width, 24, tabList, this.tabManager, TabLocation.TOP, this);
+            this.tabWidget.selectTab(0, true);
         }
-        loaded = true;
-        addRenderableWidget(tabWidget);
-        logWidget = new LogWidget("Logs", this, 40, 60, width - 80, height - 90);
-        this.refreshLogs(logWidget);
-
+        this.loaded = true;
+        this.addRenderableWidget(this.tabWidget);
+        this.logWidget = new LogWidget("Logs", this, 40, 60, this.width - 80, this.height - 90);
+        this.refreshLogs(this.logWidget);
         this.setupModWidgets();
     }
 
-    public void refreshLogs(LogWidget widget) {
+    public void refreshLogs(final LogWidget widget) {
         widget.clearLogs();
-        for (InternalLog log : WalksyLibLogger.getLogs()) {
+        for (final InternalLog log : WalksyLibLogger.getLogs()) {
             widget.addLog(log);
         }
     }
 
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
-
-        context.horizontalLine(0, width, 25, MainColors.OUTLINE_BLACK.getRGB());
-        context.horizontalLine(0, width, 26, MainColors.OUTLINE_WHITE.getRGB());
-
-        //context.horizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
-        //context.horizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
-        //context.drawTexture(RenderPipelines.GUI_TEXTURED, FOOTER_SEPARATOR_TEXTURE, 0, height - 28, 0.0F, 0.0F, width, 2, 32, 2);
-        context.centeredText(font, "WalksyLib API Screen", width / 2, 12 - font.lineHeight / 2, -1);
-
-        if (!viewingMods()) {
-            logWidget.extractRenderState(context, mouseX, mouseY, delta);
+    protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {
+        final GuiGraphicsExtractor context = graphics.context();
+        context.horizontalLine(0, this.width, 25, MainColors.OUTLINE_BLACK.getRGB());
+        context.horizontalLine(0, this.width, 26, MainColors.OUTLINE_WHITE.getRGB());
+        context.centeredText(this.font, "WalksyLib API Screen", this.width / 2, 12 - this.font.lineHeight / 2, -1);
+        if (!this.viewingMods()) {
+            this.logWidget.extractRenderState(context, mouseX, mouseY, this.delta);
         } else {
             if (this.modWidgets.isEmpty()) {
-                context.centeredText(font, "No Mods", width / 2, height / 2, -1);
+                context.centeredText(this.font, "No Mods", this.width / 2, this.height / 2, -1);
             }
-            for (ModWidget widget : this.modWidgets) {
-                widget.extractRenderState(context, mouseX, mouseY, delta);
+            for (final ModWidget widget : this.modWidgets) {
+                widget.extractRenderState(context, mouseX, mouseY, this.delta);
             }
         }
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        for (ModWidget widget : this.modWidgets) {
+    public boolean mouseClicked(final MouseButtonEvent click, final boolean doubled) {
+        for (final ModWidget widget : this.modWidgets) {
             if (this.viewingMods()) {
                 widget.mouseClicked(click, doubled);
             }
@@ -105,13 +96,12 @@ public class APIScreen extends BaseScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(final double mouseX, final double mouseY, final double horizontalAmount, final double verticalAmount) {
         this.logWidget.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    private boolean viewingMods()
-    {
+    private boolean viewingMods() {
         return this.tabManager.getCurrentTab().getTabTitle().getString().equals("Mods");
     }
 
@@ -119,16 +109,16 @@ public class APIScreen extends BaseScreen {
     @Override
     protected void rebuildWidgets() {
         super.rebuildWidgets();
-        if (tabWidget != null) {
-            tabWidget.setWidth(this.width);
-            tabWidget.setPosition(0, 27);
-            int i = tabWidget.getRectangle().bottom();
-            ScreenRectangle screenRect = new ScreenRectangle(0, i, width, height - 36 - i);
-            tabManager.setTabArea(screenRect);
+        if (this.tabWidget != null) {
+            this.tabWidget.setWidth(this.width);
+            this.tabWidget.setPosition(0, 27);
+            final int i = this.tabWidget.getRectangle().bottom();
+            final ScreenRectangle screenRect = new ScreenRectangle(0, i, this.width, this.height - 36 - i);
+            this.tabManager.setTabArea(screenRect);
         }
         this.logWidget.setPosition(20, 60);
-        this.logWidget.setWidth(width - 40);
-        this.logWidget.setHeight(height - 80);
+        this.logWidget.setWidth(this.width - 40);
+        this.logWidget.setHeight(this.height - 80);
         this.setupModWidgets();
     }
 
@@ -136,8 +126,8 @@ public class APIScreen extends BaseScreen {
         this.modWidgets.clear();
         int x = 13, y = 60;
 
-        for (Mod mod : this.entryPointList.get()) {
-            if (x + 140 + 13 > this.width) { //140 mod widget width
+        for (final Mod mod : this.entryPointList.get()) {
+            if (x + 140 + 13 > this.width) {
                 x = 13;
                 y += 47;
             }

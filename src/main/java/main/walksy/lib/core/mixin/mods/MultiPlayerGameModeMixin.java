@@ -14,7 +14,7 @@ public class MultiPlayerGameModeMixin {
 
     @Inject(method = "attack",
             at = @At("HEAD"))
-    public void onAttackEntity(Player player, Entity target, CallbackInfo ci) {
+    public void onAttackEntity(final Player player, final Entity target, final CallbackInfo ci) {
         if (target instanceof Player targetPlayer) {
             WalksyLib.getInstance().getShieldStateManager().handlePlayerAttack(targetPlayer);
         }

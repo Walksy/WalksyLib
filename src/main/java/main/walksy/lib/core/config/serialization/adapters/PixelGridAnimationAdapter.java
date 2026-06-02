@@ -11,11 +11,11 @@ import java.util.List;
 public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimation>, JsonDeserializer<PixelGridAnimation> {
 
     @Override
-    public JsonElement serialize(PixelGridAnimation src, Type typeOfSrc, JsonSerializationContext context) {
-        JsonObject obj = new JsonObject();
-        JsonArray frames = new JsonArray();
+    public JsonElement serialize(final PixelGridAnimation src, final Type typeOfSrc, final JsonSerializationContext context) {
+        final JsonObject obj = new JsonObject();
+        final JsonArray frames = new JsonArray();
 
-        for (PixelGrid frame : src.getFrames()) {
+        for (final PixelGrid frame : src.getFrames()) {
             frames.add(context.serialize(frame));
         }
 
@@ -23,7 +23,7 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
         obj.addProperty("animationSpeed", src.getAnimationSpeed());
         obj.addProperty("size", src.getSize());
 
-        JsonObject pos = new JsonObject();
+        final JsonObject pos = new JsonObject();
         pos.addProperty("x", src.getOffsetX());
         pos.addProperty("y", src.getOffsetY());
         obj.add("position", pos);
@@ -32,16 +32,16 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
     }
 
     @Override
-    public PixelGridAnimation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        JsonObject obj = json.getAsJsonObject();
-        JsonArray frameArray = obj.getAsJsonArray("frames");
+    public PixelGridAnimation deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+        final JsonObject obj = json.getAsJsonObject();
+        final JsonArray frameArray = obj.getAsJsonArray("frames");
 
-        List<PixelGrid> frames = new ArrayList<>();
-        for (JsonElement elem : frameArray) {
+        final List<PixelGrid> frames = new ArrayList<>();
+        for (final JsonElement elem : frameArray) {
             frames.add(context.deserialize(elem, PixelGrid.class));
         }
 
-        PixelGridAnimation animation = new PixelGridAnimation(frames);
+        final PixelGridAnimation animation = new PixelGridAnimation(frames);
 
         if (obj.has("animationSpeed")) {
             animation.setAnimationSpeed(obj.get("animationSpeed").getAsInt());
@@ -52,7 +52,7 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
         }
 
         if (obj.has("position")) {
-            JsonObject posObj = obj.getAsJsonObject("position");
+            final JsonObject posObj = obj.getAsJsonObject("position");
             animation.setOffset(posObj.get("x").getAsDouble(), posObj.get("y").getAsDouble());
         }
 

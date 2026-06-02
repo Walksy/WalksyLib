@@ -1,8 +1,9 @@
 package main.walksy.lib.core.gui.popup.impl;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import main.walksy.lib.core.callback.WindowDropCallback;
+import main.walksy.lib.core.callback.WalksyLibDropCallback;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
@@ -32,56 +33,56 @@ public class TextureDropPopUp extends PopUp {
 
     public record Pass(Identifier identifier, String fileName) {}
 
-    public TextureDropPopUp(WalksyLibConfigScreen parent, String subText, Consumer<Pass> onDone) {
+    public TextureDropPopUp(final WalksyLibConfigScreen parent, final String subText, final Consumer<Pass> onDone) {
         super(parent, subText, 280, 320);
         this.doneButton = new ButtonWidget(
-                x + width - 51,
-                y + height - 21,
+                this.x + this.width - 51,
+                this.y + this.height - 21,
                 40,
                 16,
                 false,
                 "Done",
                 () -> {
                     if (this.selectedTexture != null && onDone != null) {
-                        onDone.accept(new Pass(this.selectedTexture, fileName));
+                        onDone.accept(new Pass(this.selectedTexture, this.fileName));
                     }
                     parent.popUp.close();
                 });
 
-        WindowDropCallback.register(this::onFileDropped);
+        WalksyLibDropCallback.register(this::onFileDropped);
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
+    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
         super.render(context, mouseX, mouseY, delta);
 
-        context.centeredText(parent.getFont(), subText, x + width / 2, y + 10, -1);
-        context.horizontalLine(x + 2, x + width - 3, y + 23, MainColors.OUTLINE_WHITE.getRGB());
+        context.centeredText(this.parent.getFont(), this.subText, this.x + this.width / 2, this.y + 10, -1);
+        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + 23, MainColors.OUTLINE_WHITE.getRGB());
 
-        if (selectedTexture != null) {
-            TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-            DynamicTexture nativeTexture = (DynamicTexture) textureManager.getTexture(selectedTexture);
+        if (this.selectedTexture != null) {
+            final TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+            final DynamicTexture nativeTexture = (DynamicTexture) textureManager.getTexture(this.selectedTexture);
 
             if (nativeTexture != null) {
-                NativeImage image = nativeTexture.getPixels();
+                final NativeImage image = nativeTexture.getPixels();
                 if (image != null) {
-                    int imgW = image.getWidth();
-                    int imgH = image.getHeight();
+                    final int imgW = image.getWidth();
+                    final int imgH = image.getHeight();
 
-                    int maxWidth = width - 40;
-                    int maxHeight = height - 100;
+                    final int maxWidth = this.width - 40;
+                    final int maxHeight = this.height - 100;
 
-                    float scale = Math.min((float) maxWidth / imgW, (float) maxHeight / imgH);
+                    final float scale = Math.min((float) maxWidth / imgW, (float) maxHeight / imgH);
 
-                    int scaledWidth = Math.round(imgW * scale);
-                    int scaledHeight = Math.round(imgH * scale);
+                    final int scaledWidth = Math.round(imgW * scale);
+                    final int scaledHeight = Math.round(imgH * scale);
 
-                    int drawX = x + width / 2 - scaledWidth / 2;
-                    int drawY = y + height / 2 - scaledHeight / 2;
+                    final int drawX = this.x + this.width / 2 - scaledWidth / 2;
+                    final int drawY = this.y + this.height / 2 - scaledHeight / 2;
 
                     context.blit(
                             RenderPipelines.GUI_TEXTURED,
-                            selectedTexture,
+                            this.selectedTexture,
                             drawX,
                             drawY,
                             0f,
@@ -94,85 +95,81 @@ public class TextureDropPopUp extends PopUp {
                 }
             }
         } else {
-            context.centeredText(parent.getFont(), "Drop a .png image file", x + width / 2, y + height / 2, CommonColors.GRAY);
+            context.centeredText(this.parent.getFont(), "Drop a .png image file", this.x + this.width / 2, this.y + this.height / 2, CommonColors.GRAY);
         }
 
         this.doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
     }
 
-
-
     @Override
-    public void onClick(MouseButtonEvent click, boolean doubled) {
+    public void onClick(final MouseButtonEvent click, final boolean doubled) {
         this.doneButton.onClick(click, doubled);
     }
 
-
-    private void onFileDropped(String filePath) {
-        File file = new File(filePath);
-        System.out.println("File dropped: " + filePath);
+    private void onFileDropped(final String filePath) {
+        final File file = new File(filePath);
+        WalksyLibLogger.info("File dropped: " + filePath);
         if (!file.exists() || !file.isFile()) return;
 
         String name = file.getName();
-        String trueName = name;
-        String lowerName = name.toLowerCase();
+        final String trueName = name;
+        final String lowerName = name.toLowerCase();
 
         if (!lowerName.matches(".*\\.(png|jpg|jpeg|bmp|webp|gif)$")) {
-            System.err.println("Unsupported file extension: " + name);
+            WalksyLibLogger.err("Unsupported file extension: " + name);
             return;
         }
 
         try {
             if (file.length() == 0) {
-                System.err.println("Dropped file is 0 bytes. It might still be downloading!");
+                WalksyLibLogger.err("Dropped file is 0 bytes. It might still be downloading!");
                 return;
             }
 
-            byte[] fileBytes = Files.readAllBytes(file.toPath());
+            final byte[] fileBytes = Files.readAllBytes(file.toPath());
 
-            int dotIndex = name.lastIndexOf('.');
+            final int dotIndex = name.lastIndexOf('.');
             if (dotIndex > 0) {
                 name = name.substring(0, dotIndex);
             }
             name = name.toLowerCase().replaceAll("[^a-z0-9._-]", "_");
 
-            NativeImage image = loadFlexibleImage(fileBytes);
+            final NativeImage image = this.loadFlexibleImage(fileBytes);
             if (image == null) {
-                System.err.println("Failed to decode image data for: " + trueName);
+                WalksyLibLogger.err("Failed to decode image data for: " + trueName);
                 return;
             }
 
-            DynamicTexture texture = new DynamicTexture(() -> filePath, image);
-            String dynamicId = "dropped/" + name;
-            Identifier textureId = Identifier.fromNamespaceAndPath("walksylib", dynamicId);
+            final DynamicTexture texture = new DynamicTexture(() -> filePath, image);
+            final String dynamicId = "dropped/" + name;
+            final Identifier textureId = Identifier.fromNamespaceAndPath("walksylib", dynamicId);
 
             Minecraft.getInstance().getTextureManager().release(textureId);
             Minecraft.getInstance().getTextureManager().register(textureId, texture);
 
-            Path destDir = WalksyLibConfigManager.getCachedImageDir();
-            Path destPath = destDir.resolve(trueName);
+            final Path destDir = WalksyLibConfigManager.getCachedImageDir();
+            final Path destPath = destDir.resolve(trueName);
             Files.copy(file.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
 
             this.selectedTexture = textureId;
             this.fileName = trueName;
 
         } catch (Exception e) {
-            System.err.println("Failed to process dropped file: " + filePath);
-            e.printStackTrace();
+            WalksyLibLogger.err("Failed to process dropped file: " + filePath + " " + e.getMessage());
         }
     }
 
-    private NativeImage loadFlexibleImage(byte[] imageBytes) {
+    private NativeImage loadFlexibleImage(final byte[] imageBytes) {
         try {
             return NativeImage.read(new ByteArrayInputStream(imageBytes));
         } catch (Exception e) {
             try {
-                BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                final BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
                 if (bufferedImage == null) return null;
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "png", baos);
-                byte[] pngBytes = baos.toByteArray();
+                final byte[] pngBytes = baos.toByteArray();
 
                 return NativeImage.read(new ByteArrayInputStream(pngBytes));
             } catch (Exception ex) {
@@ -182,15 +179,15 @@ public class TextureDropPopUp extends PopUp {
     }
 
     @Override
-    public void layout(int requestedWidth, int requestedHeight) {
+    public void layout(final int requestedWidth, final int requestedHeight) {
         super.layout(requestedWidth, requestedHeight);
         if (this.doneButton != null) {
-            this.doneButton.setPosition(x + width - 51, y + height - 21);
+            this.doneButton.setPosition(this.x + this.width - 51, this.y + this.height - 21);
         }
     }
 
     @Override
     protected void onClose() {
-        WindowDropCallback.unregister();
+        WalksyLibDropCallback.unregister();
     }
 }

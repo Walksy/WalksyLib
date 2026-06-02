@@ -31,7 +31,7 @@ public class UniversalTabWidget extends AbstractWidget {
     private float currentScrollOffset = 0;
     private float targetScrollOffset = 0;
 
-    public UniversalTabWidget(int x, int y, int width, int height, List<CategoryTab> tabs, TabManager tabManager, TabLocation location, Screen parent) {
+    public UniversalTabWidget(final int x, final int y, final int width, final int height, final List<CategoryTab> tabs, final TabManager tabManager, final TabLocation location, final Screen parent) {
         super(x, y, width, height, Component.empty());
         this.tabManager = tabManager;
         this.location = location;
@@ -39,9 +39,8 @@ public class UniversalTabWidget extends AbstractWidget {
         this.tabs = tabs;
     }
 
-
-    private void renderArrowIndicator(GuiGraphicsExtractor ctx) {
-        MaxOffset offset = getMaxOffsetDirection();
+    private void renderArrowIndicator(final GuiGraphicsExtractor ctx) {
+        final MaxOffset offset = this.getMaxOffsetDirection();
         if (offset == null) return;
 
         ctx.pose().pushMatrix();
@@ -50,7 +49,7 @@ public class UniversalTabWidget extends AbstractWidget {
 
         if (offset != MaxOffset.RIGHT) {
             ctx.pose().pushMatrix();
-            ctx.pose().translate((float) ((getX() + getWidth()) - 25), (float) ((getY() + getHeight()) / 2.0 + 2.5));
+            ctx.pose().translate((float) ((this.getX() + this.getWidth()) - 25), (float) ((this.getY() + this.getHeight()) / 2.0 + 2.5));
             ctx.pose().scale(2.0F, 2.0F);
             ctx.blit(RenderPipelines.GUI_TEXTURED, ScrollableTabWidget.ARROW,
                     -1, -1, 0.0F, 0.0F, 8, 8, 8, 16, new Color(255, 255, 255, fadeAlpha).getRGB());
@@ -59,7 +58,7 @@ public class UniversalTabWidget extends AbstractWidget {
 
         if (offset != MaxOffset.LEFT) {
             ctx.pose().pushMatrix();
-            ctx.pose().translate((float) (getX() + 25), (float) ((getY() + getHeight()) / 2.0 + 2.5));
+            ctx.pose().translate((float) (this.getX() + 25), (float) ((this.getY() + this.getHeight()) / 2.0 + 2.5));
             ctx.pose().scale(2.0F, 2.0F);
             ctx.blit(RenderPipelines.GUI_TEXTURED, ScrollableTabWidget.ARROW,
                     1, -1, 0.0F, 8F, 8, 8, 8, 16, new Color(255, 255, 255, fadeAlpha).getRGB());
@@ -69,14 +68,14 @@ public class UniversalTabWidget extends AbstractWidget {
         ctx.pose().popMatrix();
     }
 
-    private String getAnimatedTabTitle(String full, Font textRenderer, int maxWidth) {
+    private String getAnimatedTabTitle(final String full, final Font textRenderer, final int maxWidth) {
         if (textRenderer.width(full) <= maxWidth) return full;
 
-        String ellipsis = "...";
-        int ellipsisWidth = textRenderer.width(ellipsis);
-        int visibleWidth = maxWidth - ellipsisWidth;
+        final String ellipsis = "...";
+        final int ellipsisWidth = textRenderer.width(ellipsis);
+        final int visibleWidth = maxWidth - ellipsisWidth;
 
-        int[] widths = new int[full.length() + 1];
+        final int[] widths = new int[full.length() + 1];
         for (int i = 0; i < full.length(); i++) widths[i + 1] = widths[i] + textRenderer.width(full.substring(i, i + 1));
 
         int mChars = 0;
@@ -85,135 +84,127 @@ public class UniversalTabWidget extends AbstractWidget {
             else break;
         }
 
-        int steps = full.length() - mChars + 1;
-        int cycle = steps * 2 - 2;
+        final int steps = full.length() - mChars + 1;
+        final int cycle = steps * 2 - 2;
         int pos = (int) ((System.currentTimeMillis() / 100) % cycle);
         if (pos >= steps) pos = cycle - pos;
 
-        String visiblePart = full.substring(pos, pos + mChars);
+        final String visiblePart = full.substring(pos, pos + mChars);
         return (pos == steps - 1) ? visiblePart : visiblePart + ellipsis;
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        int totalWidth = tabs.size() * (TAB_WIDTH + 4) - 4;
+    public boolean mouseScrolled(final double mouseX, final double mouseY, final double horizontalAmount, final double verticalAmount) {
+        final int totalWidth = this.tabs.size() * (TAB_WIDTH + 4) - 4;
         if (totalWidth <= this.width) return false;
 
-        targetScrollOffset -= (float) (verticalAmount * 20);
-        targetScrollOffset = Math.max(0, Math.min(targetScrollOffset, totalWidth - this.width));
+        this.targetScrollOffset -= (float) (verticalAmount * 20);
+        this.targetScrollOffset = Math.max(0, Math.min(this.targetScrollOffset, totalWidth - this.width));
         return true;
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
-        Minecraft client = Minecraft.getInstance();
-        currentScrollOffset = Mth.lerp(0.2f, currentScrollOffset, targetScrollOffset);
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor ctx, final int mouseX, final int mouseY, final float delta) {
+        final Minecraft client = Minecraft.getInstance();
+        this.currentScrollOffset = Mth.lerp(0.2f, this.currentScrollOffset, this.targetScrollOffset);
 
-        if (location == TabLocation.TOP || location == TabLocation.BOTTOM) {
-            if (tabs.isEmpty()) return;
+        if (this.location == TabLocation.TOP || this.location == TabLocation.BOTTOM) {
+            if (this.tabs.isEmpty()) return;
             ctx.enableScissor(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height);
 
-            final int tabCount = tabs.size();
+            final int tabCount = this.tabs.size();
             final int totalWidth = tabCount * (TAB_WIDTH + 4) - 4;
             final int baseX = totalWidth <= this.width
                     ? this.getX() + (this.width - totalWidth) / 2
-                    : this.getX() - (int) currentScrollOffset;
+                    : this.getX() - (int) this.currentScrollOffset;
 
-            int[] tabXs = new int[tabCount];
-            boolean[] hoveredTabs = new boolean[tabCount];
-            boolean[] selectedTabs = new boolean[tabCount];
+            final int[] tabXs = new int[tabCount];
+            final boolean[] hoveredTabs = new boolean[tabCount];
+            final boolean[] selectedTabs = new boolean[tabCount];
 
             for (int i = 0; i < tabCount; i++) {
-                int tabX = baseX + i * (TAB_WIDTH + 4);
+                final int tabX = baseX + i * (TAB_WIDTH + 4);
                 tabXs[i] = tabX;
 
-                boolean hovered = mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT;
+                final boolean hovered = mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT;
                 hoveredTabs[i] = hovered;
 
-                boolean selected = tabs.get(i).equals(tabManager.getCurrentTab());
+                final boolean selected = this.tabs.get(i).equals(this.tabManager.getCurrentTab());
                 selectedTabs[i] = selected;
-
-                //ctx.fill(tabX, getY(), tabX + TAB_WIDTH + (i == (tabCount - 1) ? 1 : 4), getY() + TAB_HEIGHT - 1, new Color(0, 0, 0, 100).getRGB());
             }
 
-
-            //Draw tab titles
             for (int i = 0; i < tabCount; i++) {
-                int tabX = tabXs[i];
+                final int tabX = tabXs[i];
                 if (tabX + TAB_WIDTH < this.getX() || tabX > this.getX() + this.width) continue;
 
-                String fullText = tabs.get(i).getTabTitle().getString();
-                String text = getAnimatedTabTitle(fullText, client.font, TAB_WIDTH - 10);
+                final String fullText = this.tabs.get(i).getTabTitle().getString();
+                final String text = this.getAnimatedTabTitle(fullText, client.font, TAB_WIDTH - 10);
 
-                int color = selectedTabs[i] ? 0xFFFFFFFF : hoveredTabs[i] ? 0xFFCCCCCC : 0xFF888888;
+                final int color = selectedTabs[i] ? 0xFFFFFFFF : hoveredTabs[i] ? 0xFFCCCCCC : 0xFF888888;
                 ctx.text(client.font, text,
                         tabX + (TAB_WIDTH - client.font.width(text)) / 2,
                         this.getY() + (TAB_HEIGHT - 8) / 2,
                         color);
             }
 
-            //Draw base lines
-            int y = this.getY() + TAB_HEIGHT - 1;
-            int startX = baseX;
-            int endX = baseX + totalWidth;
+            final int y = this.getY() + TAB_HEIGHT - 1;
+            final int startX = baseX;
+            final int endX = baseX + totalWidth;
 
             ctx.horizontalLine(startX, endX, y, MainColors.OUTLINE_WHITE.getRGB());
             ctx.horizontalLine(startX - 2, endX + 2, y + 1, MainColors.OUTLINE_BLACK.getRGB());
 
-            int leftAlpha;
+            final int leftAlpha;
             if (selectedTabs[0]) leftAlpha = 255;
-            else if (hoveredTabs[0]) leftAlpha = 204; //0xCC, same as hovered bottom highlight alpha
+            else if (hoveredTabs[0]) leftAlpha = 204;
             else leftAlpha = 51;
 
-            int rightAlpha;
+            final int rightAlpha;
             if (selectedTabs[tabCount - 1]) rightAlpha = 255;
             else if (hoveredTabs[tabCount - 1]) rightAlpha = 204;
             else rightAlpha = 51;
 
-            //LEFT vertical lines
-            ctx.verticalLine(startX - 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, leftAlpha).getRGB()); //this
+            ctx.verticalLine(startX - 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, leftAlpha).getRGB());
             ctx.verticalLine(startX - 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
-            if ((tabCount - 1) * TAB_WIDTH <= parent.width) {
+            if ((tabCount - 1) * TAB_WIDTH <= this.parent.width) {
                 ctx.horizontalLine(0, startX - 3, 27, new Color(0, 0, 0, 191).getRGB());
             }
 
-            //RIGHT vertical lines
-            ctx.verticalLine(endX + 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, rightAlpha).getRGB()); //this
+            ctx.verticalLine(endX + 1, y + 1, y - TAB_HEIGHT, new Color(255, 255, 255, rightAlpha).getRGB());
             ctx.verticalLine(endX + 2, y + 1, y - TAB_HEIGHT - 1, new Color(0, 0, 0, 191).getRGB());
             ctx.horizontalLine(this.getWidth(), endX + 3, 27, new Color(0, 0, 0, 191).getRGB());
 
-            //Draw bottom highlight for hovered or selected tabs
             for (int i = 0; i < tabCount; i++) {
-                int tabX = tabXs[i];
+                final int tabX = tabXs[i];
                 if (tabX + TAB_WIDTH < this.getX() || tabX > this.getX() + this.width) continue;
 
                 if (selectedTabs[i] || hoveredTabs[i]) {
                     int fillRight = tabX + TAB_WIDTH;
                     if (i == tabCount - 1) {
-                        fillRight += 1; //extend by 1 pixel on the last tab to cover full width
+                        fillRight += 1;
                     }
                     ctx.fill(tabX, this.getY() + TAB_HEIGHT - 1, fillRight, this.getY() + TAB_HEIGHT, selectedTabs[i] ? 0xFFFFFFFF : 0xFFCCCCCC);
                 }
             }
 
-            renderArrowIndicator(ctx);
+            this.renderArrowIndicator(ctx);
 
             ctx.disableScissor();
         }
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        double mouseX = click.x();
-        double mouseY = click.y();
-        for (int i = 0; i < tabs.size(); i++) {
-            int tabX = (tabs.size() * (TAB_WIDTH + 4) - 4 <= this.width
-                    ? this.getX() + (this.width - (tabs.size() * (TAB_WIDTH + 4) - 4)) / 2
-                    : this.getX() - (int) currentScrollOffset) + i * (TAB_WIDTH + 4);
+    public boolean mouseClicked(final MouseButtonEvent click, final boolean doubled) {
+        final double mouseX = click.x();
+        final double mouseY = click.y();
+        for (int i = 0; i < this.tabs.size(); i++) {
+            final int tabX = (this.tabs.size() * (TAB_WIDTH + 4) - 4 <= this.width
+                    ? this.getX() + (this.width - (this.tabs.size() * (TAB_WIDTH + 4) - 4)) / 2
+                    : this.getX() - (int) this.currentScrollOffset) + i * (TAB_WIDTH + 4);
 
             if (mouseX >= tabX && mouseX <= tabX + TAB_WIDTH && mouseY >= this.getY() && mouseY <= this.getY() + TAB_HEIGHT) {
-                if (tabManager.getCurrentTab() != tabs.get(i)) {
-                    tabManager.setCurrentTab(tabs.get(i), false);
+                if (this.tabManager.getCurrentTab() != this.tabs.get(i)) {
+                    this.tabManager.setCurrentTab(this.tabs.get(i), false);
                     AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
                 }
                 return true;
@@ -223,26 +214,24 @@ public class UniversalTabWidget extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput output) {
+    protected void updateWidgetNarration(final NarrationElementOutput output) {}
 
-    }
-
-    public void setTabs(List<CategoryTab> tabs) {
+    public void setTabs(final List<CategoryTab> tabs) {
         this.tabs.clear();
         this.tabs.addAll(tabs);
     }
 
-    public void selectTab(int index, boolean bl) {
-        if (index >= 0 && index < tabs.size()) {
-            tabManager.setCurrentTab(tabs.get(index), false);
+    public void selectTab(final int index, final boolean bl) {
+        if (index >= 0 && index < this.tabs.size()) {
+            this.tabManager.setCurrentTab(this.tabs.get(index), false);
         }
     }
 
     public MaxOffset getMaxOffsetDirection() {
-        int totalWidth = tabs.size() * (TAB_WIDTH + 4) - 4;
+        final int totalWidth = this.tabs.size() * (TAB_WIDTH + 4) - 4;
         if (totalWidth <= this.width) return null;
-        if (targetScrollOffset <= 0) return MaxOffset.LEFT;
-        if (targetScrollOffset >= totalWidth - this.width) return MaxOffset.RIGHT;
+        if (this.targetScrollOffset <= 0) return MaxOffset.LEFT;
+        if (this.targetScrollOffset >= totalWidth - this.width) return MaxOffset.RIGHT;
         return MaxOffset.MID;
     }
 

@@ -26,7 +26,7 @@ public class TextboxSubWidget extends SubWidget {
     private int scrollWidth;
     private Runnable onFocusLost = null;
 
-    public TextboxSubWidget(WalksyLibConfigScreen parent, int x, int y, int width, int scrollWidth, int height, String defaultV, Consumer<String> onChange, boolean centered) {
+    public TextboxSubWidget(final WalksyLibConfigScreen parent, final int x, final int y, final int width, final int scrollWidth, final int height, final String defaultV, final Consumer<String> onChange, final boolean centered) {
         super(x, y, width, height);
         this.parent = parent;
         this.scrollWidth = scrollWidth;
@@ -38,76 +38,75 @@ public class TextboxSubWidget extends SubWidget {
     }
 
     public int getScrollOffset() {
-        var tr = Minecraft.getInstance().font;
-        int textWidth = tr.width(field.getValue());
+        final var tr = Minecraft.getInstance().font;
+        final int textWidth = tr.width(this.field.getValue());
         return Math.max(0, textWidth - this.scrollWidth);
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        if (!field.isVisible()) return;
+    public void render(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+        if (!this.field.isVisible()) return;
 
-        hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+        this.hovered = mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
 
+        final Font tr = Minecraft.getInstance().font;
+        final String text = this.field.getValue();
+        final int scrollOffset = this.getScrollOffset();
+        final int color = (this.hovered || this.field.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB();
 
-        Font tr = Minecraft.getInstance().font;
-        String text = field.getValue();
-        int scrollOffset = getScrollOffset();
-        int color = (hovered || field.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB();
-
-        if (text.isEmpty() && !field.isFocused()) {
-            context.text(tr, "...", x + 3, y + (tr.lineHeight) / 2, Color.GRAY.getRGB(), true);
+        if (text.isEmpty() && !this.field.isFocused()) {
+            context.text(tr, "...", this.x + 3, this.y + (tr.lineHeight) / 2, Color.GRAY.getRGB(), true);
             return;
         }
 
-        var accessor = (EditBoxAccessor) field;
+        final var accessor = (EditBoxAccessor) this.field;
 
-        if (field.isFocused() && (parent.tickCount % 20) < 10) {
-            int cursor = Mth.clamp(field.getCursorPosition() - accessor.getDisplayPosition(), 0, text.length());
-            String visible = tr.plainSubstrByWidth(text.substring(accessor.getDisplayPosition()), field.getInnerWidth());
-            int caretX = x + 4 + tr.width(visible.substring(0, Mth.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
-            context.verticalLine(caretX, y + tr.lineHeight / 2 - 2, y + tr.lineHeight + 4, -1);
+        if (this.field.isFocused() && (this.parent.upTime % 20) < 10) {
+            final int cursor = Mth.clamp(this.field.getCursorPosition() - accessor.getDisplayPosition(), 0, text.length());
+            final String visible = tr.plainSubstrByWidth(text.substring(accessor.getDisplayPosition()), this.field.getInnerWidth());
+            final int caretX = this.x + 4 + tr.width(visible.substring(0, Mth.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
+            context.verticalLine(caretX, this.y + tr.lineHeight / 2 - 2, this.y + tr.lineHeight + 4, -1);
         }
 
-        if (centered) {
-            String trimmed = tr.plainSubstrByWidth(text, field.getInnerWidth());
-            context.text(tr, trimmed, x + width / 2 - tr.width(trimmed) / 2, y + 1 + tr.lineHeight / 2, color);
+        if (this.centered) {
+            final String trimmed = tr.plainSubstrByWidth(text, this.field.getInnerWidth());
+            context.text(tr, trimmed, this.x + this.width / 2 - tr.width(trimmed) / 2, this.y + 1 + tr.lineHeight / 2, color);
         } else {
-            context.text(tr, text, x + 3 - scrollOffset, y + 1 + tr.lineHeight / 2, color, true);
+            context.text(tr, text, this.x + 3 - scrollOffset, this.y + 1 + tr.lineHeight / 2, color, true);
         }
 
-        int textX = x + 4 - scrollOffset;
-        int textY = y + 1 + tr.lineHeight / 2;
+        final int textX = this.x + 4 - scrollOffset;
+        final int textY = this.y + 1 + tr.lineHeight / 2;
 
-        int firstCharIndex = accessor.getDisplayPosition();
-        String visibleText = tr.plainSubstrByWidth(text.substring(firstCharIndex), field.getInnerWidth());
+        final int firstCharIndex = accessor.getDisplayPosition();
+        final String visibleText = tr.plainSubstrByWidth(text.substring(firstCharIndex), this.field.getInnerWidth());
 
-        int selectionStart = Mth.clamp(this.getSelectionStart(accessor), 0, text.length());
-        int selectionEnd = Mth.clamp(this.getSelectionEnd(accessor), 0, text.length());
+        final int selectionStart = Mth.clamp(this.getSelectionStart(accessor), 0, text.length());
+        final int selectionEnd = Mth.clamp(this.getSelectionEnd(accessor), 0, text.length());
 
-        int visibleSelectionStart = Mth.clamp(selectionStart - firstCharIndex, 0, visibleText.length());
-        int visibleSelectionEnd = Mth.clamp(selectionEnd - firstCharIndex, 0, visibleText.length());
+        final int visibleSelectionStart = Mth.clamp(selectionStart - firstCharIndex, 0, visibleText.length());
+        final int visibleSelectionEnd = Mth.clamp(selectionEnd - firstCharIndex, 0, visibleText.length());
 
         if (visibleSelectionStart != visibleSelectionEnd) {
-            int highlightStartX = textX + tr.width(visibleText.substring(0, visibleSelectionStart));
-            int highlightEndX = textX + tr.width(visibleText.substring(0, visibleSelectionEnd));
-            drawSelectionHighlight(context, highlightStartX - 1, textY - 1, highlightEndX - 1, textY + 9);
+            final int highlightStartX = textX + tr.width(visibleText.substring(0, visibleSelectionStart));
+            final int highlightEndX = textX + tr.width(visibleText.substring(0, visibleSelectionEnd));
+            this.drawSelectionHighlight(context, highlightStartX - 1, textY - 1, highlightEndX - 1, textY + 9);
         }
     }
 
-    private int getSelectionStart(EditBoxAccessor editBox) {
+    private int getSelectionStart(final EditBoxAccessor editBox) {
         return Math.min(this.field.getCursorPosition(), editBox.getHighlightPos());
     }
 
-    private int getSelectionEnd(EditBoxAccessor editBox) {
+    private int getSelectionEnd(final EditBoxAccessor editBox) {
         return Math.max(this.field.getCursorPosition(), editBox.getHighlightPos());
     }
 
     @Override
-    public void onClick(MouseButtonEvent click, boolean doubled) {
-        if (hovered) {
-            field.onClick(click, doubled);
-            field.moveCursorToEnd(false);
+    public void onClick(final MouseButtonEvent click, final boolean doubled) {
+        if (this.hovered) {
+            this.field.onClick(click, doubled);
+            this.field.moveCursorToEnd(false);
             this.setFocus(true);
             AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
         } else {
@@ -116,28 +115,28 @@ public class TextboxSubWidget extends SubWidget {
     }
 
     @Override
-    public void onDrag(int mouseX) {}
+    public void onDrag(final int mouseX) {}
 
     @Override
-    public void onKeyPress(KeyEvent input) {
-        field.keyPressed(input);
+    public void onKeyPress(final KeyEvent input) {
+        this.field.keyPressed(input);
         super.onKeyPress(input);
     }
 
     @Override
-    public void onCharTyped(CharacterEvent input) {
-        field.charTyped(input);
+    public void onCharTyped(final CharacterEvent input) {
+        this.field.charTyped(input);
         super.onCharTyped(input);
     }
 
-    public void setOnFocusLost(Runnable onFocusLost) {
+    public void setOnFocusLost(final Runnable onFocusLost) {
         this.onFocusLost = onFocusLost;
     }
 
-    public void setFocus(boolean focus) {
+    public void setFocus(final boolean focus) {
         this.field.setFocused(focus);
-        if (!focus && onFocusLost != null) {
-            onFocusLost.run();
+        if (!focus && this.onFocusLost != null) {
+            this.onFocusLost.run();
         }
     }
 
@@ -149,26 +148,25 @@ public class TextboxSubWidget extends SubWidget {
         return this.field.getValue();
     }
 
-    public void setText(String text)
-    {
+    public void setText(final String text) {
         this.field.setValue(text);
     }
 
-    private void drawSelectionHighlight(GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
+    private void drawSelectionHighlight(final GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
         if (x1 < x2) {
-            int i = x1;
+            final int i = x1;
             x1 = x2;
             x2 = i;
         }
 
         if (y1 < y2) {
-            int i = y1;
+            final int i = y1;
             y1 = y2;
             y2 = i;
         }
 
-        if (x2 > x + this.width) x2 = x + this.width;
-        if (x1 > x + this.width) x1 = x + this.width;
+        if (x2 > this.x + this.width) x2 = this.x + this.width;
+        if (x1 > this.x + this.width) x1 = this.x + this.width;
 
         context.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, -16776961);
     }

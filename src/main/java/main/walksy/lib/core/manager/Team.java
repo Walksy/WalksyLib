@@ -1,10 +1,10 @@
 package main.walksy.lib.core.manager;
 
 public enum Team {
-    Team_1,
-    Team_2,
-    Team_3,
-    Team_4,
-    Team_5,
-    None
+    TEAM_1,
+    TEAM_2,
+    TEAM_3,
+    TEAM_4,
+    TEAM_5,
+    NONE
 }

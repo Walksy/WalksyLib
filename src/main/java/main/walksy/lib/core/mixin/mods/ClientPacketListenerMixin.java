@@ -13,10 +13,9 @@ public class ClientPacketListenerMixin {
 
     @Inject(method = "handleSoundEvent",
             at = @At("HEAD"))
-    public void onSound(ClientboundSoundPacket packet, CallbackInfo ci) {
+    public void onSound(final ClientboundSoundPacket packet, final CallbackInfo ci) {
         if (packet.getSound().getRegisteredName().toLowerCase().contains("shield.break")) {
             WalksyLib.getInstance().getShieldStateManager().handleSoundPacket(packet.getX(), packet.getY(), packet.getZ());
         }
     }
 }
-

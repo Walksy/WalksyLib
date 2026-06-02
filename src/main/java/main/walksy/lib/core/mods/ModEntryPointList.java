@@ -1,7 +1,6 @@
 package main.walksy.lib.core.mods;
 
 import main.walksy.lib.api.WalksyLibApi;
-import main.walksy.lib.core.gui.impl.BaseScreen;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ public class ModEntryPointList {
         this.entries.clear();
         FabricLoader.getInstance().getEntrypointContainers("walksylib", WalksyLibApi.class)
                 .forEach(entry -> {
-                    WalksyLibApi api = entry.getEntrypoint();
+                    final WalksyLibApi api = entry.getEntrypoint();
                     this.entries.add(new Mod(entry.getProvider(), api.getConfig(), api::getOverridableScreen, api.getConflictedConfigButtonTitles()));
                 });
     }
@@ -28,9 +27,9 @@ public class ModEntryPointList {
     }
 
     public void loadModConfigs() {
-        for (Mod mod : this.entries) {
+        for (final Mod mod : this.entries) {
             if (mod.hasConfig()) {
-                mod.getConfig().load();
+                mod.getConfig().onLoad();
             }
         }
     }

@@ -3,7 +3,7 @@ package main.walksy.lib.core.integration;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import main.walksy.lib.api.WalksyLibApi;
-import main.walksy.lib.core.config.impl.LocalConfig;
+import main.walksy.lib.core.config.impl.ModConfig;
 import main.walksy.lib.core.gui.impl.APIScreen;
 import main.walksy.lib.core.gui.impl.BaseScreen;
 import main.walksy.lib.core.gui.impl.ConflictedConfigScreen;
@@ -27,17 +27,17 @@ public class ModMenuIntegration implements ModMenuApi {
                 .getEntrypointContainers("walksylib", WalksyLibApi.class)
                 .stream()
                 .map(c -> {
-                    WalksyLibApi entryPoint = c.getEntrypoint();
-                    BaseScreen overridableScreen = entryPoint.getOverridableScreen(null);
-                    LocalConfig config = entryPoint.getConfig();
+                    final WalksyLibApi entryPoint = c.getEntrypoint();
+                    final BaseScreen overridableScreen = entryPoint.getOverridableScreen(null);
+                    final ModConfig config = entryPoint.getConfig();
                     if (overridableScreen == null && config == null) {
                         return null;
                     }
 
-                    return Map.entry(c.getProvider().getMetadata().getId(), (ConfigScreenFactory<?>) parent -> { //TODO overriableconfigscreen
-                                BaseScreen screen = entryPoint.getOverridableScreen(parent);
+                    return Map.entry(c.getProvider().getMetadata().getId(), (ConfigScreenFactory<?>) parent -> {
+                                final BaseScreen screen = entryPoint.getOverridableScreen(parent);
                                 if (screen != null && config != null) {
-                                    WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(parent, config, c.getProvider().getMetadata().getName());
+                                    final WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(parent, config, c.getProvider().getMetadata().getName());
                                     return new ConflictedConfigScreen("Choose Screen", parent, screen, configScreen, entryPoint.getConflictedConfigButtonTitles());
                                 }
                                 if (screen == null && config != null) {

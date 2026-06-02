@@ -4,21 +4,16 @@ import main.walksy.lib.core.config.Config;
 
 import java.nio.file.Path;
 
-public class APIConfig implements Config {
+public class LibraryConfig implements Config {
+
     @Override
-    public Path path() {
+    public Path getPath() {
         return null;
     }
 
     @Override
-    public void load() {
-
-    }
-
+    public void onLoad() {}
 
     @Override
-    public void save() {
-
-    }
-
+    public void onSave() {}
 }

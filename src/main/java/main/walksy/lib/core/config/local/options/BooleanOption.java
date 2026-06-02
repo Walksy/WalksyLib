@@ -10,36 +10,24 @@ public class BooleanOption extends OptionBuilder<Boolean, BooleanOption> {
 
     private Warning warning;
 
-    public BooleanOption(String name, Supplier<Boolean> getter, boolean defaultValue, Consumer<Boolean> setter) {
+    public BooleanOption(final String name, final Supplier<Boolean> getter, final boolean defaultValue, final Consumer<Boolean> setter) {
         super(name, getter, defaultValue, setter);
     }
 
-    public BooleanOption addWarning(Warning warning) {
+    public BooleanOption addWarning(final Warning warning) {
         this.warning = warning;
         return this;
     }
 
-    public static BooleanOption createBuilder(String name, Supplier<Boolean> getter, boolean defaultValue, Consumer<Boolean> setter) {
+    public static BooleanOption createBuilder(final String name, final Supplier<Boolean> getter, final boolean defaultValue, final Consumer<Boolean> setter) {
         return new BooleanOption(name, getter, defaultValue, setter);
     }
 
     @Override
     public Option<Boolean> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, Boolean.class, defaultValue, warning, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, Boolean.class, this.defaultValue, this.warning, this.onChange);
     }
 
-    public static class Warning
-    {
-        public String title;
-        public String message;
-        public Runnable onYes, onNo;
-
-        public Warning(String title, String message, Runnable onYes, Runnable onNo)
-        {
-            this.title = title;
-            this.message = message;
-            this.onYes = onYes;
-            this.onNo = onNo;
-        }
+    public record Warning(String title, String message, Runnable onYes, Runnable onNo) {
     }
 }

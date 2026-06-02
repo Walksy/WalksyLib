@@ -6,34 +6,28 @@ public class InternalLog {
     private final String text;
     private final ToolTip toolTip;
 
-    private InternalLog(String text)
-    {
+    private InternalLog(final String text) {
         this(text, null);
     }
 
-    private InternalLog(String text, ToolTip toolTip)
-    {
+    private InternalLog(final String text, final ToolTip toolTip) {
         this.text = text;
         this.toolTip = toolTip;
     }
 
-    public static InternalLog of(String text)
-    {
+    public static InternalLog of(final String text) {
         return of(text, null);
     }
 
-    public static InternalLog of(String text, ToolTip toolTip)
-    {
+    public static InternalLog of(final String text, final ToolTip toolTip) {
         return new InternalLog(text, toolTip);
     }
 
-    public String getText()
-    {
-        return text;
+    public String getText() {
+        return this.text;
     }
 
-    public ToolTip getToolTip()
-    {
+    public ToolTip getToolTip() {
         return this.toolTip;
     }
 

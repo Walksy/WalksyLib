@@ -1,6 +1,6 @@
 package main.walksy.lib.core.gui.widgets;
 
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.MarqueeUtil;
 import main.walksy.lib.core.utils.Scroller;
@@ -23,70 +23,69 @@ public class LogWidget extends AbstractWidget {
     private final List<InternalLog> logLines = new ArrayList<>();
     private final Scroller scroller = new Scroller(0, 12);
 
-    public LogWidget(String name, Screen parent, int x, int y, int width, int height) {
+    public LogWidget(final String name, final Screen parent, final int x, final int y, final int width, final int height) {
         super(x, y, width, height, Component.literal(name));
         this.parent = parent;
     }
 
-    public void clearLogs()
-    {
-        logLines.clear();
+    public void clearLogs() {
+        this.logLines.clear();
     }
 
-    public void addLog(InternalLog line) {
-        logLines.add(line);
-        int visibleRows = (height - 20) / 12;
-        int totalRows = logLines.size();
-        int scrollMax = Math.max(0, (totalRows - visibleRows) * 12);
-        scroller.setBounds(0, scrollMax);
+    public void addLog(final InternalLog line) {
+        this.logLines.add(line);
+        final int visibleRows = (this.height - 20) / 12;
+        final int totalRows = this.logLines.size();
+        final int scrollMax = Math.max(0, (totalRows - visibleRows) * 12);
+        this.scroller.setBounds(0, scrollMax);
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
-        int offset = 10;
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
+        final int offset = 10;
 
-        Renderer2D.fillRoundedRect(
-                context, getX(), getY() + offset, width, height, 2,
+        new Graphics(context).fillRoundedRect(
+                this.getX(), this.getY() + offset, this.width, this.height, 2,
                 new Color(0, 0, 0, 100).getRGB()
         );
-        Renderer2D.fillRoundedRectOutline(
-                context, getX(), getY() + offset, width, height, 2, 1,
+        new Graphics(context).fillRoundedRectOutline(
+                this.getX(), this.getY() + offset, this.width, this.height, 2, 1,
                 MainColors.OUTLINE_BLACK.getRGB()
         );
-        Renderer2D.fillRoundedRectOutline(
-                context, getX() + 1, getY() + 1 + offset, width - 2, height - 2, 2, 1,
+        new Graphics(context).fillRoundedRectOutline(
+                this.getX() + 1, this.getY() + 1 + offset, this.width - 2, this.height - 2, 2, 1,
                 MainColors.OUTLINE_WHITE.getRGB()
         );
 
-        isHovered = mouseX >= getX() &&
-                mouseX <= getX() + width &&
-                mouseY >= getY() + offset &&
-                mouseY <= getY() + height;
+        this.isHovered = mouseX >= this.getX() &&
+                mouseX <= this.getX() + this.width &&
+                mouseY >= this.getY() + offset &&
+                mouseY <= this.getY() + this.height;
 
-        context.enableScissor(getX(), getY() + offset + 2, getX() + width, getY() + height + 5);
+        context.enableScissor(this.getX(), this.getY() + offset + 2, this.getX() + this.width, this.getY() + this.height + 5);
 
-        if (!logLines.isEmpty()) {
-            Font textRenderer = Minecraft.getInstance().font;
-            int rowHeight = 12;
-            int yTop = getY() + offset + 5;
+        if (!this.logLines.isEmpty()) {
+            final Font textRenderer = Minecraft.getInstance().font;
+            final int rowHeight = 12;
+            final int yTop = this.getY() + offset + 5;
 
-            for (int i = 0; i < logLines.size(); i++) {
-                int y = yTop + i * rowHeight - (int) scroller.getValue();
+            for (int i = 0; i < this.logLines.size(); i++) {
+                final int y = yTop + i * rowHeight - (int) this.scroller.getValue();
 
-                if (y + rowHeight < getY() + offset || y > getY() + height) continue;
+                if (y + rowHeight < this.getY() + offset || y > this.getY() + this.height) continue;
 
-                InternalLog.ToolTip logToolTip = logLines.get(i).getToolTip();
+                final InternalLog.ToolTip logToolTip = this.logLines.get(i).getToolTip();
                 int c = Color.LIGHT_GRAY.getRGB();
 
                 if (logToolTip != null) {
                     c = logToolTip.color();
-                    this.setTooltip(isHoveredLog(mouseX, mouseY) ? logToolTip.tooltip() : null);
+                    this.setTooltip(this.isHoveredLog(mouseX, mouseY) ? logToolTip.tooltip() : null);
                 } else {
                     this.setTooltip(null);
                 }
 
-                String entry = MarqueeUtil.get(logLines.get(i).getText(), width - 10, 10);
-                context.text(textRenderer, entry, getX() + 6, y, c, false);
+                final String entry = MarqueeUtil.get(this.logLines.get(i).getText(), this.width - 10, 10);
+                context.text(textRenderer, entry, this.getX() + 6, y, c, false);
             }
         }
 
@@ -95,40 +94,37 @@ public class LogWidget extends AbstractWidget {
         context.centeredText(
                 Minecraft.getInstance().font,
                 this.getMessage(),
-                parent.width / 2,
-                getY() - 4,
+                this.parent.width / 2,
+                this.getY() - 4,
                 -1
         );
     }
 
-    private boolean isHoveredLog(double mouseX, double mouseY) {
-        if (logLines.isEmpty()) return false;
-
-        int rowHeight = 12;
-        int offset = 10;
-        int yTop = getY() + offset + 5;
-        if (mouseX < getX() || mouseX > getX() + width ||
-                mouseY < getY() + offset || mouseY > getY() + height) {
+    private boolean isHoveredLog(final double mouseX, final double mouseY) {
+        if (this.logLines.isEmpty()) return false;
+        final int rowHeight = 12;
+        final int offset = 10;
+        final int yTop = this.getY() + offset + 5;
+        if (mouseX < this.getX() || mouseX > this.getX() + this.width ||
+                mouseY < this.getY() + offset || mouseY > this.getY() + this.height) {
             return false;
         }
 
-        int index = (int) ((mouseY - yTop + scroller.getValue()) / rowHeight);
+        final int index = (int) ((mouseY - yTop + this.scroller.getValue()) / rowHeight);
 
-        return index >= 0 && index < logLines.size();
+        return index >= 0 && index < this.logLines.size();
     }
 
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (isHovered()) {
-            scroller.onScroll(verticalAmount);
+    public boolean mouseScrolled(final double mouseX, final double mouseY, final double horizontalAmount, final double verticalAmount) {
+        if (this.isHovered()) {
+            this.scroller.onScroll(verticalAmount);
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput output) {
-
-    }
+    protected void updateWidgetNarration(final NarrationElementOutput output) {}
 }

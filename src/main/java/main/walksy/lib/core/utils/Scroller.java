@@ -7,36 +7,36 @@ public class Scroller {
     private double min = Double.NEGATIVE_INFINITY;
     private double max = Double.POSITIVE_INFINITY;
 
-    public Scroller(double startValue, double step) {
+    public Scroller(final double startValue, final double step) {
         this.value = startValue;
         this.step = step;
     }
 
-    public void onScroll(double amount) {
-        if (active) {
-            value -= amount * step;
-            if (value < min) value = min;
-            if (value > max) value = max;
+    public void onScroll(final double amount) {
+        if (this.active) {
+            this.value -= amount * this.step;
+            if (this.value < this.min) this.value = this.min;
+            if (this.value > this.max) this.value = this.max;
         }
     }
 
     public double getValue() {
-        return value;
+        return this.value;
     }
 
-    public void setValue(double value) {
-        this.value = Math.max(min, Math.min(max, value));
+    public void setValue(final double value) {
+        this.value = Math.max(this.min, Math.min(this.max, value));
     }
 
-    public void setBounds(double min, double max) {
+    public void setBounds(final double min, final double max) {
         this.min = min;
         this.max = max;
-        if (active) {
-            this.value = clamp(this.value, min, max);
+        if (this.active) {
+            this.value = this.clamp(this.value, min, max);
         }
     }
 
-    private double clamp(double val, double min, double max) {
+    private double clamp(final double val, final double min, final double max) {
         return Math.max(min, Math.min(max, val));
     }
 }

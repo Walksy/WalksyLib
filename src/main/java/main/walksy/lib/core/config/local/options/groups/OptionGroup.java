@@ -11,36 +11,33 @@ public class OptionGroup {
     private final List<Option<?>> options;
     private boolean isExpanded;
 
-    private OptionGroup(String name, List<Option<?>> options, boolean expanded) {
+    private OptionGroup(final String name, final List<Option<?>> options, final boolean expanded) {
         this.name = name;
         this.options = options;
         this.isExpanded = expanded;
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public List<Option<?>> getOptions() {
-        return options;
+        return this.options;
     }
 
-    public boolean isExpanded()
-    {
+    public boolean isExpanded() {
         return this.isExpanded;
     }
 
-    public void setExpanded(boolean expanded)
-    {
+    public void setExpanded(final boolean expanded) {
         this.isExpanded = expanded;
     }
 
-    public void toggleExpanded()
-    {
+    public void toggleExpanded() {
         this.isExpanded = !this.isExpanded;
     }
 
-    public static Builder createBuilder(String name) {
+    public static Builder createBuilder(final String name) {
         return new Builder(name);
     }
 
@@ -50,24 +47,22 @@ public class OptionGroup {
         private final List<Option<?>> options = new ArrayList<>();
         private boolean expanded = true;
 
-        public Builder(String name) {
+        public Builder(final String name) {
             this.name = name;
         }
 
-        public Builder addOption(Option<?> option) {
-            options.add(option);
+        public Builder addOption(final Option<?> option) {
+            this.options.add(option);
             return this;
         }
 
-        public Builder setExpanded(boolean expanded)
-        {
+        public Builder setExpanded(final boolean expanded) {
             this.expanded = expanded;
             return this;
         }
 
         public OptionGroup build() {
-            return new OptionGroup(name, options, expanded);
+            return new OptionGroup(this.name, this.options, this.expanded);
         }
     }
 }
-

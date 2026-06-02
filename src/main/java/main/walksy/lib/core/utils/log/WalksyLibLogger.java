@@ -9,15 +9,15 @@ public class WalksyLibLogger {
     static final Logger LOGGER = Logger.getLogger("WalksyLib");
     private static final List<InternalLog> logs = new ArrayList<>();
 
-    public static void log(InternalLog log) {
+    public static void log(final InternalLog log) {
         logs.add(log);
     }
 
-    public static void info(Object message) {
+    public static void info(final Object message) {
         LOGGER.info((String) message);
     }
 
-    public static void err(Object message) {
+    public static void err(final Object message) {
         LOGGER.info("[Error] " + message);
     }
 

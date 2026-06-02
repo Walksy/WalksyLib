@@ -6,7 +6,7 @@ import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.Scroller;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -31,182 +31,177 @@ public class FrameManagerPopUp extends PopUp {
     private final Scroller scroller;
     private final Consumer<PixelGrid> onGridRemoval;
 
-    public FrameManagerPopUp(WalksyLibConfigScreen screen, Option<PixelGridAnimation> option, Runnable onDone, Consumer<PixelGrid> onGridRemoval) {
+    public FrameManagerPopUp(final WalksyLibConfigScreen screen, final Option<PixelGridAnimation> option, final Runnable onDone, final Consumer<PixelGrid> onGridRemoval) {
         super(screen, "Edit Frames", 200, 250);
         this.option = option;
         this.onGridRemoval = onGridRemoval;
         this.scroller = new Scroller(0, 2);
-        this.undoButton = new ButtonWidget(x + 5, y + height - 21, 40, 16, false, "Undo", this::undo);
-        this.undoAllButton = new ButtonWidget(x + 50, y + height - 21, 60, 16, false, "Undo All", this::undoAll);
-        this.doneButton = new ButtonWidget(x + width - 51, y + height - 21, 40, 16, false, "Done", () -> {
+        this.undoButton = new ButtonWidget(this.x + 5, this.y + this.height - 21, 40, 16, false, "Undo", this::undo);
+        this.undoAllButton = new ButtonWidget(this.x + 50, this.y + this.height - 21, 60, 16, false, "Undo All", this::undoAll);
+        this.doneButton = new ButtonWidget(this.x + this.width - 51, this.y + this.height - 21, 40, 16, false, "Done", () -> {
             onDone.run();
             screen.popUp.close();
         });
-        rebuildButtons();
+        this.rebuildButtons();
     }
 
     private void rebuildButtons() {
-        buttons.clear();
-        framePreviewPositions.clear();
+        this.buttons.clear();
+        this.framePreviewPositions.clear();
 
-        List<PixelGrid> frames = option.getValue().getFrames();
-        int centerX = x + (width / 2) - 50;
-        int startY = y + 32;
-        int spacing = 50;
+        final List<PixelGrid> frames = this.option.getValue().getFrames();
+        final int centerX = this.x + (this.width / 2) - 50;
+        final int startY = this.y + 32;
+        final int spacing = 50;
 
         for (int i = 0; i < frames.size(); i++) {
-            int frameY = startY + i * spacing;
+            final int frameY = startY + i * spacing;
 
-            int finalI = i;
-            ButtonWidget addBefore = new ButtonWidget(centerX + 30, frameY - 25, 40, 20, false, "+", () -> addFrameAt(finalI));
-            buttons.add(addBefore);
+            final int finalI = i;
+            final ButtonWidget addBefore = new ButtonWidget(centerX + 30, frameY - 25, 40, 20, false, "+", () -> this.addFrameAt(finalI));
+            this.buttons.add(addBefore);
 
-            PixelGrid frame = frames.get(i);
-            ButtonWidget removeBtn = new ButtonWidget(centerX - 25, frameY, 20, 20, false, "-", () -> removeFrame(frame));
+            final PixelGrid frame = frames.get(i);
+            final ButtonWidget removeBtn = new ButtonWidget(centerX - 25, frameY, 20, 20, false, "-", () -> this.removeFrame(frame));
             removeBtn.setOutlineColor(new Color(255, 0, 0, 130).getRGB(), new Color(255, 0, 0, 160).getRGB());
-            buttons.add(removeBtn);
+            this.buttons.add(removeBtn);
 
-            ButtonWidget frameBtn = new ButtonWidget(centerX, frameY, 100, 20, false, "Frame " + (i + 1), null);
+            final ButtonWidget frameBtn = new ButtonWidget(centerX, frameY, 100, 20, false, "Frame " + (i + 1), null);
             frameBtn.overrideHover = true;
-            buttons.add(frameBtn);
+            this.buttons.add(frameBtn);
 
-            framePreviewPositions.put(i, new Point(centerX + 110, frameY + 2));
+            this.framePreviewPositions.put(i, new Point(centerX + 110, frameY + 2));
         }
 
-        int yAfterLast = startY + frames.size() * spacing;
-        ButtonWidget addLast = new ButtonWidget(centerX + 30, yAfterLast - 25, 40, 20, false, "+", () -> addFrameAt(frames.size()));
-        buttons.add(addLast);
+        final int yAfterLast = startY + frames.size() * spacing;
+        final ButtonWidget addLast = new ButtonWidget(centerX + 30, yAfterLast - 25, 40, 20, false, "+", () -> this.addFrameAt(frames.size()));
+        this.buttons.add(addLast);
     }
 
-    private List<PixelGrid> deepCopyFrames(List<PixelGrid> original) {
-        List<PixelGrid> copy = new ArrayList<>();
-        for (PixelGrid frame : original) {
+    private List<PixelGrid> deepCopyFrames(final List<PixelGrid> original) {
+        final List<PixelGrid> copy = new ArrayList<>();
+        for (final PixelGrid frame : original) {
             copy.add(frame.copy());
         }
         return copy;
     }
 
-    private void addFrameAt(int index) {
-        PixelGridAnimation animation = option.getValue();
-        undoStack.add(deepCopyFrames(animation.getFrames()));
-        PixelGrid newFrame = PixelGrid.create(15, 15).build();
+    private void addFrameAt(final int index) {
+        final PixelGridAnimation animation = this.option.getValue();
+        this.undoStack.add(this.deepCopyFrames(animation.getFrames()));
+        final PixelGrid newFrame = PixelGrid.create(15, 15).build();
         animation.getFrames().add(index, newFrame);
-        updateFrameNumbers();
-        rebuildButtons();
+        this.updateFrameNumbers();
+        this.rebuildButtons();
     }
 
-    private void removeFrame(PixelGrid frame) {
-        if (option.getValue().getFrames().size() == 1) return;
-        PixelGridAnimation animation = option.getValue();
-        undoStack.add(deepCopyFrames(animation.getFrames()));
+    private void removeFrame(final PixelGrid frame) {
+        if (this.option.getValue().getFrames().size() == 1) return;
+        final PixelGridAnimation animation = this.option.getValue();
+        this.undoStack.add(this.deepCopyFrames(animation.getFrames()));
         animation.getFrames().remove(frame);
         if (this.onGridRemoval != null) {
             this.onGridRemoval.accept(frame);
         }
-        updateFrameNumbers();
-        rebuildButtons();
-        updateScrollerBounds();
+        this.updateFrameNumbers();
+        this.rebuildButtons();
+        this.updateScrollerBounds();
     }
 
-    private void updateFrameNumbers() {
-    }
+    private void updateFrameNumbers() {}
 
     @Override
-    protected void onClose() {
-
-    }
+    protected void onClose() {}
 
     private void undo() {
-        PixelGridAnimation animation = option.getValue();
-        if (!undoStack.isEmpty()) {
-            List<PixelGrid> lastState = undoStack.remove(undoStack.size() - 1);
+        final PixelGridAnimation animation = this.option.getValue();
+        if (!this.undoStack.isEmpty()) {
+            final List<PixelGrid> lastState = this.undoStack.remove(this.undoStack.size() - 1);
             animation.getFrames().clear();
             animation.getFrames().addAll(lastState);
-            updateFrameNumbers();
-            rebuildButtons();
+            this.updateFrameNumbers();
+            this.rebuildButtons();
         }
     }
 
     private void undoAll() {
-        PixelGridAnimation animation = option.getValue();
-        if (!undoStack.isEmpty()) {
-            List<PixelGrid> firstState = undoStack.get(0);
-            undoStack.clear();
+        final PixelGridAnimation animation = this.option.getValue();
+        if (!this.undoStack.isEmpty()) {
+            final List<PixelGrid> firstState = this.undoStack.get(0);
+            this.undoStack.clear();
             animation.getFrames().clear();
             animation.getFrames().addAll(firstState);
-            updateFrameNumbers();
-            rebuildButtons();
+            this.updateFrameNumbers();
+            this.rebuildButtons();
         }
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
+    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.enableScissor(x, y + 2, x + width, y + height - 25);
-        for (ButtonWidget btn : buttons) {
-            btn.scrollY = (float) scroller.getValue();
-            if (btn.getMessage().getString().equals("-"))
-            {
-                btn.setEnabled(option.getValue().getFrames().size() != 1);
+        context.enableScissor(this.x, this.y + 2, this.x + this.width, this.y + this.height - 25);
+        for (final ButtonWidget btn : this.buttons) {
+            btn.scrollY = (float) this.scroller.getValue();
+            if (btn.getMessage().getString().equals("-")) {
+                btn.setEnabled(this.option.getValue().getFrames().size() != 1);
             }
             btn.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
         }
 
-        List<PixelGrid> frames = option.getValue().getFrames();
-        for (Map.Entry<Integer, Point> entry : framePreviewPositions.entrySet()) {
-            int index = entry.getKey();
+        final List<PixelGrid> frames = this.option.getValue().getFrames();
+        for (final Map.Entry<Integer, Point> entry : this.framePreviewPositions.entrySet()) {
+            final int index = entry.getKey();
             if (index >= 0 && index < frames.size()) {
-                PixelGrid grid = frames.get(index);
-                Point pos = entry.getValue();
-                Renderer2D.renderGridTexture(
-                        context, grid,
+                final PixelGrid grid = frames.get(index);
+                final Point pos = entry.getValue();
+                new Graphics(context).renderGridTexture(grid,
                         pos.x - 1,
-                        (int) (pos.y - 6 - scroller.getValue()),
+                        (int) (pos.y - 6 - this.scroller.getValue()),
                         2, 0,
                         false
                 );
             }
         }
         context.disableScissor();
-        context.horizontalLine(x + 2, x + width - 3, y + height - 25, MainColors.OUTLINE_WHITE.getRGB());
-        doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        undoButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        undoAllButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + this.height - 25, MainColors.OUTLINE_WHITE.getRGB());
+        this.doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        this.undoButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        this.undoAllButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
     }
 
     @Override
-    public void onClick(MouseButtonEvent click, boolean doubled) {
-        for (ButtonWidget btn : buttons) {
+    public void onClick(final MouseButtonEvent click, final boolean doubled) {
+        for (final ButtonWidget btn : this.buttons) {
             btn.onClick(click, doubled);
         }
-        undoButton.onClick(click, doubled);
-        undoAllButton.onClick(click, doubled);
-        doneButton.onClick(click, doubled);
+        this.undoButton.onClick(click, doubled);
+        this.undoAllButton.onClick(click, doubled);
+        this.doneButton.onClick(click, doubled);
     }
 
     @Override
-    public void onScroll(double mouseX, double mouseY, double verticalAmount) {
+    public void onScroll(final double mouseX, final double mouseY, final double verticalAmount) {
         super.onScroll(mouseX, mouseY, verticalAmount);
-        scroller.onScroll(verticalAmount);
-        updateScrollerBounds();
+        this.scroller.onScroll(verticalAmount);
+        this.updateScrollerBounds();
     }
 
     @Override
-    public void layout(int x1, int y1) {
+    public void layout(final int x1, final int y1) {
         super.layout(x1, y1);
-        if (this.buttons != null && loaded) {
+        if (this.buttons != null && this.loaded) {
             this.rebuildButtons();
-            this.undoButton.setPosition(x + 5, y + height - 21);
-            this.undoAllButton.setPosition(x + 50, y + height - 21);
-            this.doneButton.setPosition(x + width - 51, y + height - 21);
+            this.undoButton.setPosition(this.x + 5, this.y + this.height - 21);
+            this.undoAllButton.setPosition(this.x + 50, this.y + this.height - 21);
+            this.doneButton.setPosition(this.x + this.width - 51, this.y + this.height - 21);
         }
     }
 
     private void updateScrollerBounds() {
-        if (buttons.isEmpty()) {
-            scroller.setBounds(0, 0);
+        if (this.buttons.isEmpty()) {
+            this.scroller.setBounds(0, 0);
             return;
         }
-        scroller.setBounds(0, Math.max(0, y + 32 + (buttons.size() / 3) * 50 - (y + height - 25)));
+        this.scroller.setBounds(0, Math.max(0, this.y + 32 + (this.buttons.size() / 3) * 50 - (this.y + this.height - 25)));
     }
 }

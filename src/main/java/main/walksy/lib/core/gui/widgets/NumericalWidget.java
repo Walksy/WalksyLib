@@ -20,12 +20,12 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     private final SliderSubWidget<T> slider;
     private final Option<T> option;
 
-    public NumericalWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<T> option) {
+    public NumericalWidget(final OptionGroup parent, final WalksyLibConfigScreen screen, final int x, final int y, final int width, final int height, final Option<T> option) {
         super(parent, screen, option, x, y, width, height, option.getName());
         this.option = option;
 
         SliderAdapter<T> adapter = null;
-        Number value = option.getValue();
+        final Number value = option.getValue();
         if (value instanceof Integer) {
             adapter = (SliderAdapter<T>) new IntSliderAdapter(option.getMin().intValue(), option.getMax().intValue(), option.getValue().intValue());
         } else if (value instanceof Float) {
@@ -38,28 +38,28 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     }
 
     @Override
-    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
         this.slider.render(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+    public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {
         this.slider.onClick(click, doubled);
     }
 
     @Override
-    public void onMouseRelease(MouseButtonEvent click) {
+    public void onMouseRelease(final MouseButtonEvent click) {
         this.slider.release();
     }
 
     @Override
-    public void onMouseDrag(MouseButtonEvent click, double deltaX, double deltaY) {
-        this.slider.onDrag((int) mouseX);
+    public void onMouseDrag(final MouseButtonEvent click, final double deltaX, final double deltaY) {
+        this.slider.onDrag((int) this.mouseX);
     }
 
     @Override
     public void onWidgetUpdate() {
-        this.slider.setPos(new Point(width - 100, getY() + 6));
+        this.slider.setPos(new Point(this.width - 100, this.getY() + 6));
     }
 
 
@@ -69,7 +69,7 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     }
 
     @Override
-    public <V> void onThirdPartyChange(V value) {
+    public <V> void onThirdPartyChange(final V value) {
         super.onThirdPartyChange(value);
         this.slider.setValue(this.option.getValue());
     }

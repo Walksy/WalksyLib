@@ -9,16 +9,16 @@ import java.util.function.Supplier;
 
 public class PixelGridAnimationOption extends OptionBuilder<PixelGridAnimation, PixelGridAnimationOption> {
 
-    public PixelGridAnimationOption(String name, Supplier<PixelGridAnimation> getter, PixelGridAnimation defaultValue, Consumer<PixelGridAnimation> setter) {
+    public PixelGridAnimationOption(final String name, final Supplier<PixelGridAnimation> getter, final PixelGridAnimation defaultValue, final Consumer<PixelGridAnimation> setter) {
         super(name, getter, defaultValue, setter);
     }
 
-    public static PixelGridAnimationOption createBuilder(String name, Supplier<PixelGridAnimation> getter, PixelGridAnimation defaultValue, Consumer<PixelGridAnimation> setter) {
+    public static PixelGridAnimationOption createBuilder(final String name, final Supplier<PixelGridAnimation> getter, final PixelGridAnimation defaultValue, final Consumer<PixelGridAnimation> setter) {
         return new PixelGridAnimationOption(name, getter, defaultValue, setter);
     }
 
     @Override
     public Option<PixelGridAnimation> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, PixelGridAnimation.class, null, null, null, defaultValue, null, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, PixelGridAnimation.class, null, null, null, this.defaultValue, null, this.onChange);
     }
 }

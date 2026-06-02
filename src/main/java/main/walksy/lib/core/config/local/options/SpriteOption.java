@@ -9,16 +9,16 @@ import java.util.function.Supplier;
 
 public class SpriteOption extends OptionBuilder<IdentifierWrapper, SpriteOption> {
 
-    public SpriteOption(String name, Supplier<IdentifierWrapper> getter, IdentifierWrapper defaultValue, Consumer<IdentifierWrapper> setter) {
+    public SpriteOption(final String name, final Supplier<IdentifierWrapper> getter, final IdentifierWrapper defaultValue, final Consumer<IdentifierWrapper> setter) {
         super(name, getter, defaultValue, setter);
     }
 
-    public static SpriteOption createBuilder(String name, Supplier<IdentifierWrapper> getter, IdentifierWrapper defaultValue, Consumer<IdentifierWrapper> setter) {
+    public static SpriteOption createBuilder(final String name, final Supplier<IdentifierWrapper> getter, final IdentifierWrapper defaultValue, final Consumer<IdentifierWrapper> setter) {
         return new SpriteOption(name, getter, defaultValue, setter);
     }
 
     @Override
     public Option<IdentifierWrapper> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, IdentifierWrapper.class, defaultValue, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, IdentifierWrapper.class, this.defaultValue, this.onChange);
     }
 }

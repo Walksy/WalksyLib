@@ -13,8 +13,8 @@ public class LivingEntityMixin {
 
     @Inject(method = "handleEntityEvent",
             at = @At("HEAD"))
-    public void onHandleStatusUpdate(byte status, CallbackInfo ci) {
-        LivingEntity entity = LivingEntity.class.cast(this);
+    public void onHandleStatusUpdate(final byte status, final CallbackInfo ci) {
+        final LivingEntity entity = LivingEntity.class.cast(this);
         if (entity instanceof Player player) {
             WalksyLib.getInstance().getShieldStateManager().handleEntityStatus(player, status);
         }

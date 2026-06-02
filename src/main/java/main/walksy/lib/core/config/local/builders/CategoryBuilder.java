@@ -13,17 +13,16 @@ public class CategoryBuilder {
     private final List<OptionGroup> optionGroups = new ArrayList<>();
     private final List<Option<?>> options = new ArrayList<>();
 
-    public CategoryBuilder(String name) {
+    public CategoryBuilder(final String name) {
         this.name = name;
     }
 
-    public CategoryBuilder group(OptionGroup group)
-    {
-        optionGroups.add(group);
+    public CategoryBuilder group(final OptionGroup group) {
+        this.optionGroups.add(group);
         return this;
     }
 
     public Category build() {
-        return new Category(name, optionGroups, options);
+        return new Category(this.name, this.optionGroups, this.options);
     }
 }

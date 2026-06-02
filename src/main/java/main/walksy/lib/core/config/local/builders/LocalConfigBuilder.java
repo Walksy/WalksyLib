@@ -1,6 +1,6 @@
 package main.walksy.lib.core.config.local.builders;
 
-import main.walksy.lib.core.config.impl.LocalConfig;
+import main.walksy.lib.core.config.impl.ModConfig;
 import main.walksy.lib.core.config.local.Category;
 
 import java.nio.file.Path;
@@ -13,34 +13,26 @@ public class LocalConfigBuilder {
     private Path path;
     private Runnable onSave;
 
-    public LocalConfigBuilder path(Path path) {
+    public LocalConfigBuilder path(final Path path) {
         this.path = path;
         return this;
     }
 
-    public LocalConfigBuilder category(Category categoryBuilder) {
-        categories.add(categoryBuilder);
+    public LocalConfigBuilder category(final Category categoryBuilder) {
+        this.categories.add(categoryBuilder);
         return this;
     }
 
-    public LocalConfigBuilder onSave(Runnable onSave) {
+    public LocalConfigBuilder onSave(final Runnable onSave) {
         this.onSave = onSave;
         return this;
     }
 
-    public LocalConfig build() {
-        if (path == null) {
-            throw new IllegalStateException("""
-                [WalksyLib] LocalConfigBuilder error: Missing required .path()!
-                You must call .path(Path) before build().
-                Example:
-                    new LocalConfigBuilder()
-                        .path(PathUtils.ofConfigDir("example"))
-                        .build();
-                """);
+    public ModConfig build() {
+        if (this.path == null) {
+            throw new IllegalStateException("Missing required .path()");
         }
 
-        return new LocalConfig(path, categories, onSave);
+        return new ModConfig(this.path, this.categories, this.onSave);
     }
 }
-

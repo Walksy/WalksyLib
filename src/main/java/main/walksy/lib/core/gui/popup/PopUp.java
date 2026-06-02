@@ -1,7 +1,7 @@
 package main.walksy.lib.core.gui.popup;
 
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -10,10 +10,10 @@ import java.awt.*;
 
 public abstract class PopUp {
 
+    private static final int DEFAULT_WIDTH = 300;
+    private static final int DEFAULT_HEIGHT = 100;
     protected final String subText;
     protected WalksyLibConfigScreen parent;
-    private final int DEFAULT_WIDTH = 300;
-    private final int DEFAULT_HEIGHT = 100;
     public boolean visible;
     public int x;
     public int y;
@@ -22,56 +22,54 @@ public abstract class PopUp {
     protected boolean canClose = true;
     protected boolean loaded = false;
 
-    public PopUp(WalksyLibConfigScreen parent, String subText) {
+    public PopUp(final WalksyLibConfigScreen parent, final String subText) {
         this.parent = parent;
         this.subText = subText;
         this.visible = false;
-        layout(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-        loaded = true;
-    }
-
-    public PopUp(WalksyLibConfigScreen parent, String subText, int width, int height) {
-        this.parent = parent;
-        this.subText = subText;
-        layout(width, height);
+        this.layout(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         this.loaded = true;
     }
 
-    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
-        Renderer2D.fillRoundedRectOutline(context,(parent.width / 2) - (this.width) / 2, (parent.height / 2) - (this.height) / 2, this.width, this.height, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        Renderer2D.fillRoundedRectOutline(context,(parent.width / 2) - (this.width / 2) + 1, (parent.height / 2) - (this.height / 2) + 1, this.width - 2, this.height - 2, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
-        Renderer2D.fillRoundedRect(context,(parent.width / 2) - (this.width / 2) + 2, (parent.height / 2) - (this.height / 2) + 2, this.width - 4, this.height - 4, 2, Color.BLACK.getRGB());
+    public PopUp(final WalksyLibConfigScreen parent, final String subText, final int width, final int height) {
+        this.parent = parent;
+        this.subText = subText;
+        this.layout(width, height);
+        this.loaded = true;
+    }
+
+    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
+        new Graphics(context).fillRoundedRectOutline((this.parent.width / 2) - (this.width) / 2, (this.parent.height / 2) - (this.height) / 2, this.width, this.height, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        new Graphics(context).fillRoundedRectOutline((this.parent.width / 2) - (this.width / 2) + 1, (this.parent.height / 2) - (this.height / 2) + 1, this.width - 2, this.height - 2, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
+        new Graphics(context).fillRoundedRect((this.parent.width / 2) - (this.width / 2) + 2, (this.parent.height / 2) - (this.height / 2) + 2, this.width - 4, this.height - 4, 2, Color.BLACK.getRGB());
     }
 
     public abstract void onClick(MouseButtonEvent click, boolean doubled);
-    public void onScroll(double mouseX, double mouseY, double verticalAmount) {}
-    public void onMouseRelease(MouseButtonEvent click) {}
+    public void onScroll(final double mouseX, final double mouseY, final double verticalAmount) {}
+    public void onMouseRelease(final MouseButtonEvent click) {}
 
-    public void layout(int requestedWidth, int requestedHeight) {
-        int maxWidth = (int) (parent.width * 0.98);
-        int maxHeight = (int) (parent.height * 0.98);
+    public void layout(final int requestedWidth, final int requestedHeight) {
+        final int maxWidth = (int) (this.parent.width * 0.98);
+        final int maxHeight = (int) (this.parent.height * 0.98);
 
         this.width = Math.min(requestedWidth, maxWidth);
         this.height = Math.min(requestedHeight, maxHeight);
 
-        this.x = (parent.width / 2) - (this.width / 2);
-        this.y = (parent.height / 2) - (this.height / 2);
+        this.x = (this.parent.width / 2) - (this.width / 2);
+        this.y = (this.parent.height / 2) - (this.height / 2);
     }
 
     public void close() {
         this.parent.popUp = null;
-        onClose();
+        this.onClose();
     }
 
     protected abstract void onClose();
 
-    public boolean canClose()
-    {
+    public boolean canClose() {
         return this.canClose;
     }
 
-    public void setParentScreen(WalksyLibConfigScreen screen)
-    {
+    public void setParentScreen(final WalksyLibConfigScreen screen) {
         this.parent = screen;
     }
 }

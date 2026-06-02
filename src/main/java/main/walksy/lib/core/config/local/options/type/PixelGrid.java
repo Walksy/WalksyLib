@@ -1,6 +1,6 @@
 package main.walksy.lib.core.config.local.options.type;
 
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
@@ -12,7 +12,7 @@ public class PixelGrid {
     private final int height;
     private boolean[][] pixels;
 
-    public PixelGrid(int width, int height, boolean[][] pixels) {
+    public PixelGrid(final int width, final int height, final boolean[][] pixels) {
         this.width = width;
         this.height = height;
         this.pixels = new boolean[height][width];
@@ -24,26 +24,26 @@ public class PixelGrid {
         }
     }
 
-    public void render(GuiGraphicsExtractor context, Supplier<Point> position, boolean blend) {
+    public void render(final GuiGraphicsExtractor context, final Supplier<Point> position, final boolean blend) {
         if (position == null || (position.get().x == -1) && (position.get().y == -1)) {
             return;
         }
-        Renderer2D.renderGridTexture(context, this, position.get().x, position.get().y, 1, 0, blend);
+        new Graphics(context).renderGridTexture(this, position.get().x, position.get().y, 1, 0, blend);
     }
 
-    public void render(GuiGraphicsExtractor context, float x, float y, boolean blend) {
-        Renderer2D.renderGridTexture(context, this, x, y, 1, 0, blend);
+    public void render(final GuiGraphicsExtractor context, final float x, final float y, final boolean blend) {
+        new Graphics(context).renderGridTexture(this, x, y, 1, 0, blend);
     }
 
-    public boolean getPixel(int x, int y) {
-        return pixels[y][x];
+    public boolean getPixel(final int x, final int y) {
+        return this.pixels[y][x];
     }
 
-    public void setPixel(int x, int y, boolean val) {
-        pixels[y][x] = val;
+    public void setPixel(final int x, final int y, final boolean val) {
+        this.pixels[y][x] = val;
     }
 
-    public void setPixels(boolean[][] pixels) {
+    public void setPixels(final boolean[][] pixels) {
         this.pixels = pixels;
     }
 
@@ -52,13 +52,13 @@ public class PixelGrid {
     }
 
     public PixelGrid copy() {
-        return new PixelGrid(width, height, pixels);
+        return new PixelGrid(this.width, this.height, this.pixels);
     }
 
-    public int getWidth() { return width; }
-    public int getHeight() { return height; }
+    public int getWidth() { return this.width; }
+    public int getHeight() { return this.height; }
 
-    public static Builder create(int width, int height) {
+    public static Builder create(final int width, final int height) {
         return new Builder(width, height);
     }
 
@@ -71,26 +71,26 @@ public class PixelGrid {
         private final int height;
         private final boolean[][] pixels;
 
-        public Builder(int width, int height) {
+        public Builder(final int width, final int height) {
             this.width = width;
             this.height = height;
             this.pixels = new boolean[height][width];
         }
 
-        public Builder set(int x, int y) {
-            if (x >= 0 && x < width && y >= 0 && y < height) {
-                pixels[y][x] = true;
+        public Builder set(final int x, final int y) {
+            if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                this.pixels[y][x] = true;
             }
             return this;
         }
 
         public PixelGrid build() {
-            return new PixelGrid(width, height, pixels);
+            return new PixelGrid(this.width, this.height, this.pixels);
         }
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof PixelGrid other)) return false;
         if (this.width != other.width || this.height != other.height) return false;

@@ -17,12 +17,13 @@ public class WalksyLib {
     private WalksyLibShieldStateManager shieldStateManager;
     private WalksyLibTeamManager teamManager;
     private ModEntryPointList modEntryPointList;
-    private Tickable[] tickableOptions = new Tickable[0];
+    private List<Tickable> tickableOptions;
 
     public void setup() {
         this.shieldStateManager = new WalksyLibShieldStateManager();
         this.teamManager = new WalksyLibTeamManager();
         this.modEntryPointList = new ModEntryPointList();
+        this.tickableOptions = new ArrayList<>();
     }
 
     public void load() {
@@ -33,30 +34,26 @@ public class WalksyLib {
     }
 
     public void tick() {
-        for (Tickable tickable : this.tickableOptions) {
+        for (final Tickable tickable : this.tickableOptions) {
             tickable.tick();
         }
     }
 
     public void retrieveTickableOptions() {
-        List<Tickable> tickables = new ArrayList<>();
-
-        for (Mod mod : this.modEntryPointList.get()) {
+        for (final Mod mod : this.modEntryPointList.get()) {
             if (!mod.hasConfig()) {
                 continue;
             }
-            for (Category category : mod.getConfig().categories()) {
-                for (OptionGroup group : category.optionGroups()) {
-                    for (Option<?> option : group.getOptions()) {
+            for (final Category category : mod.getConfig().categories()) {
+                for (final OptionGroup group : category.optionGroups()) {
+                    for (final Option<?> option : group.getOptions()) {
                         if (option.getValue() instanceof Tickable tickable) {
-                            tickables.add(tickable);
+                            this.tickableOptions.add(tickable);
                         }
                     }
                 }
             }
         }
-
-        this.tickableOptions = tickables.toArray(new Tickable[0]);
     }
 
     public static WalksyLib getInstance() {
@@ -74,7 +71,5 @@ public class WalksyLib {
         return this.teamManager;
     }
 
-    private WalksyLib() {
-
-    }
+    private WalksyLib() {}
 }

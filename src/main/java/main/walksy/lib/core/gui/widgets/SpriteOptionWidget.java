@@ -6,6 +6,7 @@ import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.impl.TextureDropPopUp;
 import main.walksy.lib.core.utils.IdentifierWrapper;
+import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -28,10 +29,10 @@ public class SpriteOptionWidget extends OptionWidget {
     private NativeImage image;
     private int visibleX, visibleY, visibleWidth, visibleHeight;
 
-    public SpriteOptionWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<IdentifierWrapper> option) {
+    public SpriteOptionWidget(final OptionGroup parent, final WalksyLibConfigScreen screen, final int x, final int y, final int width, final int height, final Option<IdentifierWrapper> option) {
         super(parent, screen, option, x, y, width, height, option.getName());
         this.option = option;
-        this.editTextureButton = new ButtonWidget(getWidth() - 100, getY() + 3, 70, 14, false, "Edit Texture", () -> this.screen.popUp = new TextureDropPopUp(screen, "Texture Editor: " + option.getName(), pass ->
+        this.editTextureButton = new ButtonWidget(this.getWidth() - 100, this.getY() + 3, 70, 14, false, "Edit Texture", () -> this.screen.popUp = new TextureDropPopUp(screen, "Texture Editor: " + option.getName(), pass ->
         {
             this.option.setValue(new IdentifierWrapper(pass.identifier(), pass.fileName()));
             this.reCalc();
@@ -41,37 +42,36 @@ public class SpriteOptionWidget extends OptionWidget {
 
 
     @Override
-    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.editTextureButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
-        if (image == null) return;
+    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+        this.editTextureButton.extractRenderState(context, mouseX, mouseY, delta);
+        if (this.image == null) return;
 
-        int padding = 6;
-        float scaleX = (float) ((getX() * 2.2 - padding) / (float) visibleWidth); //this will definitely cause some issues in the future
-        float scaleY = Math.min(
-                (getWidth() - padding) / (float) visibleWidth,
-                (getHeight() - padding) / (float) visibleHeight
+        final int padding = 6;
+        final float scaleX = (float) ((this.getX() * 2.2 - padding) / (float) this.visibleWidth);
+        final float scaleY = Math.min(
+                (this.getWidth() - padding) / (float) this.visibleWidth,
+                (this.getHeight() - padding) / (float) this.visibleHeight
         );
 
-        float drawX = getX() + getWidth() - visibleWidth * scaleX - padding;
-        float drawY = getY() + (getHeight() - visibleHeight * scaleY) / 2f;
+        final float drawX = this.getX() + this.getWidth() - this.visibleWidth * scaleX - padding;
+        final float drawY = this.getY() + (this.getHeight() - this.visibleHeight * scaleY) / 2f;
 
         context.pose().pushMatrix();
         context.pose().scale(scaleX, scaleY);
 
         context.blit(
                 RenderPipelines.GUI_TEXTURED,
-                option.getValue().getIdentifier(),
-                (int)(drawX / scaleX),
-                (int)(drawY / scaleY),
-                visibleX, visibleY,
-                visibleWidth, visibleHeight,
-                image.getWidth(), image.getHeight()
+                this.option.getValue().getIdentifier(),
+                (int) (drawX / scaleX),
+                (int) (drawY / scaleY),
+                this.visibleX, this.visibleY,
+                this.visibleWidth, this.visibleHeight,
+                this.image.getWidth(), this.image.getHeight()
         );
 
         context.pose().popMatrix();
 
-        if (isHoveringImage(mouseX, mouseY))
-        {
+        if (this.isHoveringImage(mouseX, mouseY)) {
             this.setTooltip(Tooltip.create(Component.literal(this.option.getValue().getIdentifier().getNamespace() + ": " + this.option.getValue().getIdentifier().getPath())));
         } else {
             this.setTooltip(null);
@@ -79,14 +79,14 @@ public class SpriteOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+    public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {
         super.onMouseClick(click, doubled);
         this.editTextureButton.onClick(click, doubled);
     }
 
     @Override
     public void onWidgetUpdate() {
-        this.editTextureButton.setPosition(getWidth() - 100, getY() + 3);
+        this.editTextureButton.setPosition(this.getWidth() - 100, this.getY() + 3);
     }
 
     @Override
@@ -100,52 +100,52 @@ public class SpriteOptionWidget extends OptionWidget {
         return false;
     }
 
-    public boolean isHoveringImage(double mouseX, double mouseY) {
-        if (image == null) return false;
+    public boolean isHoveringImage(final double mouseX, final double mouseY) {
+        if (this.image == null) return false;
 
-        int padding = 6;
-        float scale = Math.min(
-                (getWidth() - padding) / (float) visibleWidth,
-                (getHeight() - padding) / (float) visibleHeight
+        final int padding = 6;
+        final float scale = Math.min(
+                (this.getWidth() - padding) / (float) this.visibleWidth,
+                (this.getHeight() - padding) / (float) this.visibleHeight
         );
 
-        float drawX = getX() + getWidth() - visibleWidth * scale - padding;
-        float drawY = getY() + (getHeight() - visibleHeight * scale) / 2f;
+        final float drawX = this.getX() + this.getWidth() - this.visibleWidth * scale - padding;
+        final float drawY = this.getY() + (this.getHeight() - this.visibleHeight * scale) / 2f;
 
-        return mouseX >= drawX && mouseX <= drawX + visibleWidth * scale &&
-                mouseY >= drawY && mouseY <= drawY + visibleHeight * scale;
+        return mouseX >= drawX && mouseX <= drawX + this.visibleWidth * scale &&
+                mouseY >= drawY && mouseY <= drawY + this.visibleHeight * scale;
     }
 
 
     public void reCalc() {
-        Identifier id = option.getValue().getIdentifier();
-        AtomicReference<NativeImage> tempImage = new AtomicReference<>();
+        final Identifier id = this.option.getValue().getIdentifier();
+        final AtomicReference<NativeImage> tempImage = new AtomicReference<>();
 
-        TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+        final TextureManager textureManager = Minecraft.getInstance().getTextureManager();
         if (textureManager.getTexture(id) instanceof DynamicTexture nativeTexture) {
             tempImage.set(nativeTexture.getPixels());
         } else {
-            ResourceManager manager = Minecraft.getInstance().getResourceManager();
+            final ResourceManager manager = Minecraft.getInstance().getResourceManager();
             manager.getResource(id).ifPresent(resource -> {
-                try (InputStream stream = resource.open()) {
+                try (final InputStream stream = resource.open()) {
                     tempImage.set(NativeImage.read(stream));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    WalksyLibLogger.err(e.getMessage());
                 }
             });
         }
 
         this.image = tempImage.get();
 
-        if (image != null) {
-            int minX = image.getWidth();
-            int minY = image.getHeight();
+        if (this.image != null) {
+            int minX = this.image.getWidth();
+            int minY = this.image.getHeight();
             int maxX = 0;
             int maxY = 0;
 
-            for (int y1 = 0; y1 < image.getHeight(); y1++) {
-                for (int x1 = 0; x1 < image.getWidth(); x1++) {
-                    int alpha = image.getPixel(x1, y1) >>> 24;
+            for (int y1 = 0; y1 < this.image.getHeight(); y1++) {
+                for (int x1 = 0; x1 < this.image.getWidth(); x1++) {
+                    final int alpha = this.image.getPixel(x1, y1) >>> 24;
                     if (alpha != 0) {
                         if (x1 < minX) minX = x1;
                         if (y1 < minY) minY = y1;

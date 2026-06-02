@@ -9,16 +9,16 @@ import java.util.function.Supplier;
 
 public class PixelGridOption extends OptionBuilder<PixelGrid, PixelGridOption> {
 
-    public PixelGridOption(String name, Supplier<PixelGrid> getter, PixelGrid defaultValue, Consumer<PixelGrid> setter) {
+    public PixelGridOption(final String name, final Supplier<PixelGrid> getter, final PixelGrid defaultValue, final Consumer<PixelGrid> setter) {
         super(name, getter, defaultValue, setter);
     }
 
-    public static PixelGridOption createBuilder(String name, Supplier<PixelGrid> getter, PixelGrid defaultValue, Consumer<PixelGrid> setter) {
+    public static PixelGridOption createBuilder(final String name, final Supplier<PixelGrid> getter, final PixelGrid defaultValue, final Consumer<PixelGrid> setter) {
         return new PixelGridOption(name, getter, defaultValue, setter);
     }
 
     @Override
     public Option<PixelGrid> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, PixelGrid.class, defaultValue, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, PixelGrid.class, this.defaultValue, this.onChange);
     }
 }

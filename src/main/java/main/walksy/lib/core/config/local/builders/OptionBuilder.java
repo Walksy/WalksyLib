@@ -17,7 +17,7 @@ public abstract class OptionBuilder<T, SELF extends OptionBuilder<T, SELF>> {
     protected Supplier<Boolean> availability = () -> true;
     protected String availabilityHelp = "";
 
-    public OptionBuilder(String name, Supplier<T> getter, T defaultValue, Consumer<T> setter) {
+    public OptionBuilder(final String name, final Supplier<T> getter, final T defaultValue, final Consumer<T> setter) {
         this.name = name;
         this.getter = getter;
         this.setter = setter;
@@ -25,19 +25,19 @@ public abstract class OptionBuilder<T, SELF extends OptionBuilder<T, SELF>> {
     }
 
     @SuppressWarnings("unchecked")
-    public SELF description(OptionDescription description) {
+    public SELF description(final OptionDescription description) {
         this.description = description;
         return (SELF) this;
     }
 
     @SuppressWarnings("unchecked")
-    public SELF onChange(Runnable onChange) {
+    public SELF onChange(final Runnable onChange) {
         this.onChange = onChange;
         return (SELF) this;
     }
 
     @SuppressWarnings("unchecked")
-    public SELF availability(Supplier<Boolean> condition, String availabilityHelper) {
+    public SELF availability(final Supplier<Boolean> condition, final String availabilityHelper) {
         this.availability = condition;
         this.availabilityHelp = availabilityHelper;
         return (SELF) this;

@@ -5,7 +5,7 @@ import main.walksy.lib.core.gui.impl.BaseScreen;
 import main.walksy.lib.core.gui.impl.ConflictedConfigScreen;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.mods.Mod;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -25,40 +25,38 @@ public class ModWidget extends AbstractWidget {
     private final Mod mod;
     private final APIScreen parent;
 
-    public ModWidget(Mod mod, APIScreen parent, int x, int y) {
+    public ModWidget(final Mod mod, final APIScreen parent, final int x, final int y) {
         super(x, y, 140, 34, Component.empty());
         this.mod = mod;
         this.parent = parent;
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
         final boolean bl = this.mod.hasConfig();
         final boolean bl2 = this.mod.getOverridableConfigScreen(this.parent) != null;
         final int outlineColor;
         if (!bl && !bl2) {
             outlineColor = new Color(220, 60, 60, 180).getRGB();
         } else {
-            outlineColor = isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
+            outlineColor = this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
         }
 
-        Renderer2D.fillRoundedRectOutline_ModWidget(
-                context,
-                getX(),
-                getY(),
-                width,
-                height,
+        new Graphics(context).fillRoundedRectOutline_ModWidget(
+                this.getX(),
+                this.getY(),
+                this.width,
+                this.height,
                 2,
                 1,
                 outlineColor
         );
 
-        Renderer2D.fillRoundedRectOutline_ModWidget(
-                context,
-                getX() - 1,
-                getY() - 1,
-                width + 2,
-                height + 2,
+        new Graphics(context).fillRoundedRectOutline_ModWidget(
+                this.getX() - 1,
+                this.getY() - 1,
+                this.width + 2,
+                this.height + 2,
                 2,
                 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB()
@@ -66,18 +64,18 @@ public class ModWidget extends AbstractWidget {
 
         context.text(
                 Minecraft.getInstance().font,
-                mod.getContainer().getMetadata().getName(),
-                getX() + 38,
-                getY() + (height / 2) - Minecraft.getInstance().font.lineHeight / 2,
+                this.mod.getContainer().getMetadata().getName(),
+                this.getX() + 38,
+                this.getY() + (this.height / 2) - Minecraft.getInstance().font.lineHeight / 2,
                 -1,
                 true
         );
 
         context.blit(
                 RenderPipelines.GUI_TEXTURED,
-                mod.getModIcon(),
-                getX() + 1,
-                getY() + 1,
+                this.mod.getModIcon(),
+                this.getX() + 1,
+                this.getY() + 1,
                 0,
                 0,
                 32,
@@ -86,8 +84,8 @@ public class ModWidget extends AbstractWidget {
                 32
         );
 
-        if (isHovered()) {
-            final String modDescription = mod.getContainer().getMetadata().getDescription();
+        if (this.isHovered()) {
+            final String modDescription = this.mod.getContainer().getMetadata().getDescription();
 
             final String tooltipText;
             if (!bl && !bl2) {
@@ -105,12 +103,11 @@ public class ModWidget extends AbstractWidget {
         }
     }
 
-
     @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+    public boolean mouseClicked(final MouseButtonEvent click, final boolean doubled) {
         final BaseScreen overridable = this.mod.getOverridableConfigScreen(this.parent);
         final boolean hasConfig = this.mod.hasConfig();
-        if (!isHovered() || (!hasConfig && overridable == null)) {
+        if (!this.isHovered() || (!hasConfig && overridable == null)) {
             return super.mouseClicked(click, doubled);
         }
 
@@ -121,24 +118,20 @@ public class ModWidget extends AbstractWidget {
 
         final Screen nextScreen;
         if (overridable != null && hasConfig) {
-            WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(currentParent, this.mod.getConfig(), this.mod.getContainer().getMetadata().getName());
+            final WalksyLibConfigScreen configScreen = new WalksyLibConfigScreen(currentParent, this.mod.getConfig(), this.mod.getContainer().getMetadata().getName());
             nextScreen = new ConflictedConfigScreen("Choose Screen", currentParent, overridable, configScreen, this.mod.getConflictedButtonTitles());
         } else if (hasConfig) {
             nextScreen = new WalksyLibConfigScreen(currentParent, this.mod.getConfig(), this.mod.getContainer().getMetadata().getName());
         } else {
             nextScreen = overridable;
         }
-        Minecraft.getInstance().setScreen(nextScreen);
+        Minecraft.getInstance().setScreenAndShow(nextScreen);
         return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public void playDownSound(SoundManager soundManager) {
-
-    }
+    public void playDownSound(final SoundManager soundManager) {}
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput output) {
-
-    }
+    protected void updateWidgetNarration(final NarrationElementOutput output) {}
 }

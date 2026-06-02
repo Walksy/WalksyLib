@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ColorTypeAdapter extends TypeAdapter<WalksyLibColor> {
     @Override
-    public void write(JsonWriter out, WalksyLibColor color) throws IOException {
+    public void write(final JsonWriter out, final WalksyLibColor color) throws IOException {
         if (color == null) {
             out.nullValue();
             return;
@@ -33,7 +33,7 @@ public class ColorTypeAdapter extends TypeAdapter<WalksyLibColor> {
     }
 
     @Override
-    public WalksyLibColor read(JsonReader in) throws IOException {
+    public WalksyLibColor read(final JsonReader in) throws IOException {
         int r = 0, g = 0, b = 0, a = 255;
         int value = 0;
         float hue = 0f, saturation = 0f, brightness = 0f;
@@ -60,7 +60,7 @@ public class ColorTypeAdapter extends TypeAdapter<WalksyLibColor> {
         }
         in.endObject();
 
-        WalksyLibColor color = new WalksyLibColor(r, g, b, a);
+        final WalksyLibColor color = new WalksyLibColor(r, g, b, a);
         color.setHue(hue);
         color.setSaturation(saturation);
         color.setBrightness(brightness);

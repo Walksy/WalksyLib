@@ -1,7 +1,7 @@
 package main.walksy.lib.core.gui.widgets;
 
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -29,7 +29,7 @@ public class ButtonWidget extends AbstractWidget {
     private boolean h = false;
     private int textureOffsetX = 1, textureOffsetY = 1;
 
-    public ButtonWidget(int x, int y, int width, int height, boolean background, String name, @Nullable Runnable action) {
+    public ButtonWidget(final int x, final int y, final int width, final int height, final boolean background, final String name, @Nullable final Runnable action) {
         super(x, y, width, height, Component.literal(name));
         this.action = action;
         this.background = background;
@@ -37,7 +37,7 @@ public class ButtonWidget extends AbstractWidget {
         this.texture = null;
     }
 
-    public ButtonWidget(int x, int y, int width, int height, boolean background, Identifier texture, @Nullable Runnable action) {
+    public ButtonWidget(final int x, final int y, final int width, final int height, final boolean background, final Identifier texture, @Nullable final Runnable action) {
         super(x, y, width, height, Component.literal(texture.getPath()));
         this.action = action;
         this.background = background;
@@ -45,7 +45,7 @@ public class ButtonWidget extends AbstractWidget {
         this.texture = texture;
     }
 
-    public ButtonWidget(int x, int y, int width, int height, boolean background, Identifier texture, @Nullable Runnable action, int offsetX, int offsetY) {
+    public ButtonWidget(final int x, final int y, final int width, final int height, final boolean background, final Identifier texture, @Nullable final Runnable action, final int offsetX, final int offsetY) {
         super(x, y, width, height, Component.literal(texture.getPath()));
         this.action = action;
         this.background = background;
@@ -56,84 +56,77 @@ public class ButtonWidget extends AbstractWidget {
     }
 
 
-    public void setOutlineColor(int color, int hovered)
-    {
+    public void setOutlineColor(final int color, final int hovered) {
         this.outlineColor = color;
         this.hoveredColor = hovered;
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
-        int drawX = getX();
-        int drawY = getY() - (int) scrollY;
-        h = ctx.containsPointInScissor(mouseX, mouseY) && mouseX >= this.getX() && mouseY >= drawY && mouseX < this.getX() + this.width && mouseY < drawY + this.height;
-        if (background) {
-            ctx.fill(drawX, drawY, drawX + getWidth(), drawY + getHeight(),
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor ctx, final int mouseX, final int mouseY, final float delta) {
+        final int drawX = this.getX();
+        final int drawY = this.getY() - (int) this.scrollY;
+        this.h = ctx.containsPointInScissor(mouseX, mouseY) && mouseX >= this.getX() && mouseY >= drawY && mouseX < this.getX() + this.width && mouseY < drawY + this.height;
+        if (this.background) {
+            ctx.fill(drawX, drawY, drawX + this.getWidth(), drawY + this.getHeight(),
                     this.active ? new Color(0, 0, 0, 100).getRGB() : new Color(50, 50, 50, 100).getRGB());
         }
 
         if (this.outlineColor == -1) {
-            Renderer2D.fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
+            new Graphics(ctx).fillRoundedRectOutline(drawX, drawY, this.width, this.height, 2, 1,
                     this.active
-                            ? new Color(255, 255, 255, (isHovered() || overrideHover)
+                            ? new Color(255, 255, 255, (this.isHovered() || this.overrideHover)
                             ? MainColors.OUTLINE_WHITE_HOVERED.getAlpha()
                             : MainColors.OUTLINE_WHITE.getAlpha()).getRGB()
                             : new Color(180, 180, 180, 50).getRGB());
         } else {
-            Renderer2D.fillRoundedRectOutline(ctx, drawX, drawY, width, height, 2, 1,
+            new Graphics(ctx).fillRoundedRectOutline(drawX, drawY, this.width, this.height, 2, 1,
                     this.active
-                            ? (isHovered() || overrideHover ? hoveredColor : outlineColor)
+                            ? (this.isHovered() || this.overrideHover ? this.hoveredColor : this.outlineColor)
                             : new Color(180, 180, 180, 50).getRGB());
         }
 
-        Renderer2D.fillRoundedRectOutline(ctx, drawX - 1, drawY - 1, width + 2, height + 2, 2, 1,
+        new Graphics(ctx).fillRoundedRectOutline(drawX - 1, drawY - 1, this.width + 2, this.height + 2, 2, 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
 
-        if (texture == null && grid == null) {
-            String text = getMessage().getString();
-            int textX = drawX + ((width - Minecraft.getInstance().font.width(text)) / 2) + 1;
-            int textY = drawY + ((height - Minecraft.getInstance().font.lineHeight) / 2) + 1;
+        if (this.texture == null && this.grid == null) {
+            final String text = this.getMessage().getString();
+            final int textX = drawX + ((this.width - Minecraft.getInstance().font.width(text)) / 2) + 1;
+            final int textY = drawY + ((this.height - Minecraft.getInstance().font.lineHeight) / 2) + 1;
 
             ctx.text(Minecraft.getInstance().font, text, text.equals("-") ? textX - 1 : textX, textY,
-                    this.active ? ((isHovered() || overrideHover) ? 0xFFCCCCCC : 0xFF888888) : 0xFF555555);
-        } else if (grid == null) {
-            ctx.blit(RenderPipelines.GUI_TEXTURED, texture, drawX + 3 + this.textureOffsetX, drawY + 3 + this.textureOffsetY, 0, 0, 16, 16, 16, 16, 16, 16, this.active ? -1 : Color.GRAY.getRGB());
+                    this.active ? ((this.isHovered() || this.overrideHover) ? 0xFFCCCCCC : 0xFF888888) : 0xFF555555);
+        } else if (this.grid == null) {
+            ctx.blit(RenderPipelines.GUI_TEXTURED, this.texture, drawX + 3 + this.textureOffsetX, drawY + 3 + this.textureOffsetY, 0, 0, 16, 16, 16, 16, 16, 16, this.active ? -1 : Color.GRAY.getRGB());
         }
 
-        if (grid != null) {
-            Renderer2D.renderGridTexture(ctx, grid, drawX + 3, drawY + 3, 1, 1, false);
+        if (this.grid != null) {
+            new Graphics(ctx).renderGridTexture(this.grid, drawX + 3, drawY + 3, 1, 1, false);
         }
     }
 
-
     @Override
-    public void onClick(@NonNull MouseButtonEvent click, boolean doubled) {
+    public void onClick(@NonNull final MouseButtonEvent click, final boolean doubled) {
         super.onClick(click, doubled);
-        if (isHovered()) {
-            if (action != null) {
-                action.run();
+        if (this.isHovered()) {
+            if (this.action != null) {
+                this.action.run();
             }
         }
-
     }
 
     @Override
     public boolean isHovered() {
-        return this.h && hovered;
+        return this.h && this.hovered;
     }
 
     @Override
-    protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {
+    protected void updateWidgetNarration(@NonNull final NarrationElementOutput output) {}
 
-    }
-
-    public void setListener(Runnable runnable)
-    {
+    public void setListener(final Runnable runnable) {
         this.action = runnable;
     }
 
-    public void setEnabled(boolean bl)
-    {
+    public void setEnabled(final boolean bl) {
         this.active = bl;
     }
 }

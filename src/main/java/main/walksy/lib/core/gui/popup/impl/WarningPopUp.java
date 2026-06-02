@@ -8,9 +8,6 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.FormattedCharSequence;
 
 import java.util.List;
 
@@ -19,78 +16,75 @@ public class WarningPopUp extends PopUp {
     public final ButtonWidget yesButton;
     public final ButtonWidget noButton;
 
-    public WarningPopUp(WalksyLibConfigScreen parent, String title, String message, Runnable yesAction, Runnable noAction) {
+    public WarningPopUp(final WalksyLibConfigScreen parent, final String title, final String message, final Runnable yesAction, final Runnable noAction) {
         super(parent, message);
         this.title = title;
-        this.yesButton = new ButtonWidget((x + width) - 60, (y + height) - 33, 50, 20, false, "Yes", yesAction);
-        this.noButton = new ButtonWidget((x) + 10, (y + height) - 33, 50, 20, false, "No", noAction);
+        this.yesButton = new ButtonWidget((this.x + this.width) - 60, (this.y + this.height) - 33, 50, 20, false, "Yes", yesAction);
+        this.noButton = new ButtonWidget((this.x) + 10, (this.y + this.height) - 33, 50, 20, false, "No", noAction);
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, double mouseX, double mouseY, float delta) {
+    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
         super.render(context, mouseX, mouseY, delta);
         context.pose().pushMatrix();
-        float scale = 1.5F;
+        final float scale = 1.5F;
         context.pose().scale(scale, scale);
         context.centeredText(
-                parent.getFont(),
-                title,
-                (int) ((parent.width / 2) / scale),
-                (int) ((y + 11) / scale),
+                this.parent.getFont(),
+                this.title,
+                (int) ((this.parent.width / 2) / scale),
+                (int) ((this.y + 11) / scale),
                 -1
         );
         context.pose().popMatrix();
 
-        context.horizontalLine(x + 2, x + width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
+        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
 
-        List<FormattedCharSequence> orderedTexts = parent.getFont().split(Component.literal(subText), this.width - 20);
-        List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
-        int totalTextHeight = tooltipComponents.stream()
-                .mapToInt(tc -> tc.getHeight(parent.getFont()))
+        final List<net.minecraft.util.FormattedCharSequence> orderedTexts = this.parent.getFont().split(Component.literal(this.subText), this.width - 20);
+        final List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
+        final int totalTextHeight = tooltipComponents.stream()
+                .mapToInt(tc -> tc.getHeight(this.parent.getFont()))
                 .sum();
         int yOffset = this.y + (this.height / 2) - (totalTextHeight / 2);
 
-        for (ClientTooltipComponent tooltipComponent : tooltipComponents) {
-            int lineHeight = tooltipComponent.getHeight(parent.getFont());
+        for (final ClientTooltipComponent tooltipComponent : tooltipComponents) {
+            final int lineHeight = tooltipComponent.getHeight(this.parent.getFont());
             tooltipComponent.extractText(
                     context,
-                    parent.getFont(),
-                    (this.x + (this.width / 2)) - tooltipComponent.getWidth(parent.getFont()) / 2,
+                    this.parent.getFont(),
+                    (this.x + (this.width / 2)) - tooltipComponent.getWidth(this.parent.getFont()) / 2,
                     yOffset
             );
             yOffset += lineHeight;
         }
-        yesButton.extractRenderState(context, (int)mouseX, (int)mouseY, delta);
-        noButton.extractRenderState(context, (int)mouseX, (int)mouseY, delta);
+        this.yesButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        this.noButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
     }
 
     @Override
-    public void onClick(MouseButtonEvent click, boolean doubled)
-    {
-        yesButton.onClick(click, doubled);
-        noButton.onClick(click, doubled);
+    public void onClick(final MouseButtonEvent click, final boolean doubled) {
+        this.yesButton.onClick(click, doubled);
+        this.noButton.onClick(click, doubled);
     }
 
     @Override
-    protected void onClose() {
-
-    }
+    protected void onClose() {}
 
     @Override
-    public void layout(int width, int height) {
-        super.layout(width, getHeightOffset() + 90);
-        if (yesButton != null && noButton != null) {
-            yesButton.setPosition((x + width) - 60, (y + height) - 33);
-            noButton.setPosition((x) + 10, (y + height) - 33);
+    public void layout(final int width, final int height) {
+        super.layout(width, this.getHeightOffset() + 90);
+        if (this.yesButton != null && this.noButton != null) {
+            this.yesButton.setPosition((this.x + width) - 60, (this.y + this.height) - 33);
+            this.noButton.setPosition((this.x) + 10, (this.y + this.height) - 33);
         }
     }
 
     public int getHeightOffset() {
-        List<FormattedCharSequence> orderedTexts = parent.getFont().split(Component.literal(subText), this.width - 20);
-        List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
+        final List<net.minecraft.util.FormattedCharSequence> orderedTexts = this.parent.getFont().split(Component.literal(this.subText), this.width - 20);
+        final List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
         int height = 0;
-        for (ClientTooltipComponent tooltipComponent : tooltipComponents) {
-            height += tooltipComponent.getHeight(parent.getFont());
+        for (final ClientTooltipComponent tooltipComponent : tooltipComponents) {
+            height += tooltipComponent.getHeight(this.parent.getFont());
         }
         return height;
     }

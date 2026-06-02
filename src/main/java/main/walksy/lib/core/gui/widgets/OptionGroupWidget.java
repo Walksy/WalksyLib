@@ -3,7 +3,7 @@ package main.walksy.lib.core.gui.widgets;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.ScreenGlobals;
 import main.walksy.lib.core.utils.SearchUtils;
 import net.minecraft.client.Minecraft;
@@ -26,127 +26,117 @@ public class OptionGroupWidget extends AbstractWidget {
     private String searchQuery = "";
     public boolean isHovered;
 
-    public OptionGroupWidget(int x, int y, int width, int height, OptionGroup group, WalksyLibConfigScreen parent) {
+    public OptionGroupWidget(final int x, final int y, final int width, final int height, final OptionGroup group, final WalksyLibConfigScreen parent) {
         super(x, y, width, height, Component.literal(group.getName()));
         this.parent = parent;
         this.group = group;
-        isHovered = false;
+        this.isHovered = false;
         int yOff = y + 20;
-        for (Option<?> option : group.getOptions()) {
-            OptionWidget optionWidget = option.createWidget(group, parent, 15, yOff, ScreenGlobals.OPTION_WIDTH, ScreenGlobals.OPTION_HEIGHT);
-            children.add(optionWidget);
+        for (final Option<?> option : group.getOptions()) {
+            final OptionWidget optionWidget = option.createWidget(group, parent, 15, yOff, ScreenGlobals.OPTION_WIDTH, ScreenGlobals.OPTION_HEIGHT);
+            this.children.add(optionWidget);
             yOff += 30;
         }
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float a) {
-        context.enableScissor(0, 49, parent.width, parent.height - 28);
-        Minecraft client = Minecraft.getInstance();
-        Font textRenderer = client.font;
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
+        context.enableScissor(0, 49, this.parent.width, this.parent.height - 28);
+        final Minecraft client = Minecraft.getInstance();
+        final Font textRenderer = client.font;
 
-        String text = group.getName();
-        int textWidth = textRenderer.width(text);
-        int fontHeight = textRenderer.lineHeight;
+        final String text = this.group.getName();
+        final int textWidth = textRenderer.width(text);
+        final int fontHeight = textRenderer.lineHeight;
 
-        int centerX = getX() + textWidth / 2;
-        int hoverPadding = 58;
-        int hoverHeight = fontHeight + 4;
+        final int centerX = this.getX() + textWidth / 2;
+        final int hoverPadding = 58;
+        final int hoverHeight = fontHeight + 4;
 
-        isHovered = context.containsPointInScissor(mouseX, mouseY)
-                && mouseY >= getY() - 2 && mouseY < getY() - 2 + hoverHeight
+        this.isHovered = context.containsPointInScissor(mouseX, mouseY)
+                && mouseY >= this.getY() - 2 && mouseY < this.getY() - 2 + hoverHeight
                 && mouseX >= centerX - (textWidth / 2 + hoverPadding)
                 && mouseX < centerX + (textWidth / 2 + hoverPadding);
 
-        int bgColor;
-        if (group.isExpanded()) {
+        final int bgColor;
+        if (this.group.isExpanded()) {
             bgColor = 0xFFFFFFFF;
-        } else if (isHovered) {
+        } else if (this.isHovered) {
             bgColor = 0xFFDADADA;
         } else {
             bgColor = 0xFFAAAAAA;
         }
 
+        final int midY = this.getY() + fontHeight / 2;
+        final int textCenterX = this.getX();
+        final int textStartX = textCenterX - textWidth / 2;
+        final int textEndX = textCenterX + textWidth / 2;
 
-        int midY = getY() + fontHeight / 2;
-        int textCenterX = getX();
-        int textStartX = textCenterX - textWidth / 2;
-        int textEndX = textCenterX + textWidth / 2;
-
-        //LEFT
         context.horizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
         context.horizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
-        Renderer2D.renderMiniArrow(
-                context,
+        new Graphics(context).renderMiniArrow(
                 textStartX - 50 - 5,
-                midY - (group.isExpanded() ? 1 : 0),
+                midY - (this.group.isExpanded() ? 1 : 0),
                 1F,
-                group.isExpanded() ? Renderer2D.ArrowDirection.DOWN : Renderer2D.ArrowDirection.RIGHT,
+                this.group.isExpanded() ? Graphics.ArrowDirection.DOWN : Graphics.ArrowDirection.RIGHT,
                 bgColor
         );
 
-        //RIGHT
         context.horizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
         context.horizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
-        Renderer2D.renderMiniArrow(
-                context,
+        new Graphics(context).renderMiniArrow(
                 textEndX + 50 + 6,
-                midY - (group.isExpanded() ? 1 : 0),
+                midY - (this.group.isExpanded() ? 1 : 0),
                 1F,
-                group.isExpanded() ? Renderer2D.ArrowDirection.DOWN : Renderer2D.ArrowDirection.LEFT,
+                this.group.isExpanded() ? Graphics.ArrowDirection.DOWN : Graphics.ArrowDirection.LEFT,
                 bgColor
         );
 
-
         if (ScreenGlobals.DEBUG) {
-            renderDebug(
+            this.renderDebug(
                     context,
                     centerX - (textWidth / 2 + hoverPadding),
-                    getY() - 2,
+                    this.getY() - 2,
                     centerX + (textWidth / 2 + hoverPadding),
-                    getY() - 2 + hoverHeight
+                    this.getY() - 2 + hoverHeight
             );
         }
 
-        context.text(textRenderer, text, getX() - textWidth / 2, getY(), bgColor);
+        context.text(textRenderer, text, this.getX() - textWidth / 2, this.getY(), bgColor);
         context.disableScissor();
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput output) {
+    protected void updateWidgetNarration(final NarrationElementOutput output) {}
 
-    }
-
-    private void renderDebug(GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
+    private void renderDebug(final GuiGraphicsExtractor context, final int x1, final int y1, final int x2, final int y2) {
         context.fill(x1, y1, x2, y2, 0xAAFFFFFF);
     }
 
-    public void onMouseClick(MouseButtonEvent click, boolean doubled)
-    {
-        if (isHovered && click.button() == 0) {
-            group.toggleExpanded();
-            parent.layoutGroupWidgets();
-            updateVisibility();
+    public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {
+        if (this.isHovered && click.button() == 0) {
+            this.group.toggleExpanded();
+            this.parent.layoutGroupWidgets();
+            this.updateVisibility();
         }
     }
 
-
     public void updateVisibility() {
-        boolean expanded = this.group.isExpanded();
-        for (OptionWidget child : children) {
+        final boolean expanded = this.group.isExpanded();
+        for (final OptionWidget child : this.children) {
             child.visible = expanded;
         }
     }
 
-    public boolean searched(boolean shouldLevenshtein) {
-        if (searchQuery.isEmpty()) return true;
+    public boolean searched(final boolean shouldLevenshtein) {
+        if (this.searchQuery.isEmpty()) return true;
 
-        String[] queryWords = searchQuery.toLowerCase().trim().split("\\s+");
-        String[] nameWords = group.getName().toLowerCase().trim().split("\\s+");
+        final String[] queryWords = this.searchQuery.toLowerCase().trim().split("\\s+");
+        final String[] nameWords = this.group.getName().toLowerCase().trim().split("\\s+");
 
         outer:
-        for (String qWord : queryWords) {
-            for (String nameWord : nameWords) {
+        for (final String qWord : queryWords) {
+            for (final String nameWord : nameWords) {
                 if (nameWord.contains(qWord) || nameWord.startsWith(qWord)) {
                     continue outer;
                 }
@@ -162,15 +152,15 @@ public class OptionGroupWidget extends AbstractWidget {
         return true;
     }
 
-    public void updateSearchQuery(String query) {
+    public void updateSearchQuery(final String query) {
         this.searchQuery = query;
     }
 
     public List<OptionWidget> getChildren() {
-        return children;
+        return this.children;
     }
 
     public OptionGroup getGroup() {
-        return group;
+        return this.group;
     }
 }

@@ -14,8 +14,7 @@ public class LocalPlayerMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/player/AbstractClientPlayer;tick()V",
                     shift = At.Shift.AFTER))
-    public void onTick(CallbackInfo ci) {
+    public void onTick(final CallbackInfo ci) {
         WalksyLib.getInstance().getShieldStateManager().tick();
     }
 }
-

@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.impl;
 
+import main.walksy.lib.core.gui.Graphics;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
@@ -8,32 +9,41 @@ import net.minecraft.network.chat.Component;
 public class BaseScreen extends Screen {
 
     public final Screen parent;
-    public int tickCount = 0;
+    private int upTime = 0;
+    protected float delta;
+    protected boolean suppressWidgetMouse = false;
 
-    protected BaseScreen(String title, Screen parent) {
+    protected BaseScreen(final String title, final Screen parent) {
         super(Component.literal(title));
         this.parent = parent;
     }
 
     @Override
-    protected void init() {
-        super.init();
-    }
-
-    @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.setScreenAndShow(this.parent);
     }
 
     @Override
     public void tick() {
         super.tick();
-        tickCount++;
+        this.upTime++;
     }
 
-    public void addWidget(AbstractWidget widget) {
+    public void addWidget(final AbstractWidget widget) {
         this.addRenderableWidget(widget);
     }
+
+    @Override
+    public void extractRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+        this.delta = delta;
+        final int renderMouseX = this.suppressWidgetMouse ? 0 : mouseX;
+        final int renderMouseY = this.suppressWidgetMouse ? 0 : mouseY;
+        this.suppressWidgetMouse = false;
+        super.extractRenderState(context, renderMouseX, renderMouseY, delta);
+        this.extract(new Graphics(context), mouseX, mouseY);
+    }
+
+    protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {}
 
     @Override
     protected void extractBlurredBackground(final GuiGraphicsExtractor graphics) {
@@ -41,7 +51,7 @@ public class BaseScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+    public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float a) {
         if (this.isInGameUi()) {
             this.extractTransparentBackground(graphics);
         } else {
@@ -52,6 +62,10 @@ public class BaseScreen extends Screen {
             this.extractBlurredBackground(graphics);
         }
 
-        this.minecraft.gui.extractDeferredSubtitles();
+        this.minecraft.gui.hud.extractDeferredSubtitles();
+    }
+
+    public int getUpTime() {
+        return this.upTime;
     }
 }

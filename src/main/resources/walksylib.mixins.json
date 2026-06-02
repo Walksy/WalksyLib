@@ -8,6 +8,7 @@
 		"mods.LocalPlayerMixin",
 		"mods.MultiPlayerGameModeMixin",
 		"ScreenAccessor",
+      "HudMixin",
 		"MinecraftClientMixin",
 		"GameRendererMixin",
 		"InputUtilMixin",

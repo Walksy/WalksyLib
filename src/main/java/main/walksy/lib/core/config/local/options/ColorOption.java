@@ -9,16 +9,16 @@ import java.util.function.Supplier;
 
 public class ColorOption extends OptionBuilder<WalksyLibColor, ColorOption> {
 
-    public ColorOption(String name, Supplier<WalksyLibColor> getter, WalksyLibColor defaultValue, Consumer<WalksyLibColor> setter) {
+    public ColorOption(final String name, final Supplier<WalksyLibColor> getter, final WalksyLibColor defaultValue, final Consumer<WalksyLibColor> setter) {
         super(name, getter, defaultValue, setter);
     }
 
-    public static ColorOption createBuilder(String name, Supplier<WalksyLibColor> getter, WalksyLibColor defaultValue, Consumer<WalksyLibColor> setter) {
+    public static ColorOption createBuilder(final String name, final Supplier<WalksyLibColor> getter, final WalksyLibColor defaultValue, final Consumer<WalksyLibColor> setter) {
         return new ColorOption(name, getter, defaultValue, setter);
     }
 
     @Override
     public Option<WalksyLibColor> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, WalksyLibColor.class, defaultValue, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, WalksyLibColor.class, this.defaultValue, this.onChange);
     }
 }

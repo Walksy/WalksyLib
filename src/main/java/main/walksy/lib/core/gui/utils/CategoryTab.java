@@ -12,18 +12,17 @@ public class CategoryTab extends GridLayoutTab {
     private final List<OptionGroupWidget> optionGroupWidgets;
     private final Category category;
 
-    public CategoryTab(Category category, List<OptionGroupWidget> optionGroupWidgets) {
+    public CategoryTab(final Category category, final List<OptionGroupWidget> optionGroupWidgets) {
         super(Component.literal(category.name()));
         this.optionGroupWidgets = optionGroupWidgets;
         this.category = category;
     }
 
     public List<OptionGroupWidget> getOptionGroupWidgets() {
-        return optionGroupWidgets;
+        return this.optionGroupWidgets;
     }
 
-    public Category getCategory()
-    {
+    public Category getCategory() {
         return this.category;
     }
 }

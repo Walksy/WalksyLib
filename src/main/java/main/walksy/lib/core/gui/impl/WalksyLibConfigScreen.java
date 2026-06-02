@@ -1,6 +1,6 @@
 package main.walksy.lib.core.gui.impl;
 
-import main.walksy.lib.core.config.impl.LocalConfig;
+import main.walksy.lib.core.config.impl.ModConfig;
 import main.walksy.lib.core.config.local.Category;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.OptionDescription;
@@ -12,7 +12,7 @@ import main.walksy.lib.core.gui.utils.TabLocation;
 import main.walksy.lib.core.gui.widgets.*;
 import main.walksy.lib.core.manager.WalksyLibConfigManager;
 import main.walksy.lib.core.mixin.ScreenAccessor;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
@@ -30,6 +30,8 @@ import net.minecraft.network.chat.FormattedText;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class WalksyLibConfigScreen extends BaseScreen {
     private final TabManager tabManager = new TabManager(this::addRenderableWidget, this::removeWidget);
@@ -47,7 +49,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private int maxScroll = 0;
     public boolean scroll = true;
 
-    public WalksyLibConfigScreen(Screen parent, LocalConfig config, String title) {
+    public WalksyLibConfigScreen(final Screen parent, final ModConfig config, final String title) {
         super(title + " Config Screen", parent);
         this.name = title;
         this.configManager = new WalksyLibConfigManager(config);
@@ -56,29 +58,29 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     @Override
     public void onClose() {
-        if (popUp != null && !popUp.canClose()) {
+        if (this.popUp != null && !this.popUp.canClose()) {
             return;
         }
 
-        if (shouldUndoOptions() && popUp == null) {
-            popUp = new WarningPopUp(this, "You have unsaved changes!", "Are you sure you want to leave without saving?", () -> {
-                undo();
+        if (this.shouldUndoOptions() && this.popUp == null) {
+            this.popUp = new WarningPopUp(this, "You have unsaved changes!", "Are you sure you want to leave without saving?", () -> {
+                this.undo();
                 super.onClose();
-            }, () -> popUp.close()
-            );
+                }, () -> {
+                this.popUp.close();
+            });
             return;
         }
 
-        if (popUp != null) {
-            popUp.close();
+        if (this.popUp != null) {
+            this.popUp.close();
             return;
         }
 
         super.onClose();
         this.configManager.cleanCache();
-        save(false); //saves option group states
+        this.save(false);
     }
-
 
     @Override
     protected void init() {
@@ -92,322 +94,237 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     private void initButtons() {
-        backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::onClose);
-        allModsButton = new ButtonWidget(width - 65, 5, 57, 16, true, "WalksyLib", () -> this.minecraft.setScreen(new APIScreen(this)));
+        this.backButton = new ButtonWidget(8, 5, 50, 16, true, "Back", this::onClose);
+        this.allModsButton = new ButtonWidget(this.width - 65, 5, 57, 16, true, "WalksyLib", () -> this.minecraft.setScreenAndShow(new APIScreen(this)));
+        this.saveButton = new ButtonWidget(this.width - 58, this.height - 21, 50, 16, true, "Save", () -> this.save(true));
+        this.resetButton = new ButtonWidget(this.width - 58 - 55, this.height - 21, 50, 16, true, "Reset", this::resetOptions);
+        this.undoButton = new ButtonWidget(this.width - 58 - 110, this.height - 21, 50, 16, true, "Undo", this::undo);
 
-        saveButton = new ButtonWidget(width - 58, height - 21, 50, 16, true, "Save", () -> this.save(true));
-        resetButton = new ButtonWidget(width - 58 - 55, height - 21, 50, 16, true, "Reset", this::resetOptions);
-        undoButton = new ButtonWidget(width - 58 - 110, height - 21, 50, 16, true, "Undo", this::undo);
-
-        addRenderableWidget(backButton);
-        addRenderableWidget(allModsButton);
-        addRenderableWidget(saveButton);
-        addRenderableWidget(resetButton);
-        addRenderableWidget(undoButton);
+        this.addRenderableWidget(this.backButton);
+        this.addRenderableWidget(this.allModsButton);
+        this.addRenderableWidget(this.saveButton);
+        this.addRenderableWidget(this.resetButton);
+        this.addRenderableWidget(this.undoButton);
     }
 
     private void initSearchBar() {
-        searchBar = new SearchBarWidget(
-                this,
-                6,
-                height - 21,
-                150,
-                16,
-                this::search
-        );
-        addRenderableWidget(searchBar);
+        this.searchBar = new SearchBarWidget(this, 6, this.height - 21, 150, 16, this::search);
+        this.addRenderableWidget(this.searchBar);
     }
 
     private void initTabs() {
-        List<CategoryTab> tabList = new ArrayList<>();
+        this.updateScreenGlobals();
+        final List<CategoryTab> tabList = new ArrayList<>();
 
-        for (Category category : configManager.get().categories()) {
-            List<OptionGroupWidget> groupWidgets = new ArrayList<>();
+        for (final Category category : this.configManager.get().categories()) {
+            final List<OptionGroupWidget> groupWidgets = new ArrayList<>();
             int yOffset = 60;
 
-            for (OptionGroup group : category.optionGroups()) {
-                int groupH = ScreenGlobals.OPTION_HEIGHT;
-                int optionHeight = ScreenGlobals.OPTION_HEIGHT;
-
+            for (final OptionGroup group : category.optionGroups()) {
+                final int groupH = ScreenGlobals.OPTION_HEIGHT;
                 int groupHeight = groupH;
 
-                ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
-                ScreenGlobals.OPTION_PANEL_STARTY = 61;
-                ScreenGlobals.OPTION_PANEL_ENDX = width;
-                ScreenGlobals.OPTION_PANEL_ENDY = height - 120;
-                ScreenGlobals.OPTION_WIDTH = ScreenGlobals.OPTION_PANEL_STARTX - 30 - 22;
-
-                OptionGroupWidget groupWidget = new OptionGroupWidget((width - (ScreenGlobals.OPTION_PANEL_ENDX - ScreenGlobals.OPTION_PANEL_STARTX)) / 2, yOffset, 150, groupH, group, this);
+                final OptionGroupWidget groupWidget = new OptionGroupWidget(
+                        (this.width - (ScreenGlobals.OPTION_PANEL_ENDX - ScreenGlobals.OPTION_PANEL_STARTX)) / 2,
+                        yOffset, 150, groupH, group, this
+                );
 
                 if (group.isExpanded()) {
                     int childY = yOffset + groupH;
-                    List<OptionWidget> children = groupWidget.getChildren();
-                    int childCount = children.size();
+                    final List<OptionWidget> children = groupWidget.getChildren();
 
-                    for (int i = 0; i < childCount; i++) {
-                        OptionWidget child = children.get(i);
+                    for (int i = 0; i < children.size(); i++) {
+                        final OptionWidget child = children.get(i);
                         child.setPosition(child.getX(), childY);
-                        childY += optionHeight;
-
-                        groupHeight += optionHeight;
-                        if (i < childCount - 1) {
+                        childY += ScreenGlobals.OPTION_HEIGHT;
+                        groupHeight += ScreenGlobals.OPTION_HEIGHT;
+                        if (i < children.size() - 1) {
                             childY += ScreenGlobals.OPTION_GROUP_SEPARATION;
                             groupHeight += ScreenGlobals.OPTION_GROUP_SEPARATION;
                         }
                     }
                 }
 
-
                 groupWidget.setHeight(groupHeight);
                 groupWidgets.add(groupWidget);
-                allGroupWidgets.add(groupWidget);
-                allOptionWidgets.addAll(groupWidget.getChildren());
-
+                this.allGroupWidgets.add(groupWidget);
+                this.allOptionWidgets.addAll(groupWidget.getChildren());
                 yOffset += groupHeight + 10;
             }
 
-            CategoryTab tab = new CategoryTab(category, groupWidgets);
+            final CategoryTab tab = new CategoryTab(category, groupWidgets);
             tabList.add(tab);
-            allTabs.add(tab);
+            this.allTabs.add(tab);
         }
 
-        tabWidget = new ScrollableTabWidget(0, 27, this.width, 24, tabList, tabManager, TabLocation.TOP, this);
-        addRenderableWidget(tabWidget);
-        tabWidget.selectTab(0, true);
+        this.tabWidget = new ScrollableTabWidget(0, 27, this.width, 24, tabList, this.tabManager, TabLocation.TOP, this);
+        this.addRenderableWidget(this.tabWidget);
+        this.tabWidget.selectTab(0, true);
     }
 
-
     public void layoutGroupWidgets() {
-        if (!(tabManager.getCurrentTab() instanceof CategoryTab categoryTab)) return;
+        if (!(this.tabManager.getCurrentTab() instanceof CategoryTab categoryTab)) return;
 
-        List<OptionGroupWidget> widgets = categoryTab.getOptionGroupWidgets();
+        final List<OptionGroupWidget> widgets = categoryTab.getOptionGroupWidgets();
 
         int contentYOffset = 60;
-        for (OptionGroupWidget group : widgets) {
-            if (!group.visible) continue;
-
+        for (final OptionGroupWidget group : widgets) {
+            if (!group.visible) {
+                continue;
+            }
             int groupHeight = ScreenGlobals.OPTION_HEIGHT;
-
             if (group.getGroup().isExpanded()) {
-                List<OptionWidget> children = group.getChildren();
+                final List<OptionWidget> children = group.getChildren();
                 for (int i = 0; i < children.size(); i++) {
-                    OptionWidget child = children.get(i);
+                    final OptionWidget child = children.get(i);
                     if (!child.isVisible()) continue;
-
-                    int childHeight = ScreenGlobals.OPTION_HEIGHT;
-
-                    if (child instanceof OpenableWidget oW) {
-                        childHeight = (int) oW.getCurrentHeight();
-                    } else if (child instanceof StringListOptionWidget slw) {
-                        childHeight += slw.ADDITIONAL_HEIGHT;
-                    }
-                    groupHeight += childHeight;
-
-                    boolean hasNextVisible = false;
-                    for (int j = i + 1; j < children.size(); j++) {
-                        if (children.get(j).isVisible()) {
-                            hasNextVisible = true;
-                            break;
-                        }
-                    }
-                    if (hasNextVisible) groupHeight += ScreenGlobals.OPTION_GROUP_SEPARATION;
+                    groupHeight += this.getChildHeight(child);
+                    if (this.hasNextVisible(children, i)) groupHeight += ScreenGlobals.OPTION_GROUP_SEPARATION;
                 }
             }
-
             group.setHeight(groupHeight);
             contentYOffset += groupHeight + 10;
         }
-
-        int viewHeight = height - 120;
-        maxScroll = Math.max(0, contentYOffset - (10 * widgets.size()) - viewHeight);
-        if (scrollAnim.getTargetValue() > maxScroll) {
-            scrollAnim.setTargetValue(Math.max(0, maxScroll)); //stop the user from getting stuck below the maxScroll offset
+        final int viewHeight = this.height - 120;
+        this.maxScroll = Math.max(0, contentYOffset - (10 * widgets.size()) - viewHeight);
+        if (this.scrollAnim.getTargetValue() > this.maxScroll) {
+            this.scrollAnim.setTargetValue(Math.max(0, this.maxScroll));
         }
-        int yOffset = (int) (60 - scrollAnim.getCurrentValue());
-        for (OptionGroupWidget group : widgets) {
-            if (!group.visible) continue;
-
-            group.setPosition((width - 150) / 2, yOffset);
-
+        int yOffset = (int) (60 - this.scrollAnim.getCurrentValue());
+        for (final OptionGroupWidget group : widgets) {
+            if (!group.visible) {
+                continue;
+            }
+            group.setPosition((this.width - 150) / 2, yOffset);
             if (group.getGroup().isExpanded()) {
                 int childY = yOffset + ScreenGlobals.OPTION_HEIGHT;
-                List<OptionWidget> children = group.getChildren();
-
+                final List<OptionWidget> children = group.getChildren();
                 for (int i = 0; i < children.size(); i++) {
-                    OptionWidget child = children.get(i);
-                    if (!child.isVisible()) continue;
-
-                    int childHeight = ScreenGlobals.OPTION_HEIGHT;
-
-                    if (child instanceof OpenableWidget oW) {
-                        childHeight = (int) oW.getCurrentHeight();
-                    } else if (child instanceof StringListOptionWidget slw) {
-                        childHeight += slw.ADDITIONAL_HEIGHT;
+                    final OptionWidget child = children.get(i);
+                    if (!child.isVisible()) {
+                        continue;
                     }
+                    final int childHeight = this.getChildHeight(child);
                     child.setPosition(child.getX(), childY);
                     child.setHeight(childHeight);
-                    int size = ScreenGlobals.OPTION_HEIGHT;
-                    child.onWidgetUpdate(child.getX() + child.getWidth() - size + 22, childY);
+                    child.onWidgetUpdate(child.getX() + child.getWidth() - ScreenGlobals.OPTION_HEIGHT + 22, childY);
                     childY += childHeight;
-
-                    boolean hasNextVisible = false;
-                    for (int j = i + 1; j < children.size(); j++) {
-                        if (children.get(j).isVisible()) {
-                            hasNextVisible = true;
-                            break;
-                        }
+                    if (this.hasNextVisible(children, i)) {
+                        childY += ScreenGlobals.OPTION_GROUP_SEPARATION;
                     }
-                    if (hasNextVisible) childY += ScreenGlobals.OPTION_GROUP_SEPARATION;
                 }
             }
-
             yOffset += group.getHeight() + 10;
         }
     }
 
-
     @Override
     public void extractRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        super.extractRenderState(context, popUp == null ? mouseX : 0, popUp == null ? mouseY : 0, delta);
-        this.render(context);
-        this.scrollAnim.update(delta, this::layoutGroupWidgets); //this could cause some performance issues
-        if (this.isConfigEmpty()) {
-            context.centeredText(this.getFont(), "No Available Options...", this.width / 2, this.height / 2, -1);
-        }
-        if (popUp != null) {
-            context.fill(0, 0, width, height, new Color(0, 0, 0, 100).getRGB());
-            popUp.render(context, mouseX, mouseY, delta);
-        }
+        this.suppressWidgetMouse = this.popUp != null;
+        super.extractRenderState(context, mouseX, mouseY, delta);
     }
 
-    private void render(GuiGraphicsExtractor context) {
-        //context.drawTexture(RenderPipelines.GUI_TEXTURED, FOOTER_SEPARATOR_TEXTURE, 0, 25, 0.0F, 0.0F, width, 2, 32, 2);
-        context.horizontalLine(0, width, 25, MainColors.OUTLINE_BLACK.getRGB());
-        context.horizontalLine(0, width, 26, MainColors.OUTLINE_WHITE.getRGB());
-
-        context.horizontalLine(0, width, height - 28, MainColors.OUTLINE_BLACK.getRGB());
-        context.horizontalLine(0, width, height - 27, MainColors.OUTLINE_WHITE.getRGB());
-        context.centeredText(this.font, this.name, width / 2, 12 - this.font.lineHeight / 2, -1);
-
-        ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
-        ScreenGlobals.OPTION_PANEL_STARTY = 61;
-        ScreenGlobals.OPTION_PANEL_ENDX = width;
-        ScreenGlobals.OPTION_PANEL_ENDY = height - 120;
+    @Override
+    protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {
+        final GuiGraphicsExtractor context = graphics.context();
+        context.horizontalLine(0, this.width, 25, MainColors.OUTLINE_BLACK.getRGB());
+        context.horizontalLine(0, this.width, 26, MainColors.OUTLINE_WHITE.getRGB());
+        context.horizontalLine(0, this.width, this.height - 28, MainColors.OUTLINE_BLACK.getRGB());
+        context.horizontalLine(0, this.width, this.height - 27, MainColors.OUTLINE_WHITE.getRGB());
+        context.centeredText(this.font, this.name, this.width / 2, 12 - this.font.lineHeight / 2, -1);
         this.saveButton.setEnabled(this.shouldUndoOptions());
         this.saveButton.setTooltip(!this.saveButton.active ? Tooltip.create(Component.literal("No changes have occurred")) : null);
         this.resetButton.setEnabled(this.shouldResetOptions());
         this.undoButton.setEnabled(this.shouldUndoOptions());
         if (!this.isConfigEmpty()) {
-            this.renderOptionPanel(context, this.focusedOption);
+            this.extractOptionPanel(context, this.focusedOption);
+        }
+        this.scrollAnim.update(this.delta, this::layoutGroupWidgets);
+        if (this.isConfigEmpty()) {
+            context.centeredText(this.getFont(), "No Available Options...", this.width / 2, this.height / 2, -1);
+        }
+        if (this.popUp != null) {
+            context.fill(0, 0, this.width, this.height, new Color(0, 0, 0, 100).getRGB());
+            this.popUp.render(context, mouseX, mouseY, this.delta);
         }
     }
 
-    private void renderOptionPanel(GuiGraphicsExtractor context, Option<?> option) {
-        int startX = ScreenGlobals.OPTION_PANEL_STARTX;
-        int startY = ScreenGlobals.OPTION_PANEL_STARTY;
-        int endX = ScreenGlobals.OPTION_PANEL_ENDX;
-        int endY = ScreenGlobals.OPTION_PANEL_ENDY;
 
-        Renderer2D.fillRoundedRect(context, startX, startY, endX, endY, 2, new Color(0, 0, 0, 100).getRGB());
-        Renderer2D.fillRoundedRectOutline(context, startX, startY - 1, endX, endY, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
-        Renderer2D.fillRoundedRectOutline(context, startX - 1, startY - 2, endX, endY + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-
+    private void extractOptionPanel(final GuiGraphicsExtractor context, final Option<?> option) {
+        final int startX = ScreenGlobals.OPTION_PANEL_STARTX;
+        final int startY = ScreenGlobals.OPTION_PANEL_STARTY;
+        final int endX = ScreenGlobals.OPTION_PANEL_ENDX;
+        final int endY = ScreenGlobals.OPTION_PANEL_ENDY;
+        new Graphics(context).fillRoundedRect(startX, startY, endX, endY, 2, new Color(0, 0, 0, 100).getRGB());
+        new Graphics(context).fillRoundedRectOutline(startX, startY - 1, endX, endY, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
+        new Graphics(context).fillRoundedRectOutline(startX - 1, startY - 2, endX, endY + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         if (option != null) {
-            String optionName = option.getName();
-            int maxTextWidth = endX - startX - 20;
-
-            List<FormattedText> nameLines = this.font.splitIgnoringLanguage(Component.literal(optionName), maxTextWidth);
-
-            int lineSpacing = 2;
-            int totalNameHeight = (nameLines.size() * this.font.lineHeight) + ((nameLines.size() - 1) * lineSpacing);
-
-            int centerY = 66;
-            int nameStartY = centerY - (totalNameHeight / 2) + 4;
-            int z = nameLines.size() > 1 ? 4 : 0;
-
-            for (int i = 0; i < nameLines.size(); i++) {
-                int lineY = nameStartY + (i * (this.font.lineHeight + lineSpacing));
-                context.centeredText(
-                        this.font,
-                        nameLines.get(i).getString(),
-                        (startX + endX) / 2,
-                        lineY + z,
-                        -1
-                );
-            }
-
-            int lineY = nameStartY + totalNameHeight + 4;
-            context.horizontalLine(startX + 1, endX, lineY, MainColors.OUTLINE_WHITE.getRGB());
-
-            OptionDescription desc = option.getDescription();
-            if (desc != null) {
-                switch (desc.getType()) {
-                    case TEXT -> {
-                        String description = desc.getStringSupplier().get();
-                        int descStartY = lineY + 8;
-                        int maxWidth = endX - startX - 10;
-
-                        List<FormattedText> lines = font.splitIgnoringLanguage(Component.literal(description), maxWidth);
-
-                        for (FormattedText line : lines) {
-                            int lineWidth = font.width(line);
-                            int descStartX = startX + ((endX - startX) - lineWidth) / 2;
-
-                            context.text(
-                                    font,
-                                    line.getString(),
-                                    descStartX,
-                                    descStartY,
-                                    new Color(182, 182, 182).getRGB()
-                            );
-
-                            descStartY += font.lineHeight + 2;
-                        }
-                    }
-
-
-                    case RENDER -> {
-                        context.enableScissor(startX, startY, startX + endX, startY + endY);
-                        desc.getRenderConsumer().accept(
-                                context,
-                                new OptionDescription.OptionPanel(startX, startY, endX, endY)
-                        );
-                        context.disableScissor();
-                    }
-                }
-            } else {
-                context.centeredText(
-                        this.font,
-                        "No Description",
-                        (startX + endX) / 2,
-                        lineY + 8,
-                        -1
-                );
-            }
+            this.renderOptionInfo(context, option, startX, startY, endX, endY);
         }
-
-        if (popUp != null) {
-            popUp.layout(popUp.width, popUp.height);
+        if (this.popUp != null) {
+            this.popUp.layout(this.popUp.width, this.popUp.height);
         }
     }
 
+    private void renderOptionInfo(final GuiGraphicsExtractor context, final Option<?> option, final int startX, final int startY, final int endX, final int endY) {
+        final List<FormattedText> nameLines = this.font.splitIgnoringLanguage(Component.literal(option.getName()), endX - startX - 20);
+        final int lineSpacing = 2;
+        final int totalNameHeight = (nameLines.size() * this.font.lineHeight) + ((nameLines.size() - 1) * lineSpacing);
+        final int nameStartY = 66 - (totalNameHeight / 2) + 4;
+        final int nameYBias = nameLines.size() > 1 ? 4 : 0;
+        for (int i = 0; i < nameLines.size(); i++) {
+            context.centeredText(this.font,
+                    nameLines.get(i).getString(),
+                    (startX + endX) / 2,
+                    nameStartY + (i * (this.font.lineHeight + lineSpacing)) + nameYBias,
+                    -1
+            );
+        }
+        final int separatorY = nameStartY + totalNameHeight + 4;
+        context.horizontalLine(startX + 1, endX, separatorY, MainColors.OUTLINE_WHITE.getRGB());
+        final OptionDescription desc = option.getDescription();
+        if (desc == null) {
+            context.centeredText(this.font, "No Description", (startX + endX) / 2, separatorY + 8, -1);
+            return;
+        }
+        switch (desc.getType()) {
+            case TEXT -> this.renderTextDescription(context, desc, startX, endX, separatorY);
+            case RENDER -> {
+                context.enableScissor(startX, startY, startX + endX, startY + endY);
+                desc.getRenderConsumer().accept(context, new OptionDescription.OptionPanel(startX, startY, endX, endY));
+                context.disableScissor();
+            }
+        }
+    }
+
+    private void renderTextDescription(final GuiGraphicsExtractor context, final OptionDescription desc, final int startX, final int endX, final int separatorY) {
+        final List<FormattedText> lines = this.font.splitIgnoringLanguage(
+                Component.literal(desc.getStringSupplier().get()), endX - startX - 10
+        );
+        int descY = separatorY + 8;
+        for (final FormattedText line : lines) {
+            context.text(
+                    this.font,
+                    line.getString(),
+                    startX + ((endX - startX) - this.font.width(line)) / 2,
+                    descY,
+                    new Color(182, 182, 182).getRGB()
+            );
+            descY += this.font.lineHeight + 2;
+        }
+    }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (popUp != null) {
-            popUp.onClick(click, doubled);
-        } else if (!tabWidget.isHoveringOverAnyTab(click.x(), click.y())) {
-            searchBar.setFocused(searchBar.isHovered());
-
+    public boolean mouseClicked(final MouseButtonEvent click, final boolean doubled) {
+        if (this.popUp != null) {
+            this.popUp.onClick(click, doubled);
+        } else if (!this.tabWidget.isHoveringOverAnyTab(click.x(), click.y())) {
+            this.searchBar.setFocused(this.searchBar.isHovered());
             ((ScreenAccessor) this).getDrawables().forEach(w -> {
                 if (w instanceof OptionGroupWidget optionGroupWidget) {
-                    /**
-                     * Figure out why the ClickableWidget::mouseClicked method isn't functioning properly ->
-                     * On click (when hovered) option groups don't get toggled
-                     */
                     optionGroupWidget.onMouseClick(click, doubled);
                 } else if (w instanceof OptionWidget optionWidget) {
-                    if (optionWidget.isVisible() && optionWidget.isInScissor(0, 49, width, height - 28) && optionWidget.isAvailable()) {
+                    if (optionWidget.isVisible() && optionWidget.isInScissor(0, 49, this.width, this.height - 28) && optionWidget.isAvailable()) {
                         optionWidget.onMouseClick(click, doubled);
                     }
                     if (optionWidget.resetButton.active) {
@@ -420,17 +337,12 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent click) {
+    public boolean mouseReleased(final MouseButtonEvent click) {
         if (this.popUp != null) {
             this.popUp.onMouseRelease(click);
         }
         ((ScreenAccessor) this).getDrawables().forEach(w -> {
-            if (w instanceof OptionGroupWidget optionGroupWidget) {
-                /**
-                 * Figure out why the ClickableWidget::mouseClicked method isn't functioning properly ->
-                 * On click (when hovered) option groups don't get toggled
-                 */
-            } else if (w instanceof OptionWidget optionWidget) {
+            if (w instanceof OptionWidget optionWidget) {
                 optionWidget.onMouseRelease(click);
             }
         });
@@ -438,11 +350,10 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (popUp == null) {
+    public boolean mouseDragged(final MouseButtonEvent click, final double offsetX, final double offsetY) {
+        if (this.popUp == null) {
             ((ScreenAccessor) this).getDrawables().forEach(w -> {
-                if (w instanceof OptionGroupWidget optionGroupWidget) {
-                } else if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
+                if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
                     optionWidget.onMouseDrag(click, offsetX, offsetY);
                 }
             });
@@ -451,12 +362,10 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        if (popUp == null) {
-            ((ScreenAccessor) this).getDrawables().forEach(w ->
-            {
-                if (w instanceof OptionGroupWidget optionGroupWidget) {
-                } else if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
+    public void mouseMoved(final double mouseX, final double mouseY) {
+        if (this.popUp == null) {
+            ((ScreenAccessor) this).getDrawables().forEach(w -> {
+                if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
                     optionWidget.onMouseMove(mouseX, mouseY);
                 }
             });
@@ -465,30 +374,27 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (popUp == null && scroll && !tabWidget.isHoveringOverAnyTab(mouseX, mouseY)) {
-            float newTarget = scrollAnim.getTargetValue() - (float) (verticalAmount * 20);
-            newTarget = Math.max(0, Math.min(newTarget, maxScroll));
-            scrollAnim.setTargetValue(newTarget);
-        } else if (popUp == null) {
+    public boolean mouseScrolled(final double mouseX, final double mouseY, final double horizontalAmount, final double verticalAmount) {
+        if (this.popUp != null) {
+            this.popUp.onScroll(mouseX, mouseY, verticalAmount);
+        } else if (this.scroll && !this.tabWidget.isHoveringOverAnyTab(mouseX, mouseY)) {
+            final float newTarget = Math.max(0, Math.min(this.scrollAnim.getTargetValue() - (float) (verticalAmount * 20), this.maxScroll));
+            this.scrollAnim.setTargetValue(newTarget);
+        } else {
             ((ScreenAccessor) this).getDrawables().forEach(w -> {
                 if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
                     optionWidget.onMouseScroll(mouseX, mouseY, verticalAmount);
                 }
             });
-        } else {
-            popUp.onScroll(mouseX, mouseY, verticalAmount);
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-
     @Override
-    public boolean keyPressed(KeyEvent input) {
-        if (popUp == null) {
+    public boolean keyPressed(final KeyEvent input) {
+        if (this.popUp == null) {
             ((ScreenAccessor) this).getDrawables().forEach(w -> {
-                if (w instanceof OptionGroupWidget optionGroupWidget) {
-                } else if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
+                if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
                     optionWidget.onKeyPress(input);
                 }
             });
@@ -497,12 +403,10 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
-    public boolean charTyped(CharacterEvent input) {
-        if (popUp == null) {
-            ((ScreenAccessor) this).getDrawables().forEach(w ->
-            {
-                if (w instanceof OptionGroupWidget optionGroupWidget) {
-                } else if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
+    public boolean charTyped(final CharacterEvent input) {
+        if (this.popUp == null) {
+            ((ScreenAccessor) this).getDrawables().forEach(w -> {
+                if (w instanceof OptionWidget optionWidget && optionWidget.isAvailable()) {
                     optionWidget.onCharTyped(input);
                 }
             });
@@ -512,33 +416,23 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     @Override
     protected void rebuildWidgets() {
-        if (tabWidget != null) {
-            tabWidget.setWidth(this.width);
-            tabWidget.setPosition(0, 27);
-            int i = tabWidget.getRectangle().bottom();
-            ScreenRectangle screenRect = new ScreenRectangle(0, i, width, height - 36 - i);
-            tabManager.setTabArea(screenRect);
-
-
-            layoutGroupWidgets();
+        if (this.tabWidget != null) {
+            this.tabWidget.setWidth(this.width);
+            this.tabWidget.setPosition(0, 27);
+            final int i = this.tabWidget.getRectangle().bottom();
+            this.tabManager.setTabArea(new ScreenRectangle(0, i, this.width, this.height - 36 - i));
+            this.layoutGroupWidgets();
         }
-
-        backButton.setPosition(8, 5);
-        allModsButton.setPosition(width - 65, 5);
-        saveButton.setPosition(width - 58, height - 21);
-        resetButton.setPosition(width - 58 - 55, height - 21);
-        undoButton.setPosition(width - 58 - 110, height - 21);
-        searchBar.setPosition(6, height - 21);
-
-        ScreenGlobals.OPTION_PANEL_STARTX = (int) (width * 0.75);
-        ScreenGlobals.OPTION_PANEL_STARTY = 61;
-        ScreenGlobals.OPTION_PANEL_ENDX = width;
-        ScreenGlobals.OPTION_PANEL_ENDY = height - 120;
-        ScreenGlobals.OPTION_WIDTH = ScreenGlobals.OPTION_PANEL_STARTX - 30 - 22;
-        for (OptionWidget widget : allOptionWidgets) {
+        this.backButton.setPosition(8, 5);
+        this.allModsButton.setPosition(this.width - 65, 5);
+        this.saveButton.setPosition(this.width - 58, this.height - 21);
+        this.resetButton.setPosition(this.width - 58 - 55, this.height - 21);
+        this.undoButton.setPosition(this.width - 58 - 110, this.height - 21);
+        this.searchBar.setPosition(6, this.height - 21);
+        this.updateScreenGlobals();
+        for (final OptionWidget widget : this.allOptionWidgets) {
             widget.setWidth(ScreenGlobals.OPTION_WIDTH);
-            int size = ScreenGlobals.OPTION_HEIGHT;
-            widget.onWidgetUpdate(widget.getWidth() - size + 15 + 22, widget.getY());
+            widget.onWidgetUpdate(widget.getWidth() - ScreenGlobals.OPTION_HEIGHT + 15 + 22, widget.getY());
             if (widget instanceof OpenableWidget openableWidget && openableWidget.open) {
                 openableWidget.setHeight(openableWidget.OPEN_HEIGHT);
             } else if (widget instanceof StringListOptionWidget stringListOptionWidget) {
@@ -552,71 +446,58 @@ public class WalksyLibConfigScreen extends BaseScreen {
     @Override
     public void tick() {
         super.tick();
-        for (OptionWidget widget : allOptionWidgets) {
+        for (final OptionWidget widget : this.allOptionWidgets) {
             widget.tick();
         }
     }
 
-    public void showWidgetsForCategory(Category category) {
-        CategoryTab selected = (CategoryTab) tabManager.getCurrentTab();
+    public void showWidgetsForCategory(final Category category) {
+        final CategoryTab selected = (CategoryTab) this.tabManager.getCurrentTab();
         if (selected == null || !selected.getCategory().name().equalsIgnoreCase(category.name())) return;
-        tabWidget.updateVisibleWidgetsForTab(selected);
+        this.tabWidget.updateVisibleWidgetsForTab(selected);
         this.scrollAnim.setTargetValue(0);
     }
 
-    private boolean isConfigEmpty() {
-        return (configManager.get().categories().isEmpty());
-    }
-
-    public void setFocusedOption(Option<?> option) {
-        if (option != focusedOption) {
+    public void setFocusedOption(final Option<?> option) {
+        if (option != this.focusedOption) {
             this.focusedOption = option;
         }
     }
 
-    public void search(String query) {
-        allOptionWidgets.forEach(w -> w.updateSearchQuery(query));
-        allGroupWidgets.forEach(w -> w.updateSearchQuery(query));
-
-        for (OptionGroupWidget group : allGroupWidgets) {
-            group.visible = group.getChildren().stream().anyMatch(optionWidget -> optionWidget.getOption().searched());
-
+    public void search(final String query) {
+        this.allOptionWidgets.forEach(w -> w.updateSearchQuery(query));
+        this.allGroupWidgets.forEach(w -> w.updateSearchQuery(query));
+        for (final OptionGroupWidget group : this.allGroupWidgets) {
+            group.visible = group.getChildren().stream().anyMatch(w -> w.getOption().searched());
             if (group.searched(false)) {
                 group.visible = true;
                 group.getGroup().setExpanded(true);
                 group.getChildren().forEach(w -> w.updateSearchQuery(""));
             }
         }
-
-        String queryLower = query.toLowerCase();
-
-        List<CategoryTab> filtered = allTabs.stream()
+        final String queryLower = query.toLowerCase();
+        final List<CategoryTab> filtered = this.allTabs.stream()
                 .filter(tab -> {
-                    boolean categoryMatches = tab.getCategory().name().toLowerCase().contains(queryLower);
-                    boolean optionMatches = tab.getCategory().optionGroups().stream()
-                            .flatMap(group -> group.getOptions().stream())
+                    final boolean categoryMatches = tab.getCategory().name().toLowerCase().contains(queryLower);
+                    final boolean optionMatches = tab.getCategory().optionGroups().stream()
+                            .flatMap(g -> g.getOptions().stream())
                             .anyMatch(Option::searched);
                     return categoryMatches || optionMatches;
                 })
                 .toList();
 
-        tabWidget.setTabs(filtered);
-
-        if (tabWidget.tabSize() != allTabs.size()) {
-            tabWidget.selectTab(0, true);
+        this.tabWidget.setTabs(filtered);
+        if (this.tabWidget.tabSize() != this.allTabs.size()) {
+            this.tabWidget.selectTab(0, true);
         }
-
-        layoutGroupWidgets();
+        this.layoutGroupWidgets();
     }
 
+    public void onChangesMade(final Option<?> option) {}
 
-    public void onChangesMade(Option<?> option) {
-
-    }
-
-    public void save(boolean runSave) {
+    public void save(final boolean runSave) {
         this.setOptionPrevs();
-        this.configManager.get().save();
+        this.configManager.get().onSave();
         if (runSave) {
             this.configManager.get().runSave();
         }
@@ -624,71 +505,86 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     public void setOptionPrevs() {
-        this.configManager.get().categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(option -> option.setPrev(this.name))));
+        this.forEachOption(o -> o.setPrev(this.name));
     }
-
-    private boolean shouldResetOptions() {
-        for (Category category : this.configManager.get().categories()) {
-            for (OptionGroup group : category.optionGroups()) {
-                for (Option<?> option : group.getOptions()) {
-                    if (option.hasChanged()) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-
-    private boolean shouldUndoOptions() {
-        for (Category category : this.configManager.get().categories()) {
-            for (OptionGroup group : category.optionGroups()) {
-                for (Option<?> option : group.getOptions()) {
-                    if (!option.screenInstanceCheck()) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
 
     public void undo() {
-        this.configManager.get().categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::undo)));
-        for (OptionWidget widget : allOptionWidgets) {
+        this.forEachOption(Option::undo);
+        for (final OptionWidget widget : this.allOptionWidgets) {
             widget.onThirdPartyChange(widget.getOption().screenInstanceValue);
-            if (widget instanceof PixelGridAnimationWidget widget1) {
-                widget1.reset();
-            }
+            if (widget instanceof PixelGridAnimationWidget w) w.reset();
         }
         this.setOptionPrevs();
     }
 
     public void resetOptions() {
-        this.configManager.get().categories().forEach(category -> category.optionGroups().forEach(optionGroup -> optionGroup.getOptions().forEach(Option::reset)));
-        for (OptionWidget widget : allOptionWidgets) {
+        this.forEachOption(Option::reset);
+        for (final OptionWidget widget : this.allOptionWidgets) {
             widget.onThirdPartyChange(widget.getOption().getDefaultValue());
-            if (widget instanceof PixelGridAnimationWidget widget1) {
-                widget1.reset();
-            } else if (widget instanceof StringListOptionWidget widget1) {
-                widget1.setHeight();
-            } else if (widget instanceof SpriteOptionWidget widget1) {
-                widget1.reCalc();
+            switch (widget) {
+                case PixelGridAnimationWidget w -> w.reset();
+                case StringListOptionWidget w -> w.setHeight();
+                case SpriteOptionWidget w -> w.reCalc();
+                default -> {
+                }
             }
         }
         this.setOptionPrevs();
     }
 
+    private boolean isConfigEmpty() {
+        return this.configManager.get().categories().isEmpty();
+    }
+
+    private boolean shouldResetOptions() {
+        return this.anyOption(Option::hasChanged);
+    }
+
+    private boolean shouldUndoOptions() {
+        return this.anyOption(o -> !o.screenInstanceCheck());
+    }
+
     private void defineOptions() {
-        for (Category category : this.configManager.get().categories()) {
-            for (OptionGroup group : category.optionGroups()) {
-                for (Option<?> option : group.getOptions()) {
-                    option.setScreenInstance();
-                }
-            }
+        this.forEachOption(Option::setScreenInstance);
+    }
+
+    private void updateScreenGlobals() {
+        ScreenGlobals.OPTION_PANEL_STARTX = (int) (this.width * 0.75);
+        ScreenGlobals.OPTION_PANEL_STARTY = 61;
+        ScreenGlobals.OPTION_PANEL_ENDX = this.width;
+        ScreenGlobals.OPTION_PANEL_ENDY = this.height - 120;
+        ScreenGlobals.OPTION_WIDTH = ScreenGlobals.OPTION_PANEL_STARTX - 30 - 22;
+    }
+
+    private void forEachOption(final Consumer<Option<?>> action) {
+        this.configManager.get().categories()
+                .forEach(c -> c.optionGroups()
+                .forEach(g -> g.getOptions()
+                .forEach(action)));
+    }
+
+    private boolean anyOption(final Predicate<Option<?>> predicate) {
+        return this.configManager.get().categories().stream()
+                .flatMap(c -> c.optionGroups().stream())
+                .flatMap(g -> g.getOptions().stream())
+                .anyMatch(predicate);
+    }
+
+    private boolean hasNextVisible(final List<OptionWidget> children, final int index) {
+        for (int j = index + 1; j < children.size(); j++) {
+            if (children.get(j).isVisible()) return true;
         }
+        return false;
+    }
+
+    private int getChildHeight(final OptionWidget child) {
+        if (child instanceof OpenableWidget oW) {
+            return (int) oW.getCurrentHeight();
+        }
+        if (child instanceof StringListOptionWidget slw) {
+            return ScreenGlobals.OPTION_HEIGHT + slw.ADDITIONAL_HEIGHT;
+        }
+        return ScreenGlobals.OPTION_HEIGHT;
     }
 
     public WalksyLibConfigManager getConfigManager() {

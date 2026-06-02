@@ -8,20 +8,20 @@ import java.util.Objects;
 
 public record Category(String name, List<OptionGroup> optionGroups, List<Option<?>> options) {
 
-    public static CategoryBuilder createBuilder(String name) {
+    public static CategoryBuilder createBuilder(final String name) {
         return new CategoryBuilder(name);
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Category category = (Category) o;
+        if (o == null || this.getClass() != o.getClass()) return false;
+        final Category category = (Category) o;
         return Objects.equals(this.name(), category.name());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name());
+        return Objects.hash(this.name());
     }
 }

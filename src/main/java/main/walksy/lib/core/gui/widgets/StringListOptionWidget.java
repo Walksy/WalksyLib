@@ -25,65 +25,65 @@ public class StringListOptionWidget extends OptionWidget {
     private int pendingRemovalIndex = -1;
     public int ADDITIONAL_HEIGHT;
 
-    public StringListOptionWidget(OptionGroup parent, WalksyLibConfigScreen screen, int x, int y, int width, int height, Option<List<String>> option) {
+    public StringListOptionWidget(final OptionGroup parent, final WalksyLibConfigScreen screen, final int x, final int y, final int width, final int height, final Option<List<String>> option) {
         super(parent, screen, option, x, y, width, height, option.getName());
         this.option = option;
         this.setHeight();
-        this.addButton = new ButtonWidget(getX() + width - 37, getY() + 3, 30, 14, false, "Add", this::onAdd);
+        this.addButton = new ButtonWidget(this.getX() + width - 37, this.getY() + 3, 30, 14, false, "Add", this::onAdd);
     }
 
     @Override
-    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.addButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
+    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+        this.addButton.extractRenderState(context, mouseX, mouseY, delta);
         context.horizontalLine(
-                getX() + 1,
-                getX() + getWidth() - 2,
-                getY() + ScreenGlobals.OPTION_HEIGHT - 1,
-                isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
+                this.getX() + 1,
+                this.getX() + this.getWidth() - 2,
+                this.getY() + ScreenGlobals.OPTION_HEIGHT - 1,
+                this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
         );
         if (this.option.getValue().isEmpty()) {
-            int cX = this.getWidth() / 2;
+            final int cX = this.getWidth() / 2;
             context.centeredText(
-                    screen.getFont(),
+                    this.screen.getFont(),
                     "No Entries",
-                    cX + screen.getFont().width("No Entries") / 2,
-                    getTextYCentered() + 1 + this.ADDITIONAL_HEIGHT,
+                    cX + this.screen.getFont().width("No Entries") / 2,
+                    this.getTextYCentered() + 1 + this.ADDITIONAL_HEIGHT,
                     -1
             );
         }
 
-        for (int i = 0; i < textboxes.size(); i++) {
-            TextboxSubWidget textBox = textboxes.get(i);
-            int width = screen.getFont().width(String.valueOf(i + 1));
-            int off = -1;
-            context.text(screen.getFont(), String.valueOf(i + 1), getX() + 5, textBox.getPos().y + 6 + off, -1, true);
-            context.verticalLine(getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
+        for (int i = 0; i < this.textboxes.size(); i++) {
+            final TextboxSubWidget textBox = this.textboxes.get(i);
+            final int width = this.screen.getFont().width(String.valueOf(i + 1));
+            final int off = -1;
+            context.text(this.screen.getFont(), String.valueOf(i + 1), this.getX() + 5, textBox.getPos().y + 6 + off, -1, true);
+            context.verticalLine(this.getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
             textBox.render(context, mouseX, mouseY, delta);
-            removeButtons.get(i).extractWidgetRenderState(context, mouseX, mouseY, delta);
+            this.removeButtons.get(i).extractRenderState(context, mouseX, mouseY, delta);
         }
     }
 
     @Override
-    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
+    public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {
         this.addButton.onClick(click, doubled);
 
-        for (TextboxSubWidget textbox : textboxes) {
+        for (final TextboxSubWidget textbox : this.textboxes) {
             textbox.setFocus(false);
             textbox.onClick(click, doubled);
         }
 
-        for (int i = 0; i < removeButtons.size(); i++) {
-            removeButtons.get(i).onClick(click, doubled);
+        for (int i = 0; i < this.removeButtons.size(); i++) {
+            this.removeButtons.get(i).onClick(click, doubled);
         }
 
-        if (pendingRemovalIndex >= 0) {
-            List<String> mutable = new ArrayList<>(option.getValue());
-            if (pendingRemovalIndex < mutable.size()) {
-                mutable.remove(pendingRemovalIndex);
-                option.setValue(mutable);
-                setHeight();
+        if (this.pendingRemovalIndex >= 0) {
+            final List<String> mutable = new ArrayList<>(this.option.getValue());
+            if (this.pendingRemovalIndex < mutable.size()) {
+                mutable.remove(this.pendingRemovalIndex);
+                this.option.setValue(mutable);
+                this.setHeight();
             }
-            pendingRemovalIndex = -1;
+            this.pendingRemovalIndex = -1;
         }
 
         super.onMouseClick(click, doubled);
@@ -91,27 +91,27 @@ public class StringListOptionWidget extends OptionWidget {
 
     @Override
     public void onWidgetUpdate() {
-        addButton.setPosition(getX() + width - 37, getY() + 3);
+        this.addButton.setPosition(this.getX() + this.width - 37, this.getY() + 3);
 
-        for (int i = 0; i < textboxes.size(); i++) {
-            int labelWidth = screen.getFont().width(String.valueOf(i + 1));
-            textboxes.get(i).setPos(new Point(getX() + labelWidth + 10, getY() + 25 + i * 20));
-            textboxes.get(i).setWidth(getWidth() - (labelWidth + 44));
-            removeButtons.get(i).setPosition(getX() + getWidth() - 26, getY() + 25 + i * 20 + 1);
+        for (int i = 0; i < this.textboxes.size(); i++) {
+            final int labelWidth = this.screen.getFont().width(String.valueOf(i + 1));
+            this.textboxes.get(i).setPos(new Point(this.getX() + labelWidth + 10, this.getY() + 25 + i * 20));
+            this.textboxes.get(i).setWidth(this.getWidth() - (labelWidth + 44));
+            this.removeButtons.get(i).setPosition(this.getX() + this.getWidth() - 26, this.getY() + 25 + i * 20 + 1);
         }
     }
 
     @Override
-    public void onKeyPress(KeyEvent input) {
-        for (TextboxSubWidget textbox : textboxes) {
+    public void onKeyPress(final KeyEvent input) {
+        for (final TextboxSubWidget textbox : this.textboxes) {
             textbox.onKeyPress(input);
         }
         super.onKeyPress(input);
     }
 
     @Override
-    public void onCharTyped(CharacterEvent input) {
-        for (TextboxSubWidget textbox : textboxes) {
+    public void onCharTyped(final CharacterEvent input) {
+        for (final TextboxSubWidget textbox : this.textboxes) {
             textbox.onCharTyped(input);
         }
         super.onCharTyped(input);
@@ -129,68 +129,68 @@ public class StringListOptionWidget extends OptionWidget {
     }
 
     private void onAdd() {
-        List<String> mutable = new ArrayList<>(option.getValue());
+        final List<String> mutable = new ArrayList<>(this.option.getValue());
         mutable.add("");
-        option.setValue(mutable);
+        this.option.setValue(mutable);
         this.setHeight();
     }
 
     public void setHeight() {
         this.rebuildTextboxes();
 
-        int size = this.option.getValue().size();
+        final int size = this.option.getValue().size();
         this.ADDITIONAL_HEIGHT = size == 0 ? 20 : size * 20 + 4;
 
-        this.setHeight(ScreenGlobals.OPTION_HEIGHT + ADDITIONAL_HEIGHT);
+        this.setHeight(ScreenGlobals.OPTION_HEIGHT + this.ADDITIONAL_HEIGHT);
         this.update();
     }
 
     private void rebuildTextboxes() {
-        textboxes.clear();
-        removeButtons.clear();
+        this.textboxes.clear();
+        this.removeButtons.clear();
 
-        int yOffset = getY() + ScreenGlobals.OPTION_HEIGHT + 4;
-        int textboxHeight = 18;
-        List<String> currentValues = option.getValue();
+        final int yOffset = this.getY() + ScreenGlobals.OPTION_HEIGHT + 4;
+        final int textboxHeight = 18;
+        final List<String> currentValues = this.option.getValue();
         for (int i = 0; i < currentValues.size(); i++) {
-            int y = yOffset + i * (textboxHeight + 2);
-            int index = i;
+            final int y = yOffset + i * (textboxHeight + 2);
+            final int index = i;
 
-            Consumer<String> onChange = newValue -> {
-                List<String> newList = new ArrayList<>(option.getValue());
+            final Consumer<String> onChange = newValue -> {
+                final List<String> newList = new ArrayList<>(this.option.getValue());
                 newList.set(index, newValue);
-                option.setValue(newList);
+                this.option.setValue(newList);
             };
 
-            TextboxSubWidget textbox = new TextboxSubWidget(
-                    screen,
-                    getX() + 8,
+            final TextboxSubWidget textbox = new TextboxSubWidget(
+                    this.screen,
+                    this.getX() + 8,
                     y,
-                    getWidth() - 34,
-                    getWidth() - 34,
+                    this.getWidth() - 34,
+                    this.getWidth() - 34,
                     textboxHeight,
                     currentValues.get(i),
                     onChange,
                     false
             );
 
-            ButtonWidget removeButton = new ButtonWidget(
-                    getX() + getWidth() - 26,
+            final ButtonWidget removeButton = new ButtonWidget(
+                    this.getX() + this.getWidth() - 26,
                     y + 1,
                     20,
                     14,
                     false,
                     "-",
-                    () -> pendingRemovalIndex = index
+                    () -> this.pendingRemovalIndex = index
             );
 
-            textboxes.add(textbox);
-            removeButtons.add(removeButton);
+            this.textboxes.add(textbox);
+            this.removeButtons.add(removeButton);
         }
     }
 
     @Override
-    public <V> void onThirdPartyChange(V value) {
+    public <V> void onThirdPartyChange(final V value) {
         super.onThirdPartyChange(value);
         this.rebuildTextboxes();
         this.setHeight();

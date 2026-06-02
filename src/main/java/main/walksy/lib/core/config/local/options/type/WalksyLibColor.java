@@ -13,38 +13,38 @@ public class WalksyLibColor implements Tickable {
 
     private float pulseTime = 0;
 
-    public WalksyLibColor(int r, int g, int b) {
+    public WalksyLibColor(final int r, final int g, final int b) {
         this(r, g, b, 255);
     }
 
-    public WalksyLibColor(int r, int g, int b, int a) {
-        value = ((a & 0xFF) << 24) |
+    public WalksyLibColor(final int r, final int g, final int b, final int a) {
+        this.value = ((a & 0xFF) << 24) |
                 ((r & 0xFF) << 16) |
                 ((g & 0xFF) << 8)  |
                 ((b & 0xFF) << 0);
-        float[] hsb = RGBtoHSB(r, g, b, null);
+        final float[] hsb = RGBtoHSB(r, g, b, null);
         this.hue = hsb[0];
         this.saturation = hsb[1];
         this.brightness = hsb[2];
     }
 
-    public WalksyLibColor(int rgb) {
-        value = 0xff000000 | rgb;
-        int r = (rgb >> 16) & 0xFF;
-        int g = (rgb >> 8) & 0xFF;
-        int b = rgb & 0xFF;
+    public WalksyLibColor(final int rgb) {
+        this.value = 0xff000000 | rgb;
+        final int r = (rgb >> 16) & 0xFF;
+        final int g = (rgb >> 8) & 0xFF;
+        final int b = rgb & 0xFF;
 
-        float[] hsb = RGBtoHSB(r, g, b, null);
+        final float[] hsb = RGBtoHSB(r, g, b, null);
         this.hue = hsb[0];
         this.saturation = hsb[1];
         this.brightness = hsb[2];
     }
 
     public boolean isRainbow() {
-        return rainbow;
+        return this.rainbow;
     }
 
-    public void setHue(float hue) {
+    public void setHue(final float hue) {
         this.hue = Math.max(0f, Math.min(1f, hue));
     }
 
@@ -52,7 +52,7 @@ public class WalksyLibColor implements Tickable {
         return this.hue;
     }
 
-    public void setSaturation(float saturation) {
+    public void setSaturation(final float saturation) {
         this.saturation = Math.max(0f, Math.min(1f, saturation));
     }
 
@@ -60,7 +60,7 @@ public class WalksyLibColor implements Tickable {
         return this.saturation;
     }
 
-    public void setBrightness(float brightness) {
+    public void setBrightness(final float brightness) {
         this.brightness = Math.max(0f, Math.min(1f, brightness));
     }
 
@@ -68,52 +68,47 @@ public class WalksyLibColor implements Tickable {
         return this.brightness;
     }
 
-    public int getRainbowSpeed()
-    {
+    public int getRainbowSpeed() {
         return this.rainbowSpeed;
     }
 
-    public void setRainbow(boolean rainbow) {
+    public void setRainbow(final boolean rainbow) {
         this.rainbow = rainbow;
     }
 
-    public void setRainbowSpeed(int rainbowSpeed) {
+    public void setRainbowSpeed(final int rainbowSpeed) {
         this.rainbowSpeed = rainbowSpeed;
     }
 
     public int getPulseSpeed() {
-        return pulseSpeed;
+        return this.pulseSpeed;
     }
 
-    public void setPulseSpeed(int pulseSpeed) {
+    public void setPulseSpeed(final int pulseSpeed) {
         this.pulseSpeed = pulseSpeed;
     }
 
-    public boolean isPulse()
-    {
-        return pulse;
+    public boolean isPulse() {
+        return this.pulse;
     }
 
-    public void setPulse(boolean pulse)
-    {
+    public void setPulse(final boolean pulse) {
         this.pulse = pulse;
     }
 
-    public void setAlpha(int alpha) {
-        WalksyLibColor newColor = new WalksyLibColor(this.getRed(), this.getGreen(), this.getBlue(), alpha);
+    public void setAlpha(final int alpha) {
+        final WalksyLibColor newColor = new WalksyLibColor(this.getRed(), this.getGreen(), this.getBlue(), alpha);
         this.value = newColor.getRGB();
     }
 
-    public void resetHSB()
-    {
-        float[] hsb = RGBtoHSB(this.getRed(), this.getGreen(), this.getBlue(), null);
+    public void resetHSB() {
+        final float[] hsb = RGBtoHSB(this.getRed(), this.getGreen(), this.getBlue(), null);
         this.hue = hsb[0];
         this.saturation = hsb[1];
         this.brightness = hsb[2];
     }
 
-    public void resetAdditions()
-    {
+    public void resetAdditions() {
         this.pulse = false;
         this.rainbow = false;
         this.rainbowSpeed = 5;
@@ -121,28 +116,28 @@ public class WalksyLibColor implements Tickable {
     }
 
     public Additions getAdditions() {
-        return new Additions(hue, saturation, brightness, rainbow, rainbowSpeed, pulse, pulseSpeed);
+        return new Additions(this.hue, this.saturation, this.brightness, this.rainbow, this.rainbowSpeed, this.pulse, this.pulseSpeed);
     }
 
-    public void setAdditions(Additions additions) {
-        setHue(additions.hue);
-        setSaturation(additions.saturation);
-        setBrightness(additions.brightness);
-        setRainbow(additions.rainbow);
-        setRainbowSpeed(additions.rainbowSpeed);
-        setPulse(additions.pulse);
-        setPulseSpeed(additions.pulseSpeed);
+    public void setAdditions(final Additions additions) {
+        this.setHue(additions.hue());
+        this.setSaturation(additions.saturation());
+        this.setBrightness(additions.brightness());
+        this.setRainbow(additions.rainbow());
+        this.setRainbowSpeed(additions.rainbowSpeed());
+        this.setPulse(additions.pulse());
+        this.setPulseSpeed(additions.pulseSpeed());
     }
 
     @Override
     public void tick() {
-        if (rainbow) {
-            float speed = (float) this.rainbowSpeed / 1000;
-            hue += speed;
-            if (hue > 1f) hue = 0f;
+        if (this.rainbow) {
+            final float speed = (float) this.rainbowSpeed / 1000;
+            this.hue += speed;
+            if (this.hue > 1f) this.hue = 0f;
 
-            WalksyLibColor newColor = getHSBColor(hue, saturation, brightness);
-            WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), getAlpha());
+            final WalksyLibColor newColor = getHSBColor(this.hue, this.saturation, this.brightness);
+            final WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), this.getAlpha());
             this.value = newColorAlpha.getRGB();
         }
         this.handlePulse();
@@ -151,47 +146,47 @@ public class WalksyLibColor implements Tickable {
     private void handlePulse() {
         if (!this.pulse) return;
 
-        pulseTime += (float) this.pulseSpeed / 1000f;
-        brightness = (float) ((Math.sin(pulseTime * 2 * Math.PI) + 1) / 2);
-        WalksyLibColor newColor = getHSBColor(hue, saturation, brightness);
-        WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), getAlpha());
+        this.pulseTime += (float) this.pulseSpeed / 1000f;
+        this.brightness = (float) ((Math.sin(this.pulseTime * 2 * Math.PI) + 1) / 2);
+        final WalksyLibColor newColor = getHSBColor(this.hue, this.saturation, this.brightness);
+        final WalksyLibColor newColorAlpha = new WalksyLibColor(newColor.getRed(), newColor.getGreen(), newColor.getBlue(), this.getAlpha());
         this.value = newColorAlpha.getRGB();
     }
 
-    public static WalksyLibColor getHSBColor(float h, float s, float b) {
+    public static WalksyLibColor getHSBColor(final float h, final float s, final float b) {
         return new WalksyLibColor(HSBtoRGB(h, s, b));
     }
 
     public int getRGB() {
-        return value;
+        return this.value;
     }
 
     public int getRed() {
-        return (getRGB() >> 16) & 0xFF;
+        return (this.getRGB() >> 16) & 0xFF;
     }
 
     public int getGreen() {
-        return (getRGB() >> 8) & 0xFF;
+        return (this.getRGB() >> 8) & 0xFF;
     }
 
     public int getBlue() {
-        return (getRGB() >> 0) & 0xFF;
+        return (this.getRGB() >> 0) & 0xFF;
     }
 
     public int getAlpha() {
-        return (getRGB() >> 24) & 0xff;
+        return (this.getRGB() >> 24) & 0xff;
     }
 
-    public static int HSBtoRGB(float hue, float saturation, float brightness) {
+    public static int HSBtoRGB(final float hue, final float saturation, final float brightness) {
         int r = 0, g = 0, b = 0;
         if (saturation == 0) {
             r = g = b = (int) (brightness * 255.0f + 0.5f);
         } else {
-            float h = (hue - (float)Math.floor(hue)) * 6.0f;
-            float f = h - (float) Math.floor(h);
-            float p = brightness * (1.0f - saturation);
-            float q = brightness * (1.0f - saturation * f);
-            float t = brightness * (1.0f - (saturation * (1.0f - f)));
+            final float h = (hue - (float) Math.floor(hue)) * 6.0f;
+            final float f = h - (float) Math.floor(h);
+            final float p = brightness * (1.0f - saturation);
+            final float q = brightness * (1.0f - saturation * f);
+            final float t = brightness * (1.0f - (saturation * (1.0f - f)));
             switch ((int) h) {
                 case 0:
                     r = (int) (brightness * 255.0f + 0.5f);
@@ -228,7 +223,7 @@ public class WalksyLibColor implements Tickable {
         return 0xff000000 | (r << 16) | (g << 8) | (b << 0);
     }
 
-    public static float[] RGBtoHSB(int r, int g, int b, float[] hsbvals) {
+    public static float[] RGBtoHSB(final int r, final int g, final int b, float[] hsbvals) {
         float hue, saturation, brightness;
         if (hsbvals == null) {
             hsbvals = new float[3];
@@ -246,9 +241,9 @@ public class WalksyLibColor implements Tickable {
         if (saturation == 0)
             hue = 0;
         else {
-            float redc = ((float) (cmax - r)) / ((float) (cmax - cmin));
-            float greenc = ((float) (cmax - g)) / ((float) (cmax - cmin));
-            float bluec = ((float) (cmax - b)) / ((float) (cmax - cmin));
+            final float redc = ((float) (cmax - r)) / ((float) (cmax - cmin));
+            final float greenc = ((float) (cmax - g)) / ((float) (cmax - cmin));
+            final float bluec = ((float) (cmax - b)) / ((float) (cmax - cmin));
             if (r == cmax)
                 hue = bluec - greenc;
             else if (g == cmax)
@@ -266,7 +261,7 @@ public class WalksyLibColor implements Tickable {
     }
 
     public WalksyLibColor copy() {
-        WalksyLibColor copy = new WalksyLibColor(this.getRed(), this.getGreen(), this.getBlue(), this.getAlpha());
+        final WalksyLibColor copy = new WalksyLibColor(this.getRed(), this.getGreen(), this.getBlue(), this.getAlpha());
 
         copy.hue = this.hue;
         copy.saturation = this.saturation;
@@ -281,7 +276,7 @@ public class WalksyLibColor implements Tickable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof WalksyLibColor other)) return false;
         if (this.rainbowSpeed != other.rainbowSpeed) return false;
@@ -295,23 +290,5 @@ public class WalksyLibColor implements Tickable {
     }
 
 
-    public static class Additions {
-        public float hue;
-        public float saturation;
-        public float brightness;
-        public boolean rainbow;
-        public int rainbowSpeed;
-        public boolean pulse;
-        public int pulseSpeed;
-
-        public Additions(float hue, float saturation, float brightness, boolean rainbow, int rainbowSpeed, boolean pulse, int pulseSpeed) {
-            this.hue = hue;
-            this.saturation = saturation;
-            this.brightness = brightness;
-            this.rainbow = rainbow;
-            this.rainbowSpeed = rainbowSpeed;
-            this.pulse = pulse;
-            this.pulseSpeed = pulseSpeed;
-        }
-    }
+    public record Additions(float hue, float saturation, float brightness, boolean rainbow, int rainbowSpeed, boolean pulse, int pulseSpeed) {}
 }

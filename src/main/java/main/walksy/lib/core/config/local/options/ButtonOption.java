@@ -8,16 +8,16 @@ import java.util.function.Supplier;
 
 public class ButtonOption extends OptionBuilder<Runnable, ButtonOption> {
 
-    public ButtonOption(String name, Supplier<Runnable> getter, Runnable defaultValue, Consumer<Runnable> setter) {
+    public ButtonOption(final String name, final Supplier<Runnable> getter, final Runnable defaultValue, final Consumer<Runnable> setter) {
         super(name, getter, defaultValue, setter);
     }
 
-    public static ButtonOption createBuilder(String name, Runnable action) {
+    public static ButtonOption createBuilder(final String name, final Runnable action) {
         return new ButtonOption(name, () -> action, action, null);
     }
 
     @Override
     public Option<Runnable> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, Runnable.class, defaultValue, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, Runnable.class, this.defaultValue, this.onChange);
     }
 }

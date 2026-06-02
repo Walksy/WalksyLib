@@ -16,27 +16,27 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public record LocalConfig(Path path, List<Category> categories, Runnable onSave) implements Config {
+public record ModConfig(Path getPath, List<Category> categories, Runnable saveCallback) implements Config {
 
     @Override
-    public void load() {
-        Path path = this.path();
+    public void onLoad() {
+        final Path path = this.getPath();
         if (!Files.exists(path)) {
-            this.save();
+            this.onSave();
             return;
         }
 
         List<SerializableCategory> loadedCategories;
         try {
-            String json = Files.readString(path);
-            Type type = new TypeToken<List<SerializableCategory>>() {}.getType();
+            final String json = Files.readString(path);
+            final Type type = new TypeToken<List<SerializableCategory>>() {}.getType();
             loadedCategories = WalksyLibConfigManager.GSON.fromJson(json, type);
         } catch (IOException | JsonParseException e) {
             WalksyLibLogger.err("Failed to read or parse config from " + path + ": " + e.getMessage());
             return;
         }
 
-        for (Category existingCategory : this.categories()) {
+        for (final Category existingCategory : this.categories()) {
             loadedCategories.stream()
                     .filter(serialized -> serialized.name.equals(existingCategory.name()))
                     .findFirst()
@@ -46,17 +46,17 @@ public record LocalConfig(Path path, List<Category> categories, Runnable onSave)
 
 
     @Override
-    public void save() {
-        Path path = this.path();
-        List<SerializableCategory> serializedCategories = new ArrayList<>();
+    public void onSave() {
+        final Path path = this.getPath();
+        final List<SerializableCategory> serializedCategories = new ArrayList<>();
 
-        for (Category category : this.categories()) {
+        for (final Category category : this.categories()) {
             serializedCategories.add(WalksyLibConfigManager.serializeCategory(category));
         }
 
         try {
             Files.createDirectories(path.getParent());
-            String json = WalksyLibConfigManager.GSON.toJson(serializedCategories);
+            final String json = WalksyLibConfigManager.GSON.toJson(serializedCategories);
             Files.writeString(path, json);
         } catch (IOException e) {
             WalksyLibLogger.err("Failed to save config to " + path + ": " + e.getMessage());
@@ -64,8 +64,8 @@ public record LocalConfig(Path path, List<Category> categories, Runnable onSave)
     }
 
     public void runSave() {
-        if (this.onSave != null) {
-            this.onSave.run();
+        if (this.saveCallback != null) {
+            this.saveCallback.run();
         }
     }
 
@@ -73,7 +73,8 @@ public record LocalConfig(Path path, List<Category> categories, Runnable onSave)
         return new LocalConfigBuilder();
     }
 
-    public static LocalConfigBuilder createBuilder(String ignored) {
+    @Deprecated
+    public static LocalConfigBuilder createBuilder(final String ignored) {
         return new LocalConfigBuilder();
     }
 }

@@ -7,15 +7,15 @@ public class MarqueeUtil {
 
     public static int tickCount = 0;
 
-    public static String get(String full, int maxWidth, int interval) {
-        Font textRenderer = Minecraft.getInstance().font;
+    public static String get(final String full, final int maxWidth, final int interval) {
+        final Font textRenderer = Minecraft.getInstance().font;
         if (textRenderer.width(full) <= maxWidth) return full;
 
-        String ellipsis = "...";
-        int ellipsisWidth = textRenderer.width(ellipsis);
-        int visibleWidth = maxWidth - ellipsisWidth;
+        final String ellipsis = "...";
+        final int ellipsisWidth = textRenderer.width(ellipsis);
+        final int visibleWidth = maxWidth - ellipsisWidth;
 
-        int[] widths = new int[full.length() + 1];
+        final int[] widths = new int[full.length() + 1];
         for (int i = 0; i < full.length(); i++) {
             widths[i + 1] = widths[i] + textRenderer.width(full.substring(i, i + 1));
         }
@@ -26,14 +26,14 @@ public class MarqueeUtil {
             else break;
         }
 
-        int steps = full.length() - mChars + 1;
+        final int steps = full.length() - mChars + 1;
         if (steps <= 1) return full;
 
-        int cycle = steps * 2 - 2;
+        final int cycle = steps * 2 - 2;
         int pos = (tickCount / interval) % cycle;
         if (pos >= steps) pos = cycle - pos;
 
-        String visiblePart = full.substring(pos, pos + mChars);
+        final String visiblePart = full.substring(pos, pos + mChars);
         return (pos == steps - 1) ? visiblePart : visiblePart + ellipsis;
     }
 }

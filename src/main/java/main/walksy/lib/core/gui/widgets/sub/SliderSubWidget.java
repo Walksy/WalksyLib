@@ -1,7 +1,7 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import net.minecraft.client.Minecraft;
@@ -21,9 +21,9 @@ public class SliderSubWidget<T> extends SubWidget {
     private Consumer<T> onChange;
     private final boolean isRight;
 
-    private final Animation sliderPositionAnimation = new Animation(sliderPosition, 0.5f);
+    private final Animation sliderPositionAnimation = new Animation(this.sliderPosition, 0.5f);
 
-    public SliderSubWidget(int x, int y, int width, int height, SliderAdapter<T> adapter, T initialValue, Consumer<T> onChange, boolean right) {
+    public SliderSubWidget(final int x, final int y, final int width, final int height, final SliderAdapter<T> adapter, final T initialValue, final Consumer<T> onChange, final boolean right) {
         super(x, y, width, height);
         this.adapter = adapter;
         this.isRight = right;
@@ -32,20 +32,19 @@ public class SliderSubWidget<T> extends SubWidget {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        sliderPositionAnimation.update(delta);
-        sliderPosition = sliderPositionAnimation.getCurrentValue();
+    public void render(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+        this.sliderPositionAnimation.update(delta);
+        this.sliderPosition = this.sliderPositionAnimation.getCurrentValue();
 
-        isHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+        this.isHovered = mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
 
-        Renderer2D.fillRoundedRect(context, x, y, width, height, 1, new Color(255, 255, 255, 20).getRGB());
-        Renderer2D.fillRoundedRectOutline(context, x, y, width, height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
+        new Graphics(context).fillRoundedRect(this.x, this.y, this.width, this.height, 1, new Color(255, 255, 255, 20).getRGB());
+        new Graphics(context).fillRoundedRectOutline(this.x, this.y, this.width, this.height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
 
-        int v = isHovered ? 220 : 155;
-        Renderer2D.fillRoundedRect(
-                context,
-                x + (sliderPosition * (width - 10)),
-                y + (float) (height - 10) / 2,
+        final int v = this.isHovered ? 220 : 155;
+        new Graphics(context).fillRoundedRect(
+                this.x + (this.sliderPosition * (this.width - 10)),
+                this.y + (float) (this.height - 10) / 2,
                 10, 10,
                 2,
                 new Color(v, v, v, 255).getRGB()
@@ -53,50 +52,50 @@ public class SliderSubWidget<T> extends SubWidget {
 
         context.text(
                 Minecraft.getInstance().font,
-                adapter.format(value),
-                isRight ? x + width + 3 : x - Minecraft.getInstance().font.width(adapter.format(adapter.getMax())) - 3,
-                y + (height - 8) / 2,
+                this.adapter.format(this.value),
+                this.isRight ? this.x + this.width + 3 : this.x - Minecraft.getInstance().font.width(this.adapter.format(this.adapter.getMax())) - 3,
+                this.y + (this.height - 8) / 2,
                 -1
         );
     }
 
     @Override
-    public void onClick(MouseButtonEvent click, boolean doubled) {
-        if (isHovered) {
-            dragging = true;
-            onChange(click.x());
+    public void onClick(final MouseButtonEvent click, final boolean doubled) {
+        if (this.isHovered) {
+            this.dragging = true;
+            this.onChange(click.x());
         }
     }
 
     @Override
-    public void onDrag(int mouseX) {
-        if (dragging) {
-            onChange(mouseX);
+    public void onDrag(final int mouseX) {
+        if (this.dragging) {
+            this.onChange(mouseX);
         }
     }
 
-    private void onChange(double mouseX) {
-        float targetSliderPosition = Mth.clamp((float) (mouseX - x) / width, 0.0f, 1.0f);
-        sliderPositionAnimation.setTargetValue(targetSliderPosition);
-        value = adapter.fromSliderPosition(targetSliderPosition);
-        this.onChange.accept(value);
+    private void onChange(final double mouseX) {
+        final float targetSliderPosition = Mth.clamp((float) (mouseX - this.x) / this.width, 0.0f, 1.0f);
+        this.sliderPositionAnimation.setTargetValue(targetSliderPosition);
+        this.value = this.adapter.fromSliderPosition(targetSliderPosition);
+        this.onChange.accept(this.value);
     }
 
-    public void setValue(T value) {
-        this.value = adapter.clamp(value);
-        float targetSliderPosition = Mth.clamp(adapter.toSliderPosition(this.value), 0.0f, 1.0f);
-        sliderPositionAnimation.setTargetValue(targetSliderPosition);
+    public void setValue(final T value) {
+        this.value = this.adapter.clamp(value);
+        final float targetSliderPosition = Mth.clamp(this.adapter.toSliderPosition(this.value), 0.0f, 1.0f);
+        this.sliderPositionAnimation.setTargetValue(targetSliderPosition);
     }
 
     public T getValue() {
-        return value;
+        return this.value;
     }
 
     public void release() {
-        dragging = false;
+        this.dragging = false;
     }
 
-    public void setOnChange(Consumer<T> onChange) {
+    public void setOnChange(final Consumer<T> onChange) {
         this.onChange = onChange;
     }
 }

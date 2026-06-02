@@ -34,7 +34,7 @@ public class WalksyLibShieldStateManager {
         this.pendingBreak = null;
     }
 
-    public void disable(Player player) {
+    public void disable(final Player player) {
         if (player == null) {
             return;
         }
@@ -44,24 +44,24 @@ public class WalksyLibShieldStateManager {
         }
     }
 
-    public void addDisableCallback(String id, Consumer<Player> callback) {
+    public void addDisableCallback(final String id, final Consumer<Player> callback) {
         this.onDisableEvents.put(id, callback);
     }
 
-    public void removeDisableCallback(String id) {
+    public void removeDisableCallback(final String id) {
         this.onDisableEvents.remove(id);
     }
 
     public void tick() {
-        long now = System.currentTimeMillis();
-        Minecraft client = Minecraft.getInstance();
+        final long now = System.currentTimeMillis();
+        final Minecraft client = Minecraft.getInstance();
         if (client.level == null) {
             return;
         }
         this.currentTick++;
-        for (Player player : client.level.players()) {
+        for (final Player player : client.level.players()) {
             if (this.isHoldingUsableShield(player) && player.isUsingItem()) {
-                int current = this.shieldUseTicks.getOrDefault(player, 0);
+                final int current = this.shieldUseTicks.getOrDefault(player, 0);
                 this.shieldUseTicks.put(player, current + 1);
             } else {
                 this.shieldUseTicks.put(player, 0);
@@ -78,15 +78,15 @@ public class WalksyLibShieldStateManager {
             }
             this.pendingBreak = null;
         }
-        this.attackedPlayerEntries.entrySet().removeIf(e -> now - e.getValue().time > this.ATTACK_ENTRY_TTL_MS);
+        this.attackedPlayerEntries.entrySet().removeIf(e -> now - e.getValue().time > ATTACK_ENTRY_TTL_MS);
         this.cooldownManager.tick();
     }
 
-    public void handleSoundPacket(double x, double y, double z) {
-        Minecraft client = Minecraft.getInstance();
+    public void handleSoundPacket(final double x, final double y, final double z) {
+        final Minecraft client = Minecraft.getInstance();
         if (client.level == null || client.player == null) return;
-        LocalPlayer local = client.player;
-        long now = System.currentTimeMillis();
+        final LocalPlayer local = client.player;
+        final long now = System.currentTimeMillis();
         if (this.localShieldCooldownTicks > 2) {
             this.disable(this.nearestPlayerToSound(x, y, z, local));
             return;
@@ -94,24 +94,24 @@ public class WalksyLibShieldStateManager {
         final double matchRadiusSq = 36.0;
         Player best = null;
         double bestDistSq = Double.POSITIVE_INFINITY;
-        for (Map.Entry<Player, AttackEntry> e : this.attackedPlayerEntries.entrySet()) {
-            Player candidate = e.getKey();
-            AttackEntry ae = e.getValue();
+        for (final Map.Entry<Player, AttackEntry> e : this.attackedPlayerEntries.entrySet()) {
+            final Player candidate = e.getKey();
+            final AttackEntry ae = e.getValue();
             if (candidate == null || candidate == local) continue;
-            if (now - ae.time > this.ATTACK_ENTRY_TTL_MS) continue;
+            if (now - ae.time > ATTACK_ENTRY_TTL_MS) continue;
             if (!ae.wasBlocking) continue;
 
-            double dx = candidate.getX() - x;
-            double dy = candidate.getY() - y;
-            double dz = candidate.getZ() - z;
-            double currentDistSq = dx * dx + dy * dy + dz * dz;
+            final double dx = candidate.getX() - x;
+            final double dy = candidate.getY() - y;
+            final double dz = candidate.getZ() - z;
+            final double currentDistSq = dx * dx + dy * dy + dz * dz;
 
-            double sdx = ae.targetPos.x - x;
-            double sdy = ae.targetPos.y - y;
-            double sdz = ae.targetPos.z - z;
-            double storedDistSq = sdx * sdx + sdy * sdy + sdz * sdz;
+            final double sdx = ae.targetPos.x - x;
+            final double sdy = ae.targetPos.y - y;
+            final double sdz = ae.targetPos.z - z;
+            final double storedDistSq = sdx * sdx + sdy * sdy + sdz * sdz;
 
-            double effectiveDistSq = Math.min(currentDistSq, storedDistSq);
+            final double effectiveDistSq = Math.min(currentDistSq, storedDistSq);
             if (effectiveDistSq > matchRadiusSq) continue;
 
             if (effectiveDistSq < bestDistSq) {
@@ -119,10 +119,10 @@ public class WalksyLibShieldStateManager {
                 best = candidate;
             }
         }
-        double selfDx = local.getX() - x;
-        double selfDy = local.getY() - y;
-        double selfDz = local.getZ() - z;
-        double selfDistSq = selfDx * selfDx + selfDy * selfDy + selfDz * selfDz;
+        final double selfDx = local.getX() - x;
+        final double selfDy = local.getY() - y;
+        final double selfDz = local.getZ() - z;
+        final double selfDistSq = selfDx * selfDx + selfDy * selfDy + selfDz * selfDz;
         if (best != null && bestDistSq < selfDistSq) {
             this.disable(best);
             this.attackedPlayerEntries.remove(best);
@@ -135,16 +135,16 @@ public class WalksyLibShieldStateManager {
         this.pendingBreak = new PendingBreak(best, this.currentTick);
     }
 
-    private Player nearestPlayerToSound(double x, double y, double z, LocalPlayer local) {
-        Minecraft client = Minecraft.getInstance();
+    private Player nearestPlayerToSound(final double x, final double y, final double z, final LocalPlayer local) {
+        final Minecraft client = Minecraft.getInstance();
         Player nearest = null;
         double nearestDistSq = Double.POSITIVE_INFINITY;
-        for (Player player : client.level.players()) {
+        for (final Player player : client.level.players()) {
             if (player == local) continue;
-            double dx = player.getX() - x;
-            double dy = player.getY() - y;
-            double dz = player.getZ() - z;
-            double distSq = dx * dx + dy * dy + dz * dz;
+            final double dx = player.getX() - x;
+            final double dy = player.getY() - y;
+            final double dz = player.getZ() - z;
+            final double distSq = dx * dx + dy * dy + dz * dz;
             if (distSq < nearestDistSq) {
                 nearestDistSq = distSq;
                 nearest = player;
@@ -153,16 +153,16 @@ public class WalksyLibShieldStateManager {
         return nearest;
     }
 
-    public void handleEntityStatus(Player player, byte status) {
-        Minecraft client = Minecraft.getInstance();
+    public void handleEntityStatus(final Player player, final byte status) {
+        final Minecraft client = Minecraft.getInstance();
         if (status == SHIELD_DISABLE_STATUS && player != client.player) {
             this.disable(player);
         }
     }
 
-    public void handlePlayerAttack(Player target) {
-        Minecraft client = Minecraft.getInstance();
-        boolean estBlocking = this.shieldUseTicks.getOrDefault(target, 0) >= 3;
+    public void handlePlayerAttack(final Player target) {
+        final Minecraft client = Minecraft.getInstance();
+        final boolean estBlocking = this.shieldUseTicks.getOrDefault(target, 0) >= 3;
         if (client.player == null) return;
         if (this.disablesShield(client.player)) {
             this.attackedPlayerEntries.put(
@@ -177,117 +177,113 @@ public class WalksyLibShieldStateManager {
         }
     }
 
-    public boolean isCoolingDown(Player player) {
-        Minecraft client = Minecraft.getInstance();
+    public boolean isCoolingDown(final Player player) {
+        final Minecraft client = Minecraft.getInstance();
         if (player == client.player) {
             return client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD));
         }
         return this.cooldownManager.isCoolingDown(player);
     }
 
-    public float getCooldownProgress(Player player) {
+    public float getCooldownProgress(final Player player) {
         if (player == null) {
             return 0.0f;
         }
-        Minecraft client = Minecraft.getInstance();
+        final Minecraft client = Minecraft.getInstance();
         if (player == client.player) {
             return client.player.getCooldowns().getCooldownPercent(new ItemStack(Items.SHIELD), 0);
         }
-        int remaining = this.cooldownManager.getRemainingTicks(player);
+        final int remaining = this.cooldownManager.getRemainingTicks(player);
         if (remaining <= 0) return 0.0f;
-        float frac = remaining / (float) 100;
+        final float frac = remaining / (float) 100;
         return Math.max(0f, Math.min(1f, frac));
     }
 
-    public boolean isUsingShield(Player player) {
+    public boolean isUsingShield(final Player player) {
         return this.shieldUseTicks.getOrDefault(player, 0) >= 5;
     }
 
-    public boolean isHoldingUsableShield(Player entity) {
+    public boolean isHoldingUsableShield(final Player entity) {
         return (entity.getMainHandItem().is(Items.SHIELD)
                 || entity.getOffhandItem().is(Items.SHIELD))
                 && !this.isHoldingAnimationItemMainHand(entity);
     }
 
-    private boolean isHoldingAnimationItemMainHand(Player entity) {
+    private boolean isHoldingAnimationItemMainHand(final Player entity) {
         return entity.getMainHandItem().getUseDuration(entity) != 0
                 && !entity.getOffhandItem().is(Items.SHIELD);
     }
 
-    public boolean disablesShield(Player player) {
+    public boolean disablesShield(final Player player) {
         return player.getWeaponItem().getItem() instanceof AxeItem;
     }
 
-    private record AttackEntry(Vec3 attackPos, Vec3 targetPos, long time, boolean wasBlocking) {
+    private record AttackEntry(Vec3 attackPos, Vec3 targetPos, long time, boolean wasBlocking) {}
 
-    }
-
-    private record PendingBreak(Player target, int createdTick) {
-
-    }
+    private record PendingBreak(Player target, int createdTick) {}
 
     private static class ShieldCooldownManager {
 
         private final Map<UUID, ShieldCooldown> cooldowns = new ConcurrentHashMap<>();
 
-        public void setCooldown(Player player) {
-            setCooldown(player.getUUID(), 100);
+        public void setCooldown(final Player player) {
+            this.setCooldown(player.getUUID(), 100);
         }
 
-        public void setCooldown(Player player, int ticks) {
-            setCooldown(player.getUUID(), ticks);
+        public void setCooldown(final Player player, final int ticks) {
+            this.setCooldown(player.getUUID(), ticks);
         }
 
-        public void setCooldown(UUID playerUuid) {
-            setCooldown(playerUuid, 100);
+        public void setCooldown(final UUID playerUuid) {
+            this.setCooldown(playerUuid, 100);
         }
 
-        public void setCooldown(UUID playerUuid, int ticks) {
+        public void setCooldown(final UUID playerUuid, final int ticks) {
             if (playerUuid == null) return;
-            cooldowns.put(playerUuid, new ShieldCooldown(Math.max(0, ticks)));
+            this.cooldowns.put(playerUuid, new ShieldCooldown(Math.max(0, ticks)));
         }
 
-        public boolean isCoolingDown(Player player) {
+        public boolean isCoolingDown(final Player player) {
             if (player == null) return false;
-            return isCoolingDown(player.getUUID());
+            return this.isCoolingDown(player.getUUID());
         }
 
-        public boolean isCoolingDown(UUID playerUuid) {
+        public boolean isCoolingDown(final UUID playerUuid) {
             if (playerUuid == null) return false;
-            ShieldCooldown cd = cooldowns.get(playerUuid);
+            final ShieldCooldown cd = this.cooldowns.get(playerUuid);
             return cd != null && cd.getTicks() > 0;
         }
 
-        public int getRemainingTicks(Player player) {
+        public int getRemainingTicks(final Player player) {
             if (player == null) return 0;
-            return getRemainingTicks(player.getUUID());
+            return this.getRemainingTicks(player.getUUID());
         }
 
-        public int getRemainingTicks(UUID playerUuid) {
+        public int getRemainingTicks(final UUID playerUuid) {
             if (playerUuid == null) return 0;
-            ShieldCooldown cd = cooldowns.get(playerUuid);
+            final ShieldCooldown cd = this.cooldowns.get(playerUuid);
             return cd == null ? 0 : Math.max(0, cd.getTicks());
         }
 
-        public void remove(Player player) {
+        public void remove(final Player player) {
             if (player == null) return;
-            remove(player.getUUID());
+            this.remove(player.getUUID());
         }
 
-        public void remove(UUID playerUuid) {
+        public void remove(final UUID playerUuid) {
             if (playerUuid == null) return;
-            cooldowns.remove(playerUuid);
+            this.cooldowns.remove(playerUuid);
         }
 
         public void clear() {
-            cooldowns.clear();
+            this.cooldowns.clear();
         }
 
         public void tick() {
-            Iterator<Map.Entry<UUID, ShieldCooldown>> it = cooldowns.entrySet().iterator();
+            final Iterator<Map.Entry<UUID, ShieldCooldown>> it = this.cooldowns.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry<UUID, ShieldCooldown> e = it.next();
-                ShieldCooldown cd = e.getValue();
+                final Map.Entry<UUID, ShieldCooldown> e = it.next();
+                final ShieldCooldown cd = e.getValue();
                 cd.tick();
                 if (cd.isDone()) it.remove();
             }
@@ -296,22 +292,21 @@ public class WalksyLibShieldStateManager {
         private static final class ShieldCooldown {
             private int ticks;
 
-            public ShieldCooldown(int ticks) {
+            public ShieldCooldown(final int ticks) {
                 this.ticks = Math.max(0, ticks);
             }
 
             public int getTicks() {
-                return ticks;
+                return this.ticks;
             }
 
             public void tick() {
-                if (ticks > 0) ticks--;
+                if (this.ticks > 0) this.ticks--;
             }
 
             public boolean isDone() {
-                return ticks <= 0;
+                return this.ticks <= 0;
             }
         }
     }
-
 }

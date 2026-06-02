@@ -13,14 +13,13 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
 
-
     @Shadow
     @Final
     private Minecraft minecraft;
 
     @ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/world/phys/Vec3;Z)V"))
-    public void modifyGlobalSettings(Args args) {
-        if (this.minecraft.screen instanceof BaseScreen) {
+    public void modifyGlobalSettings(final Args args) {
+        if (this.minecraft.gui.screen() instanceof BaseScreen) {
             args.set(5, 15);
         }
     }

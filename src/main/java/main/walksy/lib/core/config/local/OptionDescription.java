@@ -10,30 +10,30 @@ public class OptionDescription {
     private final BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer;
     private final Supplier<String> textSupplier;
 
-    private OptionDescription(OptionType type, BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer, Supplier<String> textSupplier) {
+    private OptionDescription(final OptionType type, final BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer, final Supplier<String> textSupplier) {
         this.type = type;
         this.renderConsumer = renderConsumer;
         this.textSupplier = textSupplier;
     }
 
-    public static OptionDescription ofRender2D(BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer) {
+    public static OptionDescription ofRender2D(final BiConsumer<GuiGraphicsExtractor, OptionPanel> renderConsumer) {
         return new OptionDescription(OptionType.RENDER, renderConsumer, null);
     }
 
-    public static OptionDescription ofOrderedString(Supplier<String> textSupplier) {
+    public static OptionDescription ofOrderedString(final Supplier<String> textSupplier) {
         return new OptionDescription(OptionType.TEXT, null, textSupplier);
     }
 
     public OptionType getType() {
-        return type;
+        return this.type;
     }
 
     public BiConsumer<GuiGraphicsExtractor, OptionPanel> getRenderConsumer() {
-        return renderConsumer;
+        return this.renderConsumer;
     }
 
     public Supplier<String> getStringSupplier() {
-        return textSupplier;
+        return this.textSupplier;
     }
 
     public enum OptionType {
@@ -43,12 +43,11 @@ public class OptionDescription {
 
     public record OptionPanel(int x, int y, int width, int height) {
         public int endX() {
-            return x + width;
+            return this.x + this.width;
         }
 
-
         public int endY() {
-            return y + height;
+            return this.y + this.height;
         }
     }
 }

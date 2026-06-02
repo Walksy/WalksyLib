@@ -12,15 +12,15 @@ public class NumericalOption<T extends Number> extends OptionBuilder<T, Numerica
     private T max;
     private T increment;
 
-    public NumericalOption(String name, Supplier<T> getter, T defaultOption, Consumer<T> setter) {
+    public NumericalOption(final String name, final Supplier<T> getter, final T defaultOption, final Consumer<T> setter) {
         super(name, getter, defaultOption, setter);
     }
 
-    public static <T extends Number> NumericalOption<T> createBuilder(String name, Supplier<T> getter, T defaultValue, Consumer<T> setter) {
+    public static <T extends Number> NumericalOption<T> createBuilder(final String name, final Supplier<T> getter, final T defaultValue, final Consumer<T> setter) {
         return new NumericalOption<>(name, getter, defaultValue, setter);
     }
 
-    public NumericalOption<T> values(T min, T max, T increment) {
+    public NumericalOption<T> values(final T min, final T max, final T increment) {
         this.min = min;
         this.max = max;
         this.increment = increment;
@@ -29,6 +29,6 @@ public class NumericalOption<T extends Number> extends OptionBuilder<T, Numerica
 
     @Override
     public Option<T> build() {
-        return new Option<>(name, description, getter, setter, availability, availabilityHelp, (Class<T>) getter.get().getClass(), min, max, increment, defaultValue, null, onChange);
+        return new Option<>(this.name, this.description, this.getter, this.setter, this.availability, this.availabilityHelp, (Class<T>) this.getter.get().getClass(), this.min, this.max, this.increment, this.defaultValue, null, this.onChange);
     }
 }

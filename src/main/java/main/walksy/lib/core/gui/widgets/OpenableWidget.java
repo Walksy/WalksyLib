@@ -3,13 +3,11 @@ package main.walksy.lib.core.gui.widgets;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
-import main.walksy.lib.core.renderer.Renderer2D;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.utils.Animation;
 import main.walksy.lib.core.utils.MainColors;
 import main.walksy.lib.core.utils.ScreenGlobals;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.input.MouseButtonEvent;
 
 public abstract class OpenableWidget extends OptionWidget {
@@ -19,67 +17,63 @@ public abstract class OpenableWidget extends OptionWidget {
 
     private final Animation heightAnim;
 
-    public OpenableWidget(OptionGroup parent, WalksyLibConfigScreen screen, Option<?> option, int x, int y, int width, int height, String name, int openedHeight) {
+    public OpenableWidget(final OptionGroup parent, final WalksyLibConfigScreen screen, final Option<?> option, final int x, final int y, final int width, final int height, final String name, final int openedHeight) {
         super(parent, screen, option, x, y, width, height, name);
         this.OPEN_HEIGHT = openedHeight;
         this.heightAnim = new Animation(height, 0.5f);
     }
 
-    public OpenableWidget(OptionGroup parent, WalksyLibConfigScreen screen, Option<?> option, int x, int y, int width, int height, String name) {
+    public OpenableWidget(final OptionGroup parent, final WalksyLibConfigScreen screen, final Option<?> option, final int x, final int y, final int width, final int height, final String name) {
         super(parent, screen, option, x, y, width, height, name);
         this.heightAnim = new Animation(height, 0.5f);
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        heightAnim.update(delta);
-        float currentAnimated = heightAnim.getCurrentValue();
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+        this.heightAnim.update(delta);
+        final float currentAnimated = this.heightAnim.getCurrentValue();
         if (Math.abs(currentAnimated - this.height) >= 1f) {
-            int animHeight = Math.round(currentAnimated);
-            setHeight(animHeight);
-            update();
+            final int animHeight = Math.round(currentAnimated);
+            this.setHeight(animHeight);
+            this.update();
         }
-        context.enableScissor(0, 49, screen.width, screen.height - 28);
-        if (isVisible()) {
-            Renderer2D.renderMiniArrow(
-                    context,
-                    getX() - 8,
-                    getTextYCentered() + (open ? 4 : 5),
+        context.enableScissor(0, 49, this.screen.width, this.screen.height - 28);
+        if (this.isVisible()) {
+            new Graphics(context).renderMiniArrow(
+                    this.getX() - 8,
+                    this.getTextYCentered() + (this.open ? 4 : 5),
                     1,
-                    open ? Renderer2D.ArrowDirection.DOWN : Renderer2D.ArrowDirection.RIGHT,
-                    isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
+                    this.open ? Graphics.ArrowDirection.DOWN : Graphics.ArrowDirection.RIGHT,
+                    this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
             );
         }
         context.disableScissor();
-        if (!heightAnim.isAnimating() && !this.open) {
+        if (!this.heightAnim.isAnimating() && !this.open) {
             this.setHeight(ScreenGlobals.OPTION_HEIGHT);
         }
         super.extractWidgetRenderState(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-
-    }
+    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {}
 
     @Override
-    public void onMouseClick(MouseButtonEvent click, boolean doubled) {
-        if (isHovered() && click.button() == 0) {
-            toggleOpen();
+    public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {
+        if (this.isHovered() && click.button() == 0) {
+            this.toggleOpen();
         }
     }
 
-    public float getCurrentHeight()
-    {
+    public float getCurrentHeight() {
         return this.heightAnim.getCurrentValue();
     }
 
     private void toggleOpen() {
-        boolean prev = open;
-        open = !open;
+        final boolean prev = this.open;
+        this.open = !this.open;
 
-        float target = open ? OPEN_HEIGHT : ScreenGlobals.OPTION_HEIGHT;
-        heightAnim.setTargetValue(target);
+        final float target = this.open ? this.OPEN_HEIGHT : ScreenGlobals.OPTION_HEIGHT;
+        this.heightAnim.setTargetValue(target);
         this.onOpen(prev);
     }
 
@@ -90,6 +84,5 @@ public abstract class OpenableWidget extends OptionWidget {
     protected abstract void onOpen(boolean prevValue);
 
     @Override
-    public void onWidgetUpdate() {
-    }
+    public void onWidgetUpdate() {}
 }
