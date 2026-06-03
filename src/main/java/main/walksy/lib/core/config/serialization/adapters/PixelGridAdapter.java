@@ -8,7 +8,7 @@ import java.lang.reflect.Type;
 public class PixelGridAdapter implements JsonSerializer<PixelGrid>, JsonDeserializer<PixelGrid> {
 
     @Override
-    public JsonElement serialize(final PixelGrid grid, final Type type, final JsonSerializationContext jsonSerializationContext) {
+    public JsonElement serialize(final PixelGrid grid, final Type type, final JsonSerializationContext jsonSerializationextractor) {
         final JsonObject obj = new JsonObject();
         obj.addProperty("width", grid.getWidth());
         obj.addProperty("height", grid.getHeight());
@@ -26,7 +26,7 @@ public class PixelGridAdapter implements JsonSerializer<PixelGrid>, JsonDeserial
     }
 
     @Override
-    public PixelGrid deserialize(final JsonElement jsonElement, final Type type, final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+    public PixelGrid deserialize(final JsonElement jsonElement, final Type type, final JsonDeserializationContext jsonDeserializationextractor) throws JsonParseException {
         final JsonObject obj = jsonElement.getAsJsonObject();
         final int width = obj.get("width").getAsInt();
         final int height = obj.get("height").getAsInt();

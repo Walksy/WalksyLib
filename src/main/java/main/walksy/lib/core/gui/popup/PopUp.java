@@ -37,10 +37,10 @@ public abstract class PopUp {
         this.loaded = true;
     }
 
-    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
-        new Graphics(context).fillRoundedRectOutline((this.parent.width / 2) - (this.width) / 2, (this.parent.height / 2) - (this.height) / 2, this.width, this.height, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        new Graphics(context).fillRoundedRectOutline((this.parent.width / 2) - (this.width / 2) + 1, (this.parent.height / 2) - (this.height / 2) + 1, this.width - 2, this.height - 2, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
-        new Graphics(context).fillRoundedRect((this.parent.width / 2) - (this.width / 2) + 2, (this.parent.height / 2) - (this.height / 2) + 2, this.width - 4, this.height - 4, 2, Color.BLACK.getRGB());
+    public void extract(final Graphics graphics, final double mouseX, final double mouseY, final float delta) {
+        graphics.fillRoundedRectOutline((this.parent.width / 2) - (this.width) / 2, (this.parent.height / 2) - (this.height) / 2, this.width, this.height, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRectOutline((this.parent.width / 2) - (this.width / 2) + 1, (this.parent.height / 2) - (this.height / 2) + 1, this.width - 2, this.height - 2, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
+        graphics.fillRoundedRect((this.parent.width / 2) - (this.width / 2) + 2, (this.parent.height / 2) - (this.height / 2) + 2, this.width - 4, this.height - 4, 2, Color.BLACK.getRGB());
     }
 
     public abstract void onClick(MouseButtonEvent click, boolean doubled);
@@ -50,10 +50,8 @@ public abstract class PopUp {
     public void layout(final int requestedWidth, final int requestedHeight) {
         final int maxWidth = (int) (this.parent.width * 0.98);
         final int maxHeight = (int) (this.parent.height * 0.98);
-
         this.width = Math.min(requestedWidth, maxWidth);
         this.height = Math.min(requestedHeight, maxHeight);
-
         this.x = (this.parent.width / 2) - (this.width / 2);
         this.y = (this.parent.height / 2) - (this.height / 2);
     }

@@ -1,6 +1,7 @@
 package main.walksy.lib.core.gui.popup.impl;
 
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
@@ -90,22 +91,23 @@ public class GridEditorPopUp extends PopUp {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.centeredText(Minecraft.getInstance().font, "Editing Frame: " + this.index, (this.parent.width) / 2, this.y + 8, -1);
-        context.enableScissor(this.x, this.y + 20, this.x + this.width, this.y + this.height - 25);
-        if (this.renderGridOutline(context, this.currentGrid, this.x + 6, (int) (this.y + 21 - this.scroller.getValue()), 16, 2, MainColors.OUTLINE_WHITE.getRGB(), true, mouseX, mouseY)) {
+    public void extract(final Graphics graphics, final double mouseX, final double mouseY, final float delta) {
+        super.extract(graphics, mouseX, mouseY, delta);
+        GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.centeredText(Minecraft.getInstance().font, "Editing Frame: " + this.index, (this.parent.width) / 2, this.y + 8, -1);
+        extractor.enableScissor(this.x, this.y + 20, this.x + this.width, this.y + this.height - 25);
+        if (this.renderGridOutline(extractor, this.currentGrid, this.x + 6, (int) (this.y + 21 - this.scroller.getValue()), 16, 2, MainColors.OUTLINE_WHITE.getRGB(), true, mouseX, mouseY)) {
             this.scroller.active = false;
         }
-        context.disableScissor();
+        extractor.disableScissor();
         this.handleDrag(mouseX, mouseY);
-        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + this.height - 25, MainColors.OUTLINE_WHITE.getRGB());
-        this.doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.undoButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.undoAllButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.clearButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.copyButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.pasteButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        extractor.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + this.height - 25, MainColors.OUTLINE_WHITE.getRGB());
+        this.doneButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.undoButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.undoAllButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.clearButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.copyButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.pasteButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
         this.pasteButton.setEnabled(Clipboard.grid != null);
     }
 
@@ -220,7 +222,7 @@ public class GridEditorPopUp extends PopUp {
         }
     }
 
-    private boolean renderGridOutline(final GuiGraphicsExtractor context, final PixelGrid grid, final int x1, final int y1, final int pixelSize, final int gapSize, final int outlineColor, final boolean markCenter, final double mouseX, final double mouseY) {
+    private boolean renderGridOutline(final GuiGraphicsExtractor extractor, final PixelGrid grid, final int x1, final int y1, final int pixelSize, final int gapSize, final int outlineColor, final boolean markCenter, final double mouseX, final double mouseY) {
         boolean rtrn = true;
         if (markCenter) {
             final int centerX = grid.getWidth() / 2;
@@ -230,28 +232,28 @@ public class GridEditorPopUp extends PopUp {
             final int py = y1 + centerY * (pixelSize + gapSize);
 
             final int centerColor = new Color(255, 100, 100, 100).getRGB();
-            context.fill(px + 1, py + 1, px + pixelSize - 1, py + pixelSize - 1, centerColor);
+            extractor.fill(px + 1, py + 1, px + pixelSize - 1, py + pixelSize - 1, centerColor);
         }
 
         for (int y = 0; y < grid.getHeight(); y++) {
             for (int x = 0; x < grid.getWidth(); x++) {
                 final int px = x1 + x * (pixelSize + gapSize);
                 final int py = y1 + y * (pixelSize + gapSize);
-                if (!context.containsPointInScissor(px, py)) {
+                if (!extractor.containsPointInScissor(px, py)) {
                     rtrn = false;
                 }
 
                 final boolean on = grid.getPixel(x, y);
                 final int fillColor = on ? Color.WHITE.getRGB() : new Color(0, 0, 0, 0).getRGB();
-                context.fill(px + 1, py + 1, px + pixelSize - 1, py + pixelSize - 1, fillColor);
+                extractor.fill(px + 1, py + 1, px + pixelSize - 1, py + pixelSize - 1, fillColor);
 
                 final boolean hovered = mouseX >= px && mouseX < px + pixelSize && mouseY >= py && mouseY < py + pixelSize;
                 final int actualOutlineColor = hovered ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : outlineColor;
 
-                context.fill(px + 1, py, px + pixelSize - 1, py + 1, actualOutlineColor);
-                context.fill(px + 1, py + pixelSize - 1, px + pixelSize - 1, py + pixelSize, actualOutlineColor);
-                context.fill(px, py, px + 1, py + pixelSize, actualOutlineColor);
-                context.fill(px + pixelSize - 1, py, px + pixelSize, py + pixelSize, actualOutlineColor);
+                extractor.fill(px + 1, py, px + pixelSize - 1, py + 1, actualOutlineColor);
+                extractor.fill(px + 1, py + pixelSize - 1, px + pixelSize - 1, py + pixelSize, actualOutlineColor);
+                extractor.fill(px, py, px + 1, py + pixelSize, actualOutlineColor);
+                extractor.fill(px + pixelSize - 1, py, px + pixelSize, py + pixelSize, actualOutlineColor);
             }
         }
         return rtrn;

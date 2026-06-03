@@ -18,7 +18,7 @@ public abstract class SubWidget {
         this.height = height;
     }
 
-    public abstract void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta);
+    public abstract void render(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta);
     public abstract void onClick(MouseButtonEvent click, boolean doubled);
     public abstract void onDrag(int mouseX);
     public void onKeyPress(final KeyEvent input) {}

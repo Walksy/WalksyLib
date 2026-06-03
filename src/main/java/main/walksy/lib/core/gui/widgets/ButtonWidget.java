@@ -71,21 +71,22 @@ public class ButtonWidget extends AbstractWidget {
                     this.active ? new Color(0, 0, 0, 100).getRGB() : new Color(50, 50, 50, 100).getRGB());
         }
 
+        final Graphics g = new Graphics(ctx);
         if (this.outlineColor == -1) {
-            new Graphics(ctx).fillRoundedRectOutline(drawX, drawY, this.width, this.height, 2, 1,
+            g.fillRoundedRectOutline(drawX, drawY, this.width, this.height, 2, 1,
                     this.active
                             ? new Color(255, 255, 255, (this.isHovered() || this.overrideHover)
                             ? MainColors.OUTLINE_WHITE_HOVERED.getAlpha()
                             : MainColors.OUTLINE_WHITE.getAlpha()).getRGB()
                             : new Color(180, 180, 180, 50).getRGB());
         } else {
-            new Graphics(ctx).fillRoundedRectOutline(drawX, drawY, this.width, this.height, 2, 1,
+            g.fillRoundedRectOutline(drawX, drawY, this.width, this.height, 2, 1,
                     this.active
                             ? (this.isHovered() || this.overrideHover ? this.hoveredColor : this.outlineColor)
                             : new Color(180, 180, 180, 50).getRGB());
         }
 
-        new Graphics(ctx).fillRoundedRectOutline(drawX - 1, drawY - 1, this.width + 2, this.height + 2, 2, 1,
+        g.fillRoundedRectOutline(drawX - 1, drawY - 1, this.width + 2, this.height + 2, 2, 1,
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB());
 
         if (this.texture == null && this.grid == null) {
@@ -100,7 +101,7 @@ public class ButtonWidget extends AbstractWidget {
         }
 
         if (this.grid != null) {
-            new Graphics(ctx).renderGridTexture(this.grid, drawX + 3, drawY + 3, 1, 1, false);
+            g.renderGridTexture(this.grid, drawX + 3, drawY + 3, 1, 1, false);
         }
     }
 

@@ -41,18 +41,19 @@ public class LogWidget extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float a) {
         final int offset = 10;
+        final Graphics g = new Graphics(extractor);
 
-        new Graphics(context).fillRoundedRect(
+        g.fillRoundedRect(
                 this.getX(), this.getY() + offset, this.width, this.height, 2,
                 new Color(0, 0, 0, 100).getRGB()
         );
-        new Graphics(context).fillRoundedRectOutline(
+        g.fillRoundedRectOutline(
                 this.getX(), this.getY() + offset, this.width, this.height, 2, 1,
                 MainColors.OUTLINE_BLACK.getRGB()
         );
-        new Graphics(context).fillRoundedRectOutline(
+        g.fillRoundedRectOutline(
                 this.getX() + 1, this.getY() + 1 + offset, this.width - 2, this.height - 2, 2, 1,
                 MainColors.OUTLINE_WHITE.getRGB()
         );
@@ -62,7 +63,7 @@ public class LogWidget extends AbstractWidget {
                 mouseY >= this.getY() + offset &&
                 mouseY <= this.getY() + this.height;
 
-        context.enableScissor(this.getX(), this.getY() + offset + 2, this.getX() + this.width, this.getY() + this.height + 5);
+        extractor.enableScissor(this.getX(), this.getY() + offset + 2, this.getX() + this.width, this.getY() + this.height + 5);
 
         if (!this.logLines.isEmpty()) {
             final Font textRenderer = Minecraft.getInstance().font;
@@ -85,13 +86,13 @@ public class LogWidget extends AbstractWidget {
                 }
 
                 final String entry = MarqueeUtil.get(this.logLines.get(i).getText(), this.width - 10, 10);
-                context.text(textRenderer, entry, this.getX() + 6, y, c, false);
+                extractor.text(textRenderer, entry, this.getX() + 6, y, c, false);
             }
         }
 
-        context.disableScissor();
+        extractor.disableScissor();
 
-        context.centeredText(
+        extractor.centeredText(
                 Minecraft.getInstance().font,
                 this.getMessage(),
                 this.parent.width / 2,

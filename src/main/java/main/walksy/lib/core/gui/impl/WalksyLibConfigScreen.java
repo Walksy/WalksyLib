@@ -34,26 +34,33 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class WalksyLibConfigScreen extends BaseScreen {
-    private final TabManager tabManager = new TabManager(this::addRenderableWidget, this::removeWidget);
-    private final List<OptionGroupWidget> allGroupWidgets = new ArrayList<>();
-    private final List<OptionWidget> allOptionWidgets = new ArrayList<>();
-    private final List<CategoryTab> allTabs = new ArrayList<>();
-    public final Animation scrollAnim = new Animation(0, 0.5F);
+    private final TabManager tabManager;
+    private final List<OptionGroupWidget> allGroupWidgets;
+    private final List<OptionWidget> allOptionWidgets;
+    private final List<CategoryTab> allTabs;
+    public final Animation scrollAnim;
     private final String name;
     private final WalksyLibConfigManager configManager;
     private ScrollableTabWidget tabWidget;
     private ButtonWidget backButton, allModsButton, saveButton, resetButton, undoButton;
     private SearchBarWidget searchBar;
     private Option<?> focusedOption;
+    private Graphics currentGraphicsContext;
     public PopUp popUp = null;
     private int maxScroll = 0;
     public boolean scroll = true;
 
     public WalksyLibConfigScreen(final Screen parent, final ModConfig config, final String title) {
         super(title + " Config Screen", parent);
+        this.tabManager = new TabManager(this::addRenderableWidget, this::removeWidget);
+        this.allGroupWidgets = new ArrayList<>();
+        this.allOptionWidgets = new ArrayList<>();
+        this.allTabs = new ArrayList<>();
+        this.scrollAnim = new Animation(0, 0.5F);
         this.name = title;
         this.configManager = new WalksyLibConfigManager(config);
         this.focusedOption = null;
+        this.currentGraphicsContext = null;
     }
 
     @Override
@@ -115,24 +122,19 @@ public class WalksyLibConfigScreen extends BaseScreen {
     private void initTabs() {
         this.updateScreenGlobals();
         final List<CategoryTab> tabList = new ArrayList<>();
-
         for (final Category category : this.configManager.get().categories()) {
             final List<OptionGroupWidget> groupWidgets = new ArrayList<>();
             int yOffset = 60;
-
             for (final OptionGroup group : category.optionGroups()) {
                 final int groupH = ScreenGlobals.OPTION_HEIGHT;
                 int groupHeight = groupH;
-
                 final OptionGroupWidget groupWidget = new OptionGroupWidget(
                         (this.width - (ScreenGlobals.OPTION_PANEL_ENDX - ScreenGlobals.OPTION_PANEL_STARTX)) / 2,
                         yOffset, 150, groupH, group, this
                 );
-
                 if (group.isExpanded()) {
                     int childY = yOffset + groupH;
                     final List<OptionWidget> children = groupWidget.getChildren();
-
                     for (int i = 0; i < children.size(); i++) {
                         final OptionWidget child = children.get(i);
                         child.setPosition(child.getX(), childY);
@@ -144,29 +146,26 @@ public class WalksyLibConfigScreen extends BaseScreen {
                         }
                     }
                 }
-
                 groupWidget.setHeight(groupHeight);
                 groupWidgets.add(groupWidget);
                 this.allGroupWidgets.add(groupWidget);
                 this.allOptionWidgets.addAll(groupWidget.getChildren());
                 yOffset += groupHeight + 10;
             }
-
             final CategoryTab tab = new CategoryTab(category, groupWidgets);
             tabList.add(tab);
             this.allTabs.add(tab);
         }
-
         this.tabWidget = new ScrollableTabWidget(0, 27, this.width, 24, tabList, this.tabManager, TabLocation.TOP, this);
         this.addRenderableWidget(this.tabWidget);
         this.tabWidget.selectTab(0, true);
     }
 
     public void layoutGroupWidgets() {
-        if (!(this.tabManager.getCurrentTab() instanceof CategoryTab categoryTab)) return;
-
+        if (!(this.tabManager.getCurrentTab() instanceof CategoryTab categoryTab)) {
+            return;
+        }
         final List<OptionGroupWidget> widgets = categoryTab.getOptionGroupWidgets();
-
         int contentYOffset = 60;
         for (final OptionGroupWidget group : widgets) {
             if (!group.visible) {
@@ -219,61 +218,58 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
-    public void extractRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        this.suppressWidgetMouse = this.popUp != null;
-        super.extractRenderState(context, mouseX, mouseY, delta);
-    }
-
-    @Override
     protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {
-        final GuiGraphicsExtractor context = graphics.context();
-        context.horizontalLine(0, this.width, 25, MainColors.OUTLINE_BLACK.getRGB());
-        context.horizontalLine(0, this.width, 26, MainColors.OUTLINE_WHITE.getRGB());
-        context.horizontalLine(0, this.width, this.height - 28, MainColors.OUTLINE_BLACK.getRGB());
-        context.horizontalLine(0, this.width, this.height - 27, MainColors.OUTLINE_WHITE.getRGB());
-        context.centeredText(this.font, this.name, this.width / 2, 12 - this.font.lineHeight / 2, -1);
+        this.currentGraphicsContext = graphics;
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        this.suppressWidgetMouse = this.popUp != null;
+        extractor.horizontalLine(0, this.width, 25, MainColors.OUTLINE_BLACK.getRGB());
+        extractor.horizontalLine(0, this.width, 26, MainColors.OUTLINE_WHITE.getRGB());
+        extractor.horizontalLine(0, this.width, this.height - 28, MainColors.OUTLINE_BLACK.getRGB());
+        extractor.horizontalLine(0, this.width, this.height - 27, MainColors.OUTLINE_WHITE.getRGB());
+        extractor.centeredText(this.font, this.name, this.width / 2, 12 - this.font.lineHeight / 2, -1);
         this.saveButton.setEnabled(this.shouldUndoOptions());
         this.saveButton.setTooltip(!this.saveButton.active ? Tooltip.create(Component.literal("No changes have occurred")) : null);
         this.resetButton.setEnabled(this.shouldResetOptions());
         this.undoButton.setEnabled(this.shouldUndoOptions());
         if (!this.isConfigEmpty()) {
-            this.extractOptionPanel(context, this.focusedOption);
+            this.extractOptionPanel(graphics, this.focusedOption);
         }
         this.scrollAnim.update(this.delta, this::layoutGroupWidgets);
         if (this.isConfigEmpty()) {
-            context.centeredText(this.getFont(), "No Available Options...", this.width / 2, this.height / 2, -1);
+            extractor.centeredText(this.getFont(), "No Available Options...", this.width / 2, this.height / 2, -1);
         }
         if (this.popUp != null) {
-            context.fill(0, 0, this.width, this.height, new Color(0, 0, 0, 100).getRGB());
-            this.popUp.render(context, mouseX, mouseY, this.delta);
+            extractor.fill(0, 0, this.width, this.height, new Color(0, 0, 0, 100).getRGB());
+            this.popUp.extract(graphics, mouseX, mouseY, this.delta);
         }
     }
 
 
-    private void extractOptionPanel(final GuiGraphicsExtractor context, final Option<?> option) {
+    private void extractOptionPanel(final Graphics graphics, final Option<?> option) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
         final int startX = ScreenGlobals.OPTION_PANEL_STARTX;
         final int startY = ScreenGlobals.OPTION_PANEL_STARTY;
         final int endX = ScreenGlobals.OPTION_PANEL_ENDX;
         final int endY = ScreenGlobals.OPTION_PANEL_ENDY;
-        new Graphics(context).fillRoundedRect(startX, startY, endX, endY, 2, new Color(0, 0, 0, 100).getRGB());
-        new Graphics(context).fillRoundedRectOutline(startX, startY - 1, endX, endY, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
-        new Graphics(context).fillRoundedRectOutline(startX - 1, startY - 2, endX, endY + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRect(startX, startY, endX, endY, 2, new Color(0, 0, 0, 100).getRGB());
+        graphics.fillRoundedRectOutline(startX, startY - 1, endX, endY, 2, 1, MainColors.OUTLINE_WHITE.getRGB());
+        graphics.fillRoundedRectOutline(startX - 1, startY - 2, endX, endY + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         if (option != null) {
-            this.renderOptionInfo(context, option, startX, startY, endX, endY);
+            this.extractOptionInfo(extractor, option, startX, startY, endX, endY);
         }
         if (this.popUp != null) {
             this.popUp.layout(this.popUp.width, this.popUp.height);
         }
     }
 
-    private void renderOptionInfo(final GuiGraphicsExtractor context, final Option<?> option, final int startX, final int startY, final int endX, final int endY) {
+    private void extractOptionInfo(final GuiGraphicsExtractor extractor, final Option<?> option, final int startX, final int startY, final int endX, final int endY) {
         final List<FormattedText> nameLines = this.font.splitIgnoringLanguage(Component.literal(option.getName()), endX - startX - 20);
         final int lineSpacing = 2;
         final int totalNameHeight = (nameLines.size() * this.font.lineHeight) + ((nameLines.size() - 1) * lineSpacing);
         final int nameStartY = 66 - (totalNameHeight / 2) + 4;
         final int nameYBias = nameLines.size() > 1 ? 4 : 0;
         for (int i = 0; i < nameLines.size(); i++) {
-            context.centeredText(this.font,
+            extractor.centeredText(this.font,
                     nameLines.get(i).getString(),
                     (startX + endX) / 2,
                     nameStartY + (i * (this.font.lineHeight + lineSpacing)) + nameYBias,
@@ -281,29 +277,29 @@ public class WalksyLibConfigScreen extends BaseScreen {
             );
         }
         final int separatorY = nameStartY + totalNameHeight + 4;
-        context.horizontalLine(startX + 1, endX, separatorY, MainColors.OUTLINE_WHITE.getRGB());
+        extractor.horizontalLine(startX + 1, endX, separatorY, MainColors.OUTLINE_WHITE.getRGB());
         final OptionDescription desc = option.getDescription();
         if (desc == null) {
-            context.centeredText(this.font, "No Description", (startX + endX) / 2, separatorY + 8, -1);
+            extractor.centeredText(this.font, "No Description", (startX + endX) / 2, separatorY + 8, -1);
             return;
         }
         switch (desc.getType()) {
-            case TEXT -> this.renderTextDescription(context, desc, startX, endX, separatorY);
+            case TEXT -> this.extractTextDescription(extractor, desc, startX, endX, separatorY);
             case RENDER -> {
-                context.enableScissor(startX, startY, startX + endX, startY + endY);
-                desc.getRenderConsumer().accept(context, new OptionDescription.OptionPanel(startX, startY, endX, endY));
-                context.disableScissor();
+                extractor.enableScissor(startX, startY, startX + endX, startY + endY);
+                desc.getRenderConsumer().accept(extractor, new OptionDescription.OptionPanel(startX, startY, endX, endY));
+                extractor.disableScissor();
             }
         }
     }
 
-    private void renderTextDescription(final GuiGraphicsExtractor context, final OptionDescription desc, final int startX, final int endX, final int separatorY) {
+    private void extractTextDescription(final GuiGraphicsExtractor extractor, final OptionDescription desc, final int startX, final int endX, final int separatorY) {
         final List<FormattedText> lines = this.font.splitIgnoringLanguage(
                 Component.literal(desc.getStringSupplier().get()), endX - startX - 10
         );
         int descY = separatorY + 8;
         for (final FormattedText line : lines) {
-            context.text(
+            extractor.text(
                     this.font,
                     line.getString(),
                     startX + ((endX - startX) - this.font.width(line)) / 2,
@@ -453,7 +449,9 @@ public class WalksyLibConfigScreen extends BaseScreen {
 
     public void showWidgetsForCategory(final Category category) {
         final CategoryTab selected = (CategoryTab) this.tabManager.getCurrentTab();
-        if (selected == null || !selected.getCategory().name().equalsIgnoreCase(category.name())) return;
+        if (selected == null || !selected.getCategory().name().equalsIgnoreCase(category.name())) {
+            return;
+        }
         this.tabWidget.updateVisibleWidgetsForTab(selected);
         this.scrollAnim.setTargetValue(0);
     }
@@ -587,7 +585,7 @@ public class WalksyLibConfigScreen extends BaseScreen {
         return ScreenGlobals.OPTION_HEIGHT;
     }
 
-    public WalksyLibConfigManager getConfigManager() {
-        return this.configManager;
+    public Graphics currentGraphicsContext() {
+        return this.currentGraphicsContext;
     }
 }

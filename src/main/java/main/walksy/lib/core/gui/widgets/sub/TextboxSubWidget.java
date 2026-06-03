@@ -44,7 +44,7 @@ public class TextboxSubWidget extends SubWidget {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+    public void render(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
         if (!this.field.isVisible()) return;
 
         this.hovered = mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
@@ -55,24 +55,24 @@ public class TextboxSubWidget extends SubWidget {
         final int color = (this.hovered || this.field.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB();
 
         if (text.isEmpty() && !this.field.isFocused()) {
-            context.text(tr, "...", this.x + 3, this.y + (tr.lineHeight) / 2, Color.GRAY.getRGB(), true);
+            extractor.text(tr, "...", this.x + 3, this.y + (tr.lineHeight) / 2, Color.GRAY.getRGB(), true);
             return;
         }
 
         final var accessor = (EditBoxAccessor) this.field;
 
-        if (this.field.isFocused() && (this.parent.upTime % 20) < 10) {
+        if (this.field.isFocused() && (this.parent.getUpTime() % 20) < 10) {
             final int cursor = Mth.clamp(this.field.getCursorPosition() - accessor.getDisplayPosition(), 0, text.length());
             final String visible = tr.plainSubstrByWidth(text.substring(accessor.getDisplayPosition()), this.field.getInnerWidth());
             final int caretX = this.x + 4 + tr.width(visible.substring(0, Mth.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
-            context.verticalLine(caretX, this.y + tr.lineHeight / 2 - 2, this.y + tr.lineHeight + 4, -1);
+            extractor.verticalLine(caretX, this.y + tr.lineHeight / 2 - 2, this.y + tr.lineHeight + 4, -1);
         }
 
         if (this.centered) {
             final String trimmed = tr.plainSubstrByWidth(text, this.field.getInnerWidth());
-            context.text(tr, trimmed, this.x + this.width / 2 - tr.width(trimmed) / 2, this.y + 1 + tr.lineHeight / 2, color);
+            extractor.text(tr, trimmed, this.x + this.width / 2 - tr.width(trimmed) / 2, this.y + 1 + tr.lineHeight / 2, color);
         } else {
-            context.text(tr, text, this.x + 3 - scrollOffset, this.y + 1 + tr.lineHeight / 2, color, true);
+            extractor.text(tr, text, this.x + 3 - scrollOffset, this.y + 1 + tr.lineHeight / 2, color, true);
         }
 
         final int textX = this.x + 4 - scrollOffset;
@@ -90,7 +90,7 @@ public class TextboxSubWidget extends SubWidget {
         if (visibleSelectionStart != visibleSelectionEnd) {
             final int highlightStartX = textX + tr.width(visibleText.substring(0, visibleSelectionStart));
             final int highlightEndX = textX + tr.width(visibleText.substring(0, visibleSelectionEnd));
-            this.drawSelectionHighlight(context, highlightStartX - 1, textY - 1, highlightEndX - 1, textY + 9);
+            this.drawSelectionHighlight(extractor, highlightStartX - 1, textY - 1, highlightEndX - 1, textY + 9);
         }
     }
 
@@ -152,7 +152,7 @@ public class TextboxSubWidget extends SubWidget {
         this.field.setValue(text);
     }
 
-    private void drawSelectionHighlight(final GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
+    private void drawSelectionHighlight(final GuiGraphicsExtractor extractor, int x1, int y1, int x2, int y2) {
         if (x1 < x2) {
             final int i = x1;
             x1 = x2;
@@ -168,6 +168,6 @@ public class TextboxSubWidget extends SubWidget {
         if (x2 > this.x + this.width) x2 = this.x + this.width;
         if (x1 > this.x + this.width) x1 = this.x + this.width;
 
-        context.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, -16776961);
+        extractor.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, -16776961);
     }
 }

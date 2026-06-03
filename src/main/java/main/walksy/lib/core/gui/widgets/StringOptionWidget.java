@@ -2,6 +2,7 @@ package main.walksy.lib.core.gui.widgets;
 
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.TextboxSubWidget;
 import main.walksy.lib.core.utils.MainColors;
@@ -24,9 +25,10 @@ public class StringOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        context.verticalLine(this.getWidth() - 33 - this.textbox.getScrollOffset(), this.getY(), this.getY() + this.height - 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        this.textbox.render(context, mouseX, mouseY, delta);
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.verticalLine(this.getWidth() - 33 - this.textbox.getScrollOffset(), this.getY(), this.getY() + this.height - 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        this.textbox.render(extractor, mouseX, mouseY, delta);
         this.textbox.hovered = this.isHovered();
     }
 

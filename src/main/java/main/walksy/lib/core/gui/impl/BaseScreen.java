@@ -34,13 +34,13 @@ public class BaseScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+    public void extractRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
         this.delta = delta;
         final int renderMouseX = this.suppressWidgetMouse ? 0 : mouseX;
         final int renderMouseY = this.suppressWidgetMouse ? 0 : mouseY;
         this.suppressWidgetMouse = false;
-        super.extractRenderState(context, renderMouseX, renderMouseY, delta);
-        this.extract(new Graphics(context), mouseX, mouseY);
+        super.extractRenderState(extractor, renderMouseX, renderMouseY, delta);
+        this.extract(new Graphics(extractor), mouseX, mouseY);
     }
 
     protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {}

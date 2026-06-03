@@ -55,15 +55,16 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        super.draw(context, mouseX, mouseY, delta);
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        super.extract(graphics, mouseX, mouseY, delta);
         this.animationSpeedSlider.setOnChange(this.option.getValue()::setAnimationSpeed);
         this.frameSize.setOnChange(this.option.getValue()::setSize);
         if (this.option.getValue().getOffsetX() != -1 && this.option.getValue().getOffsetY() != -1) {
-            this.editHudButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            this.editHudButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
         }
 
-        context.verticalLine(
+        extractor.verticalLine(
                 this.getX() + this.getWidth() - 38,
                 this.getY(),
                 this.getY() + ScreenGlobals.OPTION_HEIGHT - 1,
@@ -71,18 +72,18 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         );
 
         if (!this.fullyClosed()) {
-            this.viewFrames.extractWidgetRenderState(context, mouseX, mouseY, delta);
-            this.editFrameButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
-            this.animationSpeedSlider.render(context, mouseX, mouseY, delta);
-            this.frameSize.render(context, mouseX, mouseY, delta);
+            this.viewFrames.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
+            this.editFrameButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
+            this.animationSpeedSlider.render(extractor, mouseX, mouseY, delta);
+            this.frameSize.render(extractor, mouseX, mouseY, delta);
             this.screen.scroll = !this.isHoveredFrameSelector();
-            context.horizontalLine(
+            extractor.horizontalLine(
                     this.getX() + 1,
                     this.getX() + this.getWidth() - 2,
                     this.getY() + ScreenGlobals.OPTION_HEIGHT - 1,
                     this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
             );
-            context.centeredText(
+            extractor.centeredText(
                     this.screen.getFont(),
                     "Frame " + this.frameToReplace + " Grid",
                     this.getWidth() - 40,
@@ -90,15 +91,15 @@ public class PixelGridAnimationWidget extends OpenableWidget {
                     -1
             );
 
-            context.text(this.screen.getFont(), "Animation Speed", this.getX() + 75, this.getY() + 28, Color.LIGHT_GRAY.getRGB(), true);
-            context.text(this.screen.getFont(), "Size", this.getX() + 75, this.getY() + 58, Color.LIGHT_GRAY.getRGB(), true);
+            extractor.text(this.screen.getFont(), "Animation Speed", this.getX() + 75, this.getY() + 28, Color.LIGHT_GRAY.getRGB(), true);
+            extractor.text(this.screen.getFont(), "Size", this.getX() + 75, this.getY() + 58, Color.LIGHT_GRAY.getRGB(), true);
 
-            context.pose().pushMatrix();
+            extractor.pose().pushMatrix();
             final float scale = 0.6F;
-            context.pose().scale(scale, scale);
+            extractor.pose().scale(scale, scale);
 
             if (this.viewingGrid != null) {
-                new Graphics(context).renderGridOutline(
+                graphics.renderGridOutline(
                         this.viewingGrid,
                         (int) ((this.getWidth() - 78) / scale),
                         (int) ((this.getY() + 37) / scale),
@@ -109,12 +110,12 @@ public class PixelGridAnimationWidget extends OpenableWidget {
                 );
             }
 
-            context.pose().popMatrix();
-            this.drawScrollableFrameSelector(context, mouseX, mouseY, delta);
+            extractor.pose().popMatrix();
+            this.drawScrollableFrameSelector(extractor, mouseX, mouseY, delta);
         }
 
         if (this.option.getValue().getCurrentFrame() != null) {
-            new Graphics(context).renderGridTexture(
+            graphics.renderGridTexture(
                     this.option.getValue().getCurrentFrame(),
                     (this.getWidth() - 10),
                     this.getY() + 3,
@@ -128,9 +129,9 @@ public class PixelGridAnimationWidget extends OpenableWidget {
     private boolean draggingScroller = false;
     private int dragOffsetY = 0;
 
-    private void drawScrollableFrameSelector(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        context.verticalLine(this.getX() + 60, this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.getY() + this.getHeight() - 1, MainColors.OUTLINE_WHITE.getRGB());
-        context.verticalLine(this.getX() + 65, this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.getY() + this.getHeight() - 1, MainColors.OUTLINE_WHITE.getRGB());
+    private void drawScrollableFrameSelector(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
+        extractor.verticalLine(this.getX() + 60, this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.getY() + this.getHeight() - 1, MainColors.OUTLINE_WHITE.getRGB());
+        extractor.verticalLine(this.getX() + 65, this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.getY() + this.getHeight() - 1, MainColors.OUTLINE_WHITE.getRGB());
 
         final int trackHeight = this.getHeight() - ScreenGlobals.OPTION_HEIGHT;
         final int contentHeight = this.buttonFrames.size() * 23;
@@ -139,15 +140,15 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         final int handleY = this.getY() + ScreenGlobals.OPTION_HEIGHT - 1
                 + (int) (this.scroller.getValue() * (trackHeight - handleHeight) / Math.max(1, contentHeight - trackHeight));
 
-        context.fill(this.getX() + 61, handleY + 1, this.getX() + 65, handleY + handleHeight, new Color(210, 210, 210).getRGB());
+        extractor.fill(this.getX() + 61, handleY + 1, this.getX() + 65, handleY + handleHeight, new Color(210, 210, 210).getRGB());
 
-        context.enableScissor(this.getX(), this.getY() + ScreenGlobals.OPTION_HEIGHT, this.getX() + 60, this.getY() + this.OPEN_HEIGHT - 1);
+        extractor.enableScissor(this.getX(), this.getY() + ScreenGlobals.OPTION_HEIGHT, this.getX() + 60, this.getY() + this.OPEN_HEIGHT - 1);
         for (final ButtonWidget btn : this.buttonFrames) {
             btn.hovered = this.isHoveredFrameSelector();
             btn.scrollY = (float) this.scroller.getValue();
-            btn.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            btn.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
         }
-        context.disableScissor();
+        extractor.disableScissor();
     }
 
     @Override

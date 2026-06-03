@@ -40,8 +40,8 @@ public class OptionGroupWidget extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
-        context.enableScissor(0, 49, this.parent.width, this.parent.height - 28);
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float a) {
+        extractor.enableScissor(0, 49, this.parent.width, this.parent.height - 28);
         final Minecraft client = Minecraft.getInstance();
         final Font textRenderer = client.font;
 
@@ -53,7 +53,7 @@ public class OptionGroupWidget extends AbstractWidget {
         final int hoverPadding = 58;
         final int hoverHeight = fontHeight + 4;
 
-        this.isHovered = context.containsPointInScissor(mouseX, mouseY)
+        this.isHovered = extractor.containsPointInScissor(mouseX, mouseY)
                 && mouseY >= this.getY() - 2 && mouseY < this.getY() - 2 + hoverHeight
                 && mouseX >= centerX - (textWidth / 2 + hoverPadding)
                 && mouseX < centerX + (textWidth / 2 + hoverPadding);
@@ -72,9 +72,10 @@ public class OptionGroupWidget extends AbstractWidget {
         final int textStartX = textCenterX - textWidth / 2;
         final int textEndX = textCenterX + textWidth / 2;
 
-        context.horizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
-        context.horizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
-        new Graphics(context).renderMiniArrow(
+        final Graphics graphics = this.parent.currentGraphicsContext();
+        extractor.horizontalLine(textStartX - 50, textStartX - 8, midY - 1, bgColor);
+        extractor.horizontalLine(textStartX - 50, textStartX - 8, midY, bgColor);
+        graphics.renderMiniArrow(
                 textStartX - 50 - 5,
                 midY - (this.group.isExpanded() ? 1 : 0),
                 1F,
@@ -82,9 +83,9 @@ public class OptionGroupWidget extends AbstractWidget {
                 bgColor
         );
 
-        context.horizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
-        context.horizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
-        new Graphics(context).renderMiniArrow(
+        extractor.horizontalLine(textEndX + 5, textEndX + 50, midY - 1, bgColor);
+        extractor.horizontalLine(textEndX + 5, textEndX + 50, midY, bgColor);
+        graphics.renderMiniArrow(
                 textEndX + 50 + 6,
                 midY - (this.group.isExpanded() ? 1 : 0),
                 1F,
@@ -94,7 +95,7 @@ public class OptionGroupWidget extends AbstractWidget {
 
         if (ScreenGlobals.DEBUG) {
             this.renderDebug(
-                    context,
+                    extractor,
                     centerX - (textWidth / 2 + hoverPadding),
                     this.getY() - 2,
                     centerX + (textWidth / 2 + hoverPadding),
@@ -102,15 +103,15 @@ public class OptionGroupWidget extends AbstractWidget {
             );
         }
 
-        context.text(textRenderer, text, this.getX() - textWidth / 2, this.getY(), bgColor);
-        context.disableScissor();
+        extractor.text(textRenderer, text, this.getX() - textWidth / 2, this.getY(), bgColor);
+        extractor.disableScissor();
     }
 
     @Override
     protected void updateWidgetNarration(final NarrationElementOutput output) {}
 
-    private void renderDebug(final GuiGraphicsExtractor context, final int x1, final int y1, final int x2, final int y2) {
-        context.fill(x1, y1, x2, y2, 0xAAFFFFFF);
+    private void renderDebug(final GuiGraphicsExtractor extractor, final int x1, final int y1, final int x2, final int y2) {
+        extractor.fill(x1, y1, x2, y2, 0xAAFFFFFF);
     }
 
     public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {

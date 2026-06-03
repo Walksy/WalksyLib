@@ -2,6 +2,7 @@ package main.walksy.lib.core.gui.popup.impl;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.callback.WalksyLibDropCallback;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
 import main.walksy.lib.core.gui.popup.PopUp;
@@ -53,34 +54,27 @@ public class TextureDropPopUp extends PopUp {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
-        super.render(context, mouseX, mouseY, delta);
-
-        context.centeredText(this.parent.getFont(), this.subText, this.x + this.width / 2, this.y + 10, -1);
-        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + 23, MainColors.OUTLINE_WHITE.getRGB());
-
+    public void extract(final Graphics graphics, final double mouseX, final double mouseY, final float delta) {
+        super.extract(graphics, mouseX, mouseY, delta);
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.centeredText(this.parent.getFont(), this.subText, this.x + this.width / 2, this.y + 10, -1);
+        extractor.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + 23, MainColors.OUTLINE_WHITE.getRGB());
         if (this.selectedTexture != null) {
             final TextureManager textureManager = Minecraft.getInstance().getTextureManager();
             final DynamicTexture nativeTexture = (DynamicTexture) textureManager.getTexture(this.selectedTexture);
-
             if (nativeTexture != null) {
                 final NativeImage image = nativeTexture.getPixels();
                 if (image != null) {
                     final int imgW = image.getWidth();
                     final int imgH = image.getHeight();
-
                     final int maxWidth = this.width - 40;
                     final int maxHeight = this.height - 100;
-
                     final float scale = Math.min((float) maxWidth / imgW, (float) maxHeight / imgH);
-
                     final int scaledWidth = Math.round(imgW * scale);
                     final int scaledHeight = Math.round(imgH * scale);
-
                     final int drawX = this.x + this.width / 2 - scaledWidth / 2;
                     final int drawY = this.y + this.height / 2 - scaledHeight / 2;
-
-                    context.blit(
+                    extractor.blit(
                             RenderPipelines.GUI_TEXTURED,
                             this.selectedTexture,
                             drawX,
@@ -95,10 +89,10 @@ public class TextureDropPopUp extends PopUp {
                 }
             }
         } else {
-            context.centeredText(this.parent.getFont(), "Drop a .png image file", this.x + this.width / 2, this.y + this.height / 2, CommonColors.GRAY);
+            extractor.centeredText(this.parent.getFont(), "Drop a .png image file", this.x + this.width / 2, this.y + this.height / 2, CommonColors.GRAY);
         }
 
-        this.doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        this.doneButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
     }
 
     @Override
@@ -110,11 +104,9 @@ public class TextureDropPopUp extends PopUp {
         final File file = new File(filePath);
         WalksyLibLogger.info("File dropped: " + filePath);
         if (!file.exists() || !file.isFile()) return;
-
         String name = file.getName();
         final String trueName = name;
         final String lowerName = name.toLowerCase();
-
         if (!lowerName.matches(".*\\.(png|jpg|jpeg|bmp|webp|gif)$")) {
             WalksyLibLogger.err("Unsupported file extension: " + name);
             return;
@@ -125,32 +117,25 @@ public class TextureDropPopUp extends PopUp {
                 WalksyLibLogger.err("Dropped file is 0 bytes. It might still be downloading!");
                 return;
             }
-
             final byte[] fileBytes = Files.readAllBytes(file.toPath());
-
             final int dotIndex = name.lastIndexOf('.');
             if (dotIndex > 0) {
                 name = name.substring(0, dotIndex);
             }
             name = name.toLowerCase().replaceAll("[^a-z0-9._-]", "_");
-
             final NativeImage image = this.loadFlexibleImage(fileBytes);
             if (image == null) {
                 WalksyLibLogger.err("Failed to decode image data for: " + trueName);
                 return;
             }
-
             final DynamicTexture texture = new DynamicTexture(() -> filePath, image);
             final String dynamicId = "dropped/" + name;
             final Identifier textureId = Identifier.fromNamespaceAndPath("walksylib", dynamicId);
-
             Minecraft.getInstance().getTextureManager().release(textureId);
             Minecraft.getInstance().getTextureManager().register(textureId, texture);
-
             final Path destDir = WalksyLibConfigManager.getCachedImageDir();
             final Path destPath = destDir.resolve(trueName);
             Files.copy(file.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
-
             this.selectedTexture = textureId;
             this.fileName = trueName;
 

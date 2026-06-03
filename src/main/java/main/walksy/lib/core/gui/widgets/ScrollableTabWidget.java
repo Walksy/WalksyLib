@@ -145,7 +145,7 @@ public class ScrollableTabWidget extends AbstractWidget {
         ctx.pose().pushMatrix();
 
         final double offsetX = 0;
-        int fadeAlpha = (int) ((Math.sin((this.parent.upTime % 60) / 60.0 * 2 * Math.PI) * 0.5 + 0.5) * 255.0);
+        int fadeAlpha = (int) ((Math.sin((this.parent.getUpTime() % 60) / 60.0 * 2 * Math.PI) * 0.5 + 0.5) * 255.0);
         fadeAlpha = Math.min(Math.max(fadeAlpha, 0), 255);
 
         if (offset != MaxOffset.RIGHT) {

@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public interface WalksyLibConfig {
 
-    Map<Class<? extends WalksyLibConfig>, ModConfig> CACHE = new ConcurrentHashMap<>();
+    public static Map<Class<? extends WalksyLibConfig>, ModConfig> CACHE = new ConcurrentHashMap<>();
 
     ModConfig define();
 

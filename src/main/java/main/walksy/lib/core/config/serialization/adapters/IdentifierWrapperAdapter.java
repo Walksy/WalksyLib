@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
 public class IdentifierWrapperAdapter implements JsonSerializer<IdentifierWrapper>, JsonDeserializer<IdentifierWrapper> {
 
     @Override
-    public JsonElement serialize(final IdentifierWrapper src, final Type typeOfSrc, final JsonSerializationContext context) {
+    public JsonElement serialize(final IdentifierWrapper src, final Type typeOfSrc, final JsonSerializationContext extractor) {
         final JsonObject obj = new JsonObject();
         obj.addProperty("id", src.getIdentifier().toString());
         obj.addProperty("fileName", src.getFileName());
@@ -17,7 +17,7 @@ public class IdentifierWrapperAdapter implements JsonSerializer<IdentifierWrappe
     }
 
     @Override
-    public IdentifierWrapper deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+    public IdentifierWrapper deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext extractor) throws JsonParseException {
         final JsonObject obj = json.getAsJsonObject();
 
         final Identifier id = Identifier.tryParse(obj.get("id").getAsString());

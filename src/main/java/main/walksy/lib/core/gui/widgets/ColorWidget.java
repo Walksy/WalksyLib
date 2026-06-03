@@ -104,8 +104,9 @@ public class ColorWidget extends OpenableWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        super.draw(context, mouseX, mouseY, delta);
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        super.extract(graphics, mouseX, mouseY, delta);
         this.pulseSpeedSlider.setOnChange(this.option.getValue()::setPulseSpeed);
         this.chromaSpeedSlider.setOnChange(this.option.getValue()::setRainbowSpeed);
         this.COLOR_PICKER_STARTX = (this.getX() + this.getWidth()) / 2;
@@ -114,26 +115,26 @@ public class ColorWidget extends OpenableWidget {
         this.satThumbYAnim.update(delta);
         this.hueThumbYAnim.update(delta);
         this.opacityThumbYAnim.update(delta);
-        new Graphics(context).drawRoundedTexture(RenderPipelines.GUI_TEXTURED, TRANSPARENT_BACKGROUND, this.getWidth() - 15, this.getY() + 4, 23, baseHeight - 8, 2, 4, 4);
-        new Graphics(context).fillRoundedRectOutline(this.getWidth() - 16, this.getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        new Graphics(context).fillRoundedRect(this.getWidth() - 15, this.getY() + 4, 23, baseHeight - 8, 2, this.option.getValue().getRGB());
+        graphics.drawRoundedTexture(RenderPipelines.GUI_TEXTURED, TRANSPARENT_BACKGROUND, this.getWidth() - 15, this.getY() + 4, 23, baseHeight - 8, 2, 4, 4);
+        graphics.fillRoundedRectOutline(this.getWidth() - 16, this.getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRect(this.getWidth() - 15, this.getY() + 4, 23, baseHeight - 8, 2, this.option.getValue().getRGB());
 
-        this.hexInput.render(context, mouseX, mouseY, delta);
+        this.hexInput.render(extractor, mouseX, mouseY, delta);
 
         if (this.fullyClosed()) {
-            context.verticalLine(this.getX() + this.getWidth() - 38, this.getY(), this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+            extractor.verticalLine(this.getX() + this.getWidth() - 38, this.getY(), this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
         } else if (this.getCurrentHeight() > 34) {
-            this.drawHueSlider(context);
-            this.drawSaturationBox(context);
-            this.drawOpacitySlider(context);
+            this.drawHueSlider(graphics);
+            this.drawSaturationBox(graphics);
+            this.drawOpacitySlider(graphics);
             this.chromaButton.overrideHover = this.option.getValue().isRainbow();
             this.pulseButton.overrideHover = this.option.getValue().isPulse();
-            this.chromaButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
-            this.pulseButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
-            this.chromaSpeedSlider.render(context, mouseX, mouseY, delta);
-            this.pulseSpeedSlider.render(context, mouseX, mouseY, delta);
+            this.chromaButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
+            this.pulseButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
+            this.chromaSpeedSlider.render(extractor, mouseX, mouseY, delta);
+            this.pulseSpeedSlider.render(extractor, mouseX, mouseY, delta);
 
-            context.text(
+            extractor.text(
                     Minecraft.getInstance().font,
                     "Rainbow Speed",
                     this.getX() + 32,
@@ -142,7 +143,7 @@ public class ColorWidget extends OpenableWidget {
                     true
             );
 
-            context.text(
+            extractor.text(
                     Minecraft.getInstance().font,
                     "Pulse Speed",
                     this.getX() + 32,
@@ -153,44 +154,44 @@ public class ColorWidget extends OpenableWidget {
         }
     }
 
-    public void drawSatThumb(final GuiGraphicsExtractor context, final int x, final int y) {
-        new Graphics(context).fillRoundedRectOutline(x, y, 6, 6, 1, 1, Color.BLACK.getRGB());
-        new Graphics(context).fillRoundedRectOutline(x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
+    public void drawSatThumb(final Graphics graphics, final int x, final int y) {
+        graphics.fillRoundedRectOutline(x, y, 6, 6, 1, 1, Color.BLACK.getRGB());
+        graphics.fillRoundedRectOutline(x + 1, y + 1, 4, 4, 1, 1, MainColors.OUTLINE_WHITE.getRGB());
     }
 
-    public void drawSliderThumb(final GuiGraphicsExtractor context, final int x, final int y) {
-        new Graphics(context).fillRoundedRectOutline(x, y, 9, 3, 1, 1, Color.BLACK.getRGB());
+    public void drawSliderThumb(final Graphics graphics, final int x, final int y) {
+        graphics.fillRoundedRectOutline(x, y, 9, 3, 1, 1, Color.BLACK.getRGB());
     }
 
-    public void drawOpacitySlider(final GuiGraphicsExtractor context) {
+    public void drawOpacitySlider(final Graphics graphics) {
         final int opacityHeight = this.getHeight() - 30 + 8;
-        new Graphics(context).fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 34, this.getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        new Graphics(context).fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 33, this.getY() + 20, 13, opacityHeight - 2, 2, 1, this.isHoveringOpacitySlider(this.mouseX, this.mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        new Graphics(context).drawRoundedTexture(RenderPipelines.GUI_TEXTURED, TRANSPARENT_BACKGROUND, this.COLOR_PICKER_STARTX - 32, this.getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
+        graphics.fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 34, this.getY() + 19, 15, opacityHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 33, this.getY() + 20, 13, opacityHeight - 2, 2, 1, this.isHoveringOpacitySlider(this.mouseX, this.mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        graphics.drawRoundedTexture(RenderPipelines.GUI_TEXTURED, TRANSPARENT_BACKGROUND, this.COLOR_PICKER_STARTX - 32, this.getY() + 21, 11, opacityHeight - 4, 2, 4, 4);
         final WalksyLibColor color = new WalksyLibColor(this.option.getValue().getRed(), this.option.getValue().getGreen(), this.option.getValue().getBlue(), 255);
         final WalksyLibColor colorG = new WalksyLibColor(this.option.getValue().getRed(), this.option.getValue().getGreen(), this.option.getValue().getBlue(), 0);
-        new Graphics(context).fillRoundedRectGradient(this.COLOR_PICKER_STARTX - 32, this.getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
+        graphics.fillRoundedRectGradient(this.COLOR_PICKER_STARTX - 32, this.getY() + 21, 11, opacityHeight - 4, 2, color.getRGB(), colorG.getRGB());
 
         final int opacitySliderX = this.COLOR_PICKER_STARTX - 34;
-        this.drawSliderThumb(context, opacitySliderX + 3, (int) this.opacityThumbYAnim.getCurrentValue() + 1);
+        this.drawSliderThumb(graphics, opacitySliderX + 3, (int) this.opacityThumbYAnim.getCurrentValue() + 1);
     }
 
-    public void drawHueSlider(final GuiGraphicsExtractor context) {
+    public void drawHueSlider(final Graphics graphics) {
         final int hueHeight = this.getHeight() - 30 + 8;
-        new Graphics(context).fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 17, this.getY() + 19, 15, hueHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        new Graphics(context).fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 16, this.getY() + 20, 13, hueHeight - 2, 2, 1, this.isHoveringHueSlider(this.mouseX, this.mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        new Graphics(context).drawRoundedHueSlider(this.COLOR_PICKER_STARTX - 15, this.getY() + 21, 11, hueHeight - 4, 2);
+        graphics.fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 17, this.getY() + 19, 15, hueHeight, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRectOutline(this.COLOR_PICKER_STARTX - 16, this.getY() + 20, 13, hueHeight - 2, 2, 1, this.isHoveringHueSlider(this.mouseX, this.mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        graphics.drawRoundedHueSlider(this.COLOR_PICKER_STARTX - 15, this.getY() + 21, 11, hueHeight - 4, 2);
 
         final int hueSliderX = this.COLOR_PICKER_STARTX - 17;
 
-        this.drawSliderThumb(context, hueSliderX + 3, (int) this.hueThumbYAnim.getCurrentValue() + 1);
+        this.drawSliderThumb(graphics, hueSliderX + 3, (int) this.hueThumbYAnim.getCurrentValue() + 1);
     }
 
-    public void drawSaturationBox(final GuiGraphicsExtractor context) {
-        new Graphics(context).fillRoundedRectOutline(this.COLOR_PICKER_STARTX, this.getY() + 19, this.getWidth() - this.COLOR_PICKER_STARTX + 9, this.getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        new Graphics(context).fillRoundedRectOutline(this.COLOR_PICKER_STARTX + 1, this.getY() + 20, this.getWidth() - this.COLOR_PICKER_STARTX + 7, this.getHeight() - 28 + 6 - 2, 2, 1, this.isHoveringSaturationValueBox(this.mouseX, this.mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        new Graphics(context).drawHueSaturationValueBox(this.COLOR_PICKER_STARTX + 2, this.getY() + 21, this.getWidth() - this.COLOR_PICKER_STARTX + 5, this.getHeight() - 28 + 6 - 4, 2, this.option.getValue().getHue());
-        this.drawSatThumb(context, (int) this.satThumbXAnim.getCurrentValue() + 1, (int) this.satThumbYAnim.getCurrentValue());
+    public void drawSaturationBox(final Graphics graphics) {
+        graphics.fillRoundedRectOutline(this.COLOR_PICKER_STARTX, this.getY() + 19, this.getWidth() - this.COLOR_PICKER_STARTX + 9, this.getHeight() - 28 + 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRectOutline(this.COLOR_PICKER_STARTX + 1, this.getY() + 20, this.getWidth() - this.COLOR_PICKER_STARTX + 7, this.getHeight() - 28 + 6 - 2, 2, 1, this.isHoveringSaturationValueBox(this.mouseX, this.mouseY) ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        graphics.drawHueSaturationValueBox(this.COLOR_PICKER_STARTX + 2, this.getY() + 21, this.getWidth() - this.COLOR_PICKER_STARTX + 5, this.getHeight() - 28 + 6 - 4, 2, this.option.getValue().getHue());
+        this.drawSatThumb(graphics, (int) this.satThumbXAnim.getCurrentValue() + 1, (int) this.satThumbYAnim.getCurrentValue());
     }
 
     public boolean isHoveringHueSlider(final double mouseX, final double mouseY) {
@@ -382,7 +383,6 @@ public class ColorWidget extends OpenableWidget {
         final int boxY = this.getY() + 20;
         final int boxWidth = this.getWidth() - this.COLOR_PICKER_STARTX + 9;
         final int boxHeight = this.getHeight() - 29 + 6;
-
         final float newSaturation = (float) ((mouseX - boxX) / (double) boxWidth);
         final float newBrightness = 1f - (float) ((mouseY - boxY) / (double) boxHeight);
 

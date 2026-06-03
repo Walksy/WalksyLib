@@ -23,12 +23,13 @@ public class ButtonOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
         this.hoveredButton = mouseX >= this.getWidth() - 30 && mouseX <= this.getWidth() - 30 + 38 &&
                 mouseY >= this.getY() + 3 && mouseY <= this.getY() + 3 + this.getHeight() - 6;
-        new Graphics(context).fillRoundedRectOutline(this.getWidth() - 31, this.getY() + 2, 40, this.getHeight() - 4, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        new Graphics(context).fillRoundedRectOutline(this.getWidth() - 30, this.getY() + 3, 38, this.getHeight() - 6, 2, 1, this.hoveredButton ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        context.text(this.screen.getFont(), "Press", this.getWidth() - 29 + (38 - this.screen.getFont().width("Press")) / 2, this.getTextYCentered() + 1, -1, true);
+        graphics.fillRoundedRectOutline(this.getWidth() - 31, this.getY() + 2, 40, this.getHeight() - 4, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRectOutline(this.getWidth() - 30, this.getY() + 3, 38, this.getHeight() - 6, 2, 1, this.hoveredButton ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        extractor.text(this.screen.getFont(), "Press", this.getWidth() - 29 + (38 - this.screen.getFont().width("Press")) / 2, this.getTextYCentered() + 1, -1, true);
     }
 
     @Override

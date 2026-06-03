@@ -25,7 +25,8 @@ public class EnumOptionWidget<E extends Enum<E>> extends OptionWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
         final int rectX = this.getWidth() - 30 - this.maxWidth;
         final int rectY = this.getY() + 3;
         final int rectWidth = this.maxWidth + 38;
@@ -33,16 +34,16 @@ public class EnumOptionWidget<E extends Enum<E>> extends OptionWidget {
 
         final boolean hovered = this.isHoveringEnum(mouseX, mouseY);
 
-        new Graphics(context).fillRoundedRectOutline(rectX - 1, rectY - 1, rectWidth + 2, rectHeight + 2, 2, 1,
+        graphics.fillRoundedRectOutline(rectX - 1, rectY - 1, rectWidth + 2, rectHeight + 2, 2, 1,
                 hovered ? MainColors.OUTLINE_BLACK.getRGB() : new Color(0, 0, 0, 100).getRGB());
 
-        new Graphics(context).fillRoundedRectOutline(rectX, rectY, rectWidth, rectHeight, 2, 1,
+        graphics.fillRoundedRectOutline(rectX, rectY, rectWidth, rectHeight, 2, 1,
                 hovered ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
 
         final Font textRenderer = Minecraft.getInstance().font;
         final int textPos = (int) (rectY + (rectHeight / 2f) - textRenderer.lineHeight / 2f) + 1;
 
-        context.centeredText(
+        extractor.centeredText(
                 textRenderer,
                 this.option.getValue().name(),
                 (int) (rectX + rectWidth / 2f),

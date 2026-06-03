@@ -45,46 +45,40 @@ public abstract class OptionWidget extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        if (!this.isVisible()) return;
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
+        if (!this.isVisible()) {
+            return;
+        }
         this.mouseX = mouseX;
         this.mouseY = mouseY;
-
-        this.isHovered = (mouseX >= this.getX() && mouseX < (this.getX() + this.getWidth())
-                && mouseY >= this.getY() && mouseY < (this.getY() + this.getHeight()));
-
+        this.isHovered = (mouseX >= this.getX() && mouseX < (this.getX() + this.getWidth()) && mouseY >= this.getY() && mouseY < (this.getY() + this.getHeight()));
         if (this.isHovered) {
             this.screen.setFocusedOption(this.option);
         }
-
         final int scissorX1 = 0;
         final int scissorY1 = 49;
         final int scissorX2 = this.screen.width;
         final int scissorY2 = this.screen.height - 28;
-
-        if (this.getX() + this.getWidth() < scissorX1 || this.getX() > scissorX2
-                || this.getY() + this.getHeight() < scissorY1 || this.getY() > scissorY2) {
+        if (this.getX() + this.getWidth() < scissorX1 || this.getX() > scissorX2 || this.getY() + this.getHeight() < scissorY1 || this.getY() > scissorY2) {
             return;
         }
-
-        context.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
-
-        this.renderBase(context);
-
+        final Graphics graphics = this.screen.currentGraphicsContext();
+        extractor.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
+        graphics.fillRoundedRectOutline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), 2, 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
+        graphics.fillRoundedRectOutline(this.getX() - 1, this.getY() - 1, this.getWidth() + 2, this.getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        extractor.text(this.screen.getFont(), this.option.getName(), this.getX() + 5, this.getTextYCentered() + 1, -1);
         this.resetButton.setEnabled(this.option.hasChanged() && this.isAvailable());
-        this.resetButton.extractWidgetRenderState(context, mouseX, mouseY, delta);
-        context.enableScissor(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight() - 1);
-        this.draw(context, this.isAvailable() ? mouseX : 0, this.isAvailable() ? mouseY : 0, delta);
-        context.disableScissor();
-        this.drawOutsideScissor(context, this.isAvailable() ? mouseX : 0, this.isAvailable() ? mouseY : 0, delta);
-
+        this.resetButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
+        extractor.enableScissor(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight() - 1);
+        this.extract(graphics, this.isAvailable() ? mouseX : 0, this.isAvailable() ? mouseY : 0, delta);
+        extractor.disableScissor();
         if (!this.isAvailable()) {
-            new Graphics(context).fillRoundedRect(this.getX() - 1, this.getY() - 1, this.getWidth() + 2, this.getHeight() + 2, 2, new Color(0, 0, 0, 180).getRGB());
+            graphics.fillRoundedRect(this.getX() - 1, this.getY() - 1, this.getWidth() + 2, this.getHeight() + 2, 2, new Color(0, 0, 0, 180).getRGB());
             if (this.isHovered) {
-                context.setTooltipForNextFrame(Component.literal(this.option.getAvailabilityHelper()), mouseX, mouseY);
+                extractor.setTooltipForNextFrame(Component.literal(this.option.getAvailabilityHelper()), mouseX, mouseY);
             }
         }
-        context.disableScissor();
+        extractor.disableScissor();
     }
 
     public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {}
@@ -102,33 +96,16 @@ public abstract class OptionWidget extends AbstractWidget {
 
     public abstract void onWidgetUpdate();
 
-    public abstract void draw(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta);
+    public abstract void extract(Graphics graphics, int mouseX, int mouseY, float delta);
 
-    public void drawOutsideScissor(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {}
-
-    private void renderBase(final GuiGraphicsExtractor context) {
-        new Graphics(context).fillRoundedRectOutline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), 2, 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        new Graphics(context).fillRoundedRectOutline(this.getX() - 1, this.getY() - 1, this.getWidth() + 2, this.getHeight() + 2, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
-        this.renderName(context);
-    }
 
     public boolean isAvailable() {
         return this.option.isAvailable();
     }
 
-    protected void renderName(final GuiGraphicsExtractor context) {
-        context.text(this.screen.getFont(), this.option.getName(), this.getX() + 5, this.getTextYCentered() + 1, -1);
-    }
-
     protected void handleResetButtonClick() {
         this.option.reset();
         this.onThirdPartyChange(this.option.getDefaultValue());
-    }
-
-    protected void renderHoverBackground(final GuiGraphicsExtractor context, final int hoverLeft, final int hoverRight) {
-        if (this.isHovered()) {
-            context.fill(hoverLeft, this.getY(), hoverRight, this.getY() + this.getHeight(), 0x64FFFFFF);
-        }
     }
 
     protected int getTextYCentered() {

@@ -32,31 +32,31 @@ public class HudEditorScreen extends BaseScreen {
 
     @Override
     protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {
-        final GuiGraphicsExtractor context = graphics.context();
-        context.centeredText(this.font, "Currently Editing: " + this.hudOption.getName(), this.width / 2, 10, -1);
-        context.centeredText(this.font, "(ESC to leave)", this.width / 2, 20, Color.GRAY.getRGB());
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.centeredText(this.font, "Currently Editing: " + this.hudOption.getName(), this.width / 2, 10, -1);
+        extractor.centeredText(this.font, "(ESC to leave)", this.width / 2, 20, Color.GRAY.getRGB());
 
         if (!(this.hudOption.getValue() instanceof PixelGridAnimation pixelGridAnimation)) {
             return;
         }
 
         if (this.minecraft.level == null) {
-            context.fill(0, 0, this.width, this.height, Color.BLACK.getRGB());
-            context.blitSprite(
+            extractor.fill(0, 0, this.width, this.height, Color.BLACK.getRGB());
+            extractor.blitSprite(
                     RenderPipelines.GUI_TEXTURED,
                     CROSSHAIR_TEXTURE,
-                    (context.guiWidth() - 15) / 2,
-                    (context.guiHeight() - 15) / 2,
+                    (extractor.guiWidth() - 15) / 2,
+                    (extractor.guiHeight() - 15) / 2,
                     15,
                     15
             );
         }
-        pixelGridAnimation.render(context, false);
+        pixelGridAnimation.render(extractor, false);
         if (!this.dragging) {
             final Vec2 pos = pixelGridAnimation.getAbsolutePosition();
             final float size = pixelGridAnimation.getSize();
-            context.pose().pushMatrix();
-            context.pose().scale(size, size);
+            extractor.pose().pushMatrix();
+            extractor.pose().scale(size, size);
             graphics.renderGridOutline(
                     pixelGridAnimation.getCurrentFrame(),
                     (int) Math.round(pos.x / size),
@@ -64,7 +64,7 @@ public class HudEditorScreen extends BaseScreen {
                     1,
                     0
             );
-            context.pose().popMatrix();
+            extractor.pose().popMatrix();
         }
     }
 

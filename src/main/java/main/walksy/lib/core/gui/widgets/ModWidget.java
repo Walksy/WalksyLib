@@ -32,7 +32,7 @@ public class ModWidget extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float a) {
         final boolean bl = this.mod.hasConfig();
         final boolean bl2 = this.mod.getOverridableConfigScreen(this.parent) != null;
         final int outlineColor;
@@ -41,8 +41,8 @@ public class ModWidget extends AbstractWidget {
         } else {
             outlineColor = this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
         }
-
-        new Graphics(context).fillRoundedRectOutline_ModWidget(
+        Graphics graphics = new Graphics(extractor);
+        graphics.fillRoundedRectOutline_ModWidget(
                 this.getX(),
                 this.getY(),
                 this.width,
@@ -51,8 +51,7 @@ public class ModWidget extends AbstractWidget {
                 1,
                 outlineColor
         );
-
-        new Graphics(context).fillRoundedRectOutline_ModWidget(
+        graphics.fillRoundedRectOutline_ModWidget(
                 this.getX() - 1,
                 this.getY() - 1,
                 this.width + 2,
@@ -62,7 +61,7 @@ public class ModWidget extends AbstractWidget {
                 this.active ? new Color(0, 0, 0, 191).getRGB() : new Color(30, 30, 30, 120).getRGB()
         );
 
-        context.text(
+        extractor.text(
                 Minecraft.getInstance().font,
                 this.mod.getContainer().getMetadata().getName(),
                 this.getX() + 38,
@@ -70,8 +69,7 @@ public class ModWidget extends AbstractWidget {
                 -1,
                 true
         );
-
-        context.blit(
+        extractor.blit(
                 RenderPipelines.GUI_TEXTURED,
                 this.mod.getModIcon(),
                 this.getX() + 1,
@@ -83,7 +81,6 @@ public class ModWidget extends AbstractWidget {
                 32,
                 32
         );
-
         if (this.isHovered()) {
             final String modDescription = this.mod.getContainer().getMetadata().getDescription();
 

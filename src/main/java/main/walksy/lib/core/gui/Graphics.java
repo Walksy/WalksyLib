@@ -21,17 +21,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
-public class Graphics {
-
-    private final GuiGraphicsExtractor extractor;
-
-    public Graphics(final GuiGraphicsExtractor extractor) {
-        this.extractor = extractor;
-    }
-
-    public GuiGraphicsExtractor context() {
-        return this.extractor;
-    }
+public record Graphics(GuiGraphicsExtractor extractor) {
 
     public void drawRoundedTexture(
             final RenderPipeline pipeline,

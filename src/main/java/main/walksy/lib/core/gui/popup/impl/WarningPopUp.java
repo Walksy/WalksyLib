@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.popup.impl;
 
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
@@ -24,41 +25,39 @@ public class WarningPopUp extends PopUp {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.pose().pushMatrix();
+    public void extract(final Graphics graphics, final double mouseX, final double mouseY, final float delta) {
+        super.extract(graphics, mouseX, mouseY, delta);
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.pose().pushMatrix();
         final float scale = 1.5F;
-        context.pose().scale(scale, scale);
-        context.centeredText(
+        extractor.pose().scale(scale, scale);
+        extractor.centeredText(
                 this.parent.getFont(),
                 this.title,
                 (int) ((this.parent.width / 2) / scale),
                 (int) ((this.y + 11) / scale),
                 -1
         );
-        context.pose().popMatrix();
-
-        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
-
+        extractor.pose().popMatrix();
+        extractor.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + 30, MainColors.OUTLINE_WHITE.getRGB());
         final List<net.minecraft.util.FormattedCharSequence> orderedTexts = this.parent.getFont().split(Component.literal(this.subText), this.width - 20);
         final List<ClientTooltipComponent> tooltipComponents = orderedTexts.stream().map(ClientTooltipComponent::create).toList();
         final int totalTextHeight = tooltipComponents.stream()
                 .mapToInt(tc -> tc.getHeight(this.parent.getFont()))
                 .sum();
         int yOffset = this.y + (this.height / 2) - (totalTextHeight / 2);
-
         for (final ClientTooltipComponent tooltipComponent : tooltipComponents) {
             final int lineHeight = tooltipComponent.getHeight(this.parent.getFont());
             tooltipComponent.extractText(
-                    context,
+                    extractor,
                     this.parent.getFont(),
                     (this.x + (this.width / 2)) - tooltipComponent.getWidth(this.parent.getFont()) / 2,
                     yOffset
             );
             yOffset += lineHeight;
         }
-        this.yesButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.noButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        this.yesButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.noButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
     }
 
     @Override

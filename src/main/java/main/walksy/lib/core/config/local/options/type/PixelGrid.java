@@ -24,15 +24,17 @@ public class PixelGrid {
         }
     }
 
-    public void render(final GuiGraphicsExtractor context, final Supplier<Point> position, final boolean blend) {
+    public void render(final GuiGraphicsExtractor extractor, final Supplier<Point> position, final boolean blend) {
         if (position == null || (position.get().x == -1) && (position.get().y == -1)) {
             return;
         }
-        new Graphics(context).renderGridTexture(this, position.get().x, position.get().y, 1, 0, blend);
+        final Graphics g = new Graphics(extractor);
+        g.renderGridTexture(this, position.get().x, position.get().y, 1, 0, blend);
     }
 
-    public void render(final GuiGraphicsExtractor context, final float x, final float y, final boolean blend) {
-        new Graphics(context).renderGridTexture(this, x, y, 1, 0, blend);
+    public void render(final GuiGraphicsExtractor extractor, final float x, final float y, final boolean blend) {
+        final Graphics g = new Graphics(extractor);
+        g.renderGridTexture(this, x, y, 1, 0, blend);
     }
 
     public boolean getPixel(final int x, final int y) {

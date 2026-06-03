@@ -52,17 +52,18 @@ public class BooleanWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        if (ScreenGlobals.DEBUG) this.renderDebug(context);
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        if (ScreenGlobals.DEBUG) this.renderDebug(extractor);
 
-        new Graphics(context).fillRoundedRect(this.getWidth() - 16, this.getY() + 3, 25, this.getHeight() - 6, 2, new Color(255, 255, 255, 20).getRGB());
-        new Graphics(context).fillRoundedRectOutline(this.getWidth() - 16, this.getY() + 3, 25, this.getHeight() - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRect(this.getWidth() - 16, this.getY() + 3, 25, this.getHeight() - 6, 2, new Color(255, 255, 255, 20).getRGB());
+        graphics.fillRoundedRectOutline(this.getWidth() - 16, this.getY() + 3, 25, this.getHeight() - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
 
         this.toggleAnim.update(delta);
         final int color = this.option.getValue() ? Color.WHITE.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
         final float animX = this.toggleAnim.getCurrentValue();
 
-        new Graphics(context).fillRoundedRect(animX, this.getY() + 4, 14, this.getHeight() - 8, 2, color);
+        graphics.fillRoundedRect(animX, this.getY() + 4, 14, this.getHeight() - 8, 2, color);
     }
 
     @Override
@@ -90,8 +91,8 @@ public class BooleanWidget extends OptionWidget {
     @Override
     public void playDownSound(final SoundManager soundManager) {}
 
-    private void renderDebug(final GuiGraphicsExtractor context) {
-        context.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), new Color(255, 255, 255, 150).getRGB());
+    private void renderDebug(final GuiGraphicsExtractor extractor) {
+        extractor.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), new Color(255, 255, 255, 150).getRGB());
     }
 
     @Override

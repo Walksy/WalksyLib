@@ -69,18 +69,18 @@ public class APIScreen extends BaseScreen {
 
     @Override
     protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {
-        final GuiGraphicsExtractor context = graphics.context();
-        context.horizontalLine(0, this.width, 25, MainColors.OUTLINE_BLACK.getRGB());
-        context.horizontalLine(0, this.width, 26, MainColors.OUTLINE_WHITE.getRGB());
-        context.centeredText(this.font, "WalksyLib API Screen", this.width / 2, 12 - this.font.lineHeight / 2, -1);
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.horizontalLine(0, this.width, 25, MainColors.OUTLINE_BLACK.getRGB());
+        extractor.horizontalLine(0, this.width, 26, MainColors.OUTLINE_WHITE.getRGB());
+        extractor.centeredText(this.font, "WalksyLib API Screen", this.width / 2, 12 - this.font.lineHeight / 2, -1);
         if (!this.viewingMods()) {
-            this.logWidget.extractRenderState(context, mouseX, mouseY, this.delta);
+            this.logWidget.extractRenderState(extractor, mouseX, mouseY, this.delta);
         } else {
             if (this.modWidgets.isEmpty()) {
-                context.centeredText(this.font, "No Mods", this.width / 2, this.height / 2, -1);
+                extractor.centeredText(this.font, "No Mods", this.width / 2, this.height / 2, -1);
             }
             for (final ModWidget widget : this.modWidgets) {
-                widget.extractRenderState(context, mouseX, mouseY, this.delta);
+                widget.extractRenderState(extractor, mouseX, mouseY, this.delta);
             }
         }
     }

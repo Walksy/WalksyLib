@@ -43,18 +43,19 @@ public class SearchBarWidget extends EditBox {
     }
 
     @Override
-    public void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float a) {
+    public void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float a) {
         if (this.isVisible()) {
-            new Graphics(context).fillRoundedRect(this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, 2, MainColors.OUTLINE_BLACK.getRGB());
+            final Graphics g = this.parent.currentGraphicsContext();
+            g.fillRoundedRect(this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, 2, MainColors.OUTLINE_BLACK.getRGB());
 
             int color = this.isHovered ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB();
             if (this.isFocused()) {
                 color = Color.WHITE.getRGB();
             }
-            new Graphics(context).fillRoundedRectOutline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), 2, 1, color);
+            g.fillRoundedRectOutline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), 2, 1, color);
 
             if (this.getValue().isEmpty() && !this.isFocused()) {
-                context.text(
+                extractor.text(
                         this.parent.getFont(),
                         "Search...",
                         this.getX() + 3,
@@ -64,8 +65,8 @@ public class SearchBarWidget extends EditBox {
                 );
             }
 
-            if (this.isFocused() && (this.parent.upTime % 20) < 10) {
-                context.verticalLine(
+            if (this.isFocused() && (this.parent.getUpTime() % 20) < 10) {
+                extractor.verticalLine(
                         (this.getX() + 4) + this.parent.getFont().width(this.getValue()),
                         this.getY() + ((this.parent.getFont().lineHeight) / 2) - 2,
                         this.getY() + ((this.parent.getFont().lineHeight)) + 4,
@@ -73,7 +74,7 @@ public class SearchBarWidget extends EditBox {
                 );
             }
 
-            context.text(
+            extractor.text(
                     this.parent.getFont(),
                     this.getValue(),
                     this.getX() + 3,
@@ -101,7 +102,7 @@ public class SearchBarWidget extends EditBox {
                 final int highlightTop = textY - 1;
                 final int highlightBottom = textY + 9;
 
-                this.drawSelectionHighlight(context, highlightStartX - 1, highlightTop, highlightEndX - 1, highlightBottom);
+                this.drawSelectionHighlight(extractor, highlightStartX - 1, highlightTop, highlightEndX - 1, highlightBottom);
             }
         }
     }
@@ -128,7 +129,7 @@ public class SearchBarWidget extends EditBox {
         return result;
     }
 
-    private void drawSelectionHighlight(final GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
+    private void drawSelectionHighlight(final GuiGraphicsExtractor extractor, int x1, int y1, int x2, int y2) {
         if (x1 < x2) {
             final int i = x1;
             x1 = x2;
@@ -143,6 +144,6 @@ public class SearchBarWidget extends EditBox {
         if (x2 > this.getX() + this.width) x2 = this.getX() + this.width;
         if (x1 > this.getX() + this.width) x1 = this.getX() + this.width;
 
-        context.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, -16776961);
+        extractor.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, -16776961);
     }
 }

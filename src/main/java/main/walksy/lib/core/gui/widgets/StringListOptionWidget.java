@@ -2,6 +2,7 @@ package main.walksy.lib.core.gui.widgets;
 
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.widgets.sub.TextboxSubWidget;
 import main.walksy.lib.core.utils.MainColors;
@@ -33,9 +34,10 @@ public class StringListOptionWidget extends OptionWidget {
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        this.addButton.extractRenderState(context, mouseX, mouseY, delta);
-        context.horizontalLine(
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        this.addButton.extractRenderState(extractor, mouseX, mouseY, delta);
+        extractor.horizontalLine(
                 this.getX() + 1,
                 this.getX() + this.getWidth() - 2,
                 this.getY() + ScreenGlobals.OPTION_HEIGHT - 1,
@@ -43,7 +45,7 @@ public class StringListOptionWidget extends OptionWidget {
         );
         if (this.option.getValue().isEmpty()) {
             final int cX = this.getWidth() / 2;
-            context.centeredText(
+            extractor.centeredText(
                     this.screen.getFont(),
                     "No Entries",
                     cX + this.screen.getFont().width("No Entries") / 2,
@@ -56,10 +58,10 @@ public class StringListOptionWidget extends OptionWidget {
             final TextboxSubWidget textBox = this.textboxes.get(i);
             final int width = this.screen.getFont().width(String.valueOf(i + 1));
             final int off = -1;
-            context.text(this.screen.getFont(), String.valueOf(i + 1), this.getX() + 5, textBox.getPos().y + 6 + off, -1, true);
-            context.verticalLine(this.getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
-            textBox.render(context, mouseX, mouseY, delta);
-            this.removeButtons.get(i).extractRenderState(context, mouseX, mouseY, delta);
+            extractor.text(this.screen.getFont(), String.valueOf(i + 1), this.getX() + 5, textBox.getPos().y + 6 + off, -1, true);
+            extractor.verticalLine(this.getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
+            textBox.render(extractor, mouseX, mouseY, delta);
+            this.removeButtons.get(i).extractRenderState(extractor, mouseX, mouseY, delta);
         }
     }
 

@@ -11,12 +11,12 @@ import java.util.List;
 public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimation>, JsonDeserializer<PixelGridAnimation> {
 
     @Override
-    public JsonElement serialize(final PixelGridAnimation src, final Type typeOfSrc, final JsonSerializationContext context) {
+    public JsonElement serialize(final PixelGridAnimation src, final Type typeOfSrc, final JsonSerializationContext extractor) {
         final JsonObject obj = new JsonObject();
         final JsonArray frames = new JsonArray();
 
         for (final PixelGrid frame : src.getFrames()) {
-            frames.add(context.serialize(frame));
+            frames.add(extractor.serialize(frame));
         }
 
         obj.add("frames", frames);
@@ -32,13 +32,13 @@ public class PixelGridAnimationAdapter implements JsonSerializer<PixelGridAnimat
     }
 
     @Override
-    public PixelGridAnimation deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+    public PixelGridAnimation deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext extractor) throws JsonParseException {
         final JsonObject obj = json.getAsJsonObject();
         final JsonArray frameArray = obj.getAsJsonArray("frames");
 
         final List<PixelGrid> frames = new ArrayList<>();
         for (final JsonElement elem : frameArray) {
-            frames.add(context.deserialize(elem, PixelGrid.class));
+            frames.add(extractor.deserialize(elem, PixelGrid.class));
         }
 
         final PixelGridAnimation animation = new PixelGridAnimation(frames);

@@ -3,6 +3,7 @@ package main.walksy.lib.core.gui.popup.impl;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import main.walksy.lib.core.config.local.options.type.PixelGridAnimation;
+import main.walksy.lib.core.gui.impl.BaseScreen;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.popup.PopUp;
 import main.walksy.lib.core.gui.widgets.ButtonWidget;
@@ -137,15 +138,16 @@ public class FrameManagerPopUp extends PopUp {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor context, final double mouseX, final double mouseY, final float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.enableScissor(this.x, this.y + 2, this.x + this.width, this.y + this.height - 25);
+    public void extract(final Graphics graphics, final double mouseX, final double mouseY, final float delta) {
+        super.extract(graphics, mouseX, mouseY, delta);
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        extractor.enableScissor(this.x, this.y + 2, this.x + this.width, this.y + this.height - 25);
         for (final ButtonWidget btn : this.buttons) {
             btn.scrollY = (float) this.scroller.getValue();
             if (btn.getMessage().getString().equals("-")) {
                 btn.setEnabled(this.option.getValue().getFrames().size() != 1);
             }
-            btn.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+            btn.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
         }
 
         final List<PixelGrid> frames = this.option.getValue().getFrames();
@@ -154,7 +156,7 @@ public class FrameManagerPopUp extends PopUp {
             if (index >= 0 && index < frames.size()) {
                 final PixelGrid grid = frames.get(index);
                 final Point pos = entry.getValue();
-                new Graphics(context).renderGridTexture(grid,
+                graphics.renderGridTexture(grid,
                         pos.x - 1,
                         (int) (pos.y - 6 - this.scroller.getValue()),
                         2, 0,
@@ -162,11 +164,11 @@ public class FrameManagerPopUp extends PopUp {
                 );
             }
         }
-        context.disableScissor();
-        context.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + this.height - 25, MainColors.OUTLINE_WHITE.getRGB());
-        this.doneButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.undoButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
-        this.undoAllButton.extractRenderState(context, (int) mouseX, (int) mouseY, delta);
+        extractor.disableScissor();
+        extractor.horizontalLine(this.x + 2, this.x + this.width - 3, this.y + this.height - 25, MainColors.OUTLINE_WHITE.getRGB());
+        this.doneButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.undoButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
+        this.undoAllButton.extractRenderState(extractor, (int) mouseX, (int) mouseY, delta);
     }
 
     @Override

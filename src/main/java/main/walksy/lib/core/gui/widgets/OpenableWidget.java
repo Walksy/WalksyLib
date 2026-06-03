@@ -23,13 +23,8 @@ public abstract class OpenableWidget extends OptionWidget {
         this.heightAnim = new Animation(height, 0.5f);
     }
 
-    public OpenableWidget(final OptionGroup parent, final WalksyLibConfigScreen screen, final Option<?> option, final int x, final int y, final int width, final int height, final String name) {
-        super(parent, screen, option, x, y, width, height, name);
-        this.heightAnim = new Animation(height, 0.5f);
-    }
-
     @Override
-    protected void extractWidgetRenderState(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
+    protected void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
         this.heightAnim.update(delta);
         final float currentAnimated = this.heightAnim.getCurrentValue();
         if (Math.abs(currentAnimated - this.height) >= 1f) {
@@ -37,9 +32,10 @@ public abstract class OpenableWidget extends OptionWidget {
             this.setHeight(animHeight);
             this.update();
         }
-        context.enableScissor(0, 49, this.screen.width, this.screen.height - 28);
+        extractor.enableScissor(0, 49, this.screen.width, this.screen.height - 28);
         if (this.isVisible()) {
-            new Graphics(context).renderMiniArrow(
+            final Graphics g = this.screen.currentGraphicsContext();
+            g.renderMiniArrow(
                     this.getX() - 8,
                     this.getTextYCentered() + (this.open ? 4 : 5),
                     1,
@@ -47,15 +43,15 @@ public abstract class OpenableWidget extends OptionWidget {
                     this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB()
             );
         }
-        context.disableScissor();
+        extractor.disableScissor();
         if (!this.heightAnim.isAnimating() && !this.open) {
             this.setHeight(ScreenGlobals.OPTION_HEIGHT);
         }
-        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        super.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
     }
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {}
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {}
 
     @Override
     public void onMouseClick(final MouseButtonEvent click, final boolean doubled) {

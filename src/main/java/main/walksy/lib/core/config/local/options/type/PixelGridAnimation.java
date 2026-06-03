@@ -54,18 +54,18 @@ public class PixelGridAnimation implements Tickable {
         this.hasPlayedOnce = false;
     }
 
-    public void render(final GuiGraphicsExtractor context, final boolean blend) {
+    public void render(final GuiGraphicsExtractor extractor, final boolean blend) {
         final Vec2 pos = this.getAbsolutePosition();
-        this.render(context, pos.x, pos.y, blend);
+        this.render(extractor, pos.x, pos.y, blend);
     }
 
-    public void render(final GuiGraphicsExtractor context, final float x, final float y, final boolean blend) {
+    public void render(final GuiGraphicsExtractor extractor, final float x, final float y, final boolean blend) {
         final PixelGrid frame = this.getCurrentFrame();
         if (frame != null) {
-            context.pose().pushMatrix();
-            context.pose().scale(this.size, this.size);
-            frame.render(context, x / this.size, y / this.size, blend);
-            context.pose().popMatrix();
+            extractor.pose().pushMatrix();
+            extractor.pose().scale(this.size, this.size);
+            frame.render(extractor, x / this.size, y / this.size, blend);
+            extractor.pose().popMatrix();
         }
     }
 

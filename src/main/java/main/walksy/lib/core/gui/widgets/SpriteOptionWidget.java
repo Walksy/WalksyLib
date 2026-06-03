@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.config.local.Option;
 import main.walksy.lib.core.config.local.options.groups.OptionGroup;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.popup.impl.TextureDropPopUp;
 import main.walksy.lib.core.utils.IdentifierWrapper;
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
@@ -42,8 +43,9 @@ public class SpriteOptionWidget extends OptionWidget {
 
 
     @Override
-    public void draw(final GuiGraphicsExtractor context, final int mouseX, final int mouseY, final float delta) {
-        this.editTextureButton.extractRenderState(context, mouseX, mouseY, delta);
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        final GuiGraphicsExtractor extractor = graphics.extractor();
+        this.editTextureButton.extractRenderState(extractor, mouseX, mouseY, delta);
         if (this.image == null) return;
 
         final int padding = 6;
@@ -56,10 +58,10 @@ public class SpriteOptionWidget extends OptionWidget {
         final float drawX = this.getX() + this.getWidth() - this.visibleWidth * scaleX - padding;
         final float drawY = this.getY() + (this.getHeight() - this.visibleHeight * scaleY) / 2f;
 
-        context.pose().pushMatrix();
-        context.pose().scale(scaleX, scaleY);
+        extractor.pose().pushMatrix();
+        extractor.pose().scale(scaleX, scaleY);
 
-        context.blit(
+        extractor.blit(
                 RenderPipelines.GUI_TEXTURED,
                 this.option.getValue().getIdentifier(),
                 (int) (drawX / scaleX),
@@ -69,7 +71,7 @@ public class SpriteOptionWidget extends OptionWidget {
                 this.image.getWidth(), this.image.getHeight()
         );
 
-        context.pose().popMatrix();
+        extractor.pose().popMatrix();
 
         if (this.isHoveringImage(mouseX, mouseY)) {
             this.setTooltip(Tooltip.create(Component.literal(this.option.getValue().getIdentifier().getNamespace() + ": " + this.option.getValue().getIdentifier().getPath())));
