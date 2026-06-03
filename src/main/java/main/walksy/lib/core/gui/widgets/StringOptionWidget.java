@@ -28,7 +28,7 @@ public class StringOptionWidget extends OptionWidget {
     public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
         final GuiGraphicsExtractor extractor = graphics.extractor();
         extractor.verticalLine(this.getWidth() - 33 - this.textbox.getScrollOffset(), this.getY(), this.getY() + this.height - 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
-        this.textbox.render(extractor, mouseX, mouseY, delta);
+        this.textbox.extract(extractor, mouseX, mouseY, delta);
         this.textbox.hovered = this.isHovered();
     }
 

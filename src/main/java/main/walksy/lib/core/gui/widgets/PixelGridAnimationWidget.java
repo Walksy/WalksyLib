@@ -74,8 +74,8 @@ public class PixelGridAnimationWidget extends OpenableWidget {
         if (!this.fullyClosed()) {
             this.viewFrames.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
             this.editFrameButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
-            this.animationSpeedSlider.render(extractor, mouseX, mouseY, delta);
-            this.frameSize.render(extractor, mouseX, mouseY, delta);
+            this.animationSpeedSlider.extract(extractor, mouseX, mouseY, delta);
+            this.frameSize.extract(extractor, mouseX, mouseY, delta);
             this.screen.scroll = !this.isHoveredFrameSelector();
             extractor.horizontalLine(
                     this.getX() + 1,

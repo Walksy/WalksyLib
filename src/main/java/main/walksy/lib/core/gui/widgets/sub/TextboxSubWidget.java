@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
+import main.walksy.lib.core.gui.Graphics;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.mixin.EditBoxAccessor;
 import net.minecraft.client.Minecraft;
@@ -44,49 +45,41 @@ public class TextboxSubWidget extends SubWidget {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
-        if (!this.field.isVisible()) return;
-
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
+        if (!this.field.isVisible()) {
+            return;
+        }
+        final GuiGraphicsExtractor extractor = graphics.extractor();
         this.hovered = mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
-
         final Font tr = Minecraft.getInstance().font;
         final String text = this.field.getValue();
         final int scrollOffset = this.getScrollOffset();
         final int color = (this.hovered || this.field.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB();
-
         if (text.isEmpty() && !this.field.isFocused()) {
             extractor.text(tr, "...", this.x + 3, this.y + (tr.lineHeight) / 2, Color.GRAY.getRGB(), true);
             return;
         }
-
         final var accessor = (EditBoxAccessor) this.field;
-
         if (this.field.isFocused() && (this.parent.getUpTime() % 20) < 10) {
             final int cursor = Mth.clamp(this.field.getCursorPosition() - accessor.getDisplayPosition(), 0, text.length());
             final String visible = tr.plainSubstrByWidth(text.substring(accessor.getDisplayPosition()), this.field.getInnerWidth());
             final int caretX = this.x + 4 + tr.width(visible.substring(0, Mth.clamp(cursor, 0, visible.length()))) - 1 - scrollOffset;
             extractor.verticalLine(caretX, this.y + tr.lineHeight / 2 - 2, this.y + tr.lineHeight + 4, -1);
         }
-
         if (this.centered) {
             final String trimmed = tr.plainSubstrByWidth(text, this.field.getInnerWidth());
             extractor.text(tr, trimmed, this.x + this.width / 2 - tr.width(trimmed) / 2, this.y + 1 + tr.lineHeight / 2, color);
         } else {
             extractor.text(tr, text, this.x + 3 - scrollOffset, this.y + 1 + tr.lineHeight / 2, color, true);
         }
-
         final int textX = this.x + 4 - scrollOffset;
         final int textY = this.y + 1 + tr.lineHeight / 2;
-
         final int firstCharIndex = accessor.getDisplayPosition();
         final String visibleText = tr.plainSubstrByWidth(text.substring(firstCharIndex), this.field.getInnerWidth());
-
         final int selectionStart = Mth.clamp(this.getSelectionStart(accessor), 0, text.length());
         final int selectionEnd = Mth.clamp(this.getSelectionEnd(accessor), 0, text.length());
-
         final int visibleSelectionStart = Mth.clamp(selectionStart - firstCharIndex, 0, visibleText.length());
         final int visibleSelectionEnd = Mth.clamp(selectionEnd - firstCharIndex, 0, visibleText.length());
-
         if (visibleSelectionStart != visibleSelectionEnd) {
             final int highlightStartX = textX + tr.width(visibleText.substring(0, visibleSelectionStart));
             final int highlightEndX = textX + tr.width(visibleText.substring(0, visibleSelectionEnd));

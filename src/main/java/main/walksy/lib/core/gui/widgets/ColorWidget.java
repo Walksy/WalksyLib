@@ -119,7 +119,7 @@ public class ColorWidget extends OpenableWidget {
         graphics.fillRoundedRectOutline(this.getWidth() - 16, this.getY() + 3, 25, baseHeight - 6, 2, 1, MainColors.OUTLINE_BLACK.getRGB());
         graphics.fillRoundedRect(this.getWidth() - 15, this.getY() + 4, 23, baseHeight - 8, 2, this.option.getValue().getRGB());
 
-        this.hexInput.render(extractor, mouseX, mouseY, delta);
+        this.hexInput.extract(extractor, mouseX, mouseY, delta);
 
         if (this.fullyClosed()) {
             extractor.verticalLine(this.getX() + this.getWidth() - 38, this.getY(), this.getY() + ScreenGlobals.OPTION_HEIGHT - 1, this.isHovered() ? MainColors.OUTLINE_WHITE_HOVERED.getRGB() : MainColors.OUTLINE_WHITE.getRGB());
@@ -131,8 +131,8 @@ public class ColorWidget extends OpenableWidget {
             this.pulseButton.overrideHover = this.option.getValue().isPulse();
             this.chromaButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
             this.pulseButton.extractWidgetRenderState(extractor, mouseX, mouseY, delta);
-            this.chromaSpeedSlider.render(extractor, mouseX, mouseY, delta);
-            this.pulseSpeedSlider.render(extractor, mouseX, mouseY, delta);
+            this.chromaSpeedSlider.extract(extractor, mouseX, mouseY, delta);
+            this.pulseSpeedSlider.extract(extractor, mouseX, mouseY, delta);
 
             extractor.text(
                     Minecraft.getInstance().font,

@@ -1,5 +1,6 @@
 package main.walksy.lib.core.gui.widgets.sub;
 
+import main.walksy.lib.core.gui.Graphics;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -18,7 +19,7 @@ public abstract class SubWidget {
         this.height = height;
     }
 
-    public abstract void render(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta);
+    public abstract void extract(Graphics graphics, int mouseX, int mouseY, float delta);
     public abstract void onClick(MouseButtonEvent click, boolean doubled);
     public abstract void onDrag(int mouseX);
     public void onKeyPress(final KeyEvent input) {}

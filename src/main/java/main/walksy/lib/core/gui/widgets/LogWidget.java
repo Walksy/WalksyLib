@@ -43,17 +43,17 @@ public class LogWidget extends AbstractWidget {
     @Override
     protected void extractWidgetRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float a) {
         final int offset = 10;
-        final Graphics g = new Graphics(extractor);
+        final Graphics graphics = new Graphics(extractor);
 
-        g.fillRoundedRect(
+        graphics.fillRoundedRect(
                 this.getX(), this.getY() + offset, this.width, this.height, 2,
                 new Color(0, 0, 0, 100).getRGB()
         );
-        g.fillRoundedRectOutline(
+        graphics.fillRoundedRectOutline(
                 this.getX(), this.getY() + offset, this.width, this.height, 2, 1,
                 MainColors.OUTLINE_BLACK.getRGB()
         );
-        g.fillRoundedRectOutline(
+        graphics.fillRoundedRectOutline(
                 this.getX() + 1, this.getY() + 1 + offset, this.width - 2, this.height - 2, 2, 1,
                 MainColors.OUTLINE_WHITE.getRGB()
         );

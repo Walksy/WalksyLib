@@ -9,8 +9,6 @@ import main.walksy.lib.core.gui.widgets.sub.adaptor.IntSliderAdapter;
 import main.walksy.lib.core.gui.widgets.sub.adaptor.SliderAdapter;
 import main.walksy.lib.core.gui.impl.WalksyLibConfigScreen;
 import main.walksy.lib.core.gui.Graphics;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
@@ -41,7 +39,7 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     @Override
     public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
         final GuiGraphicsExtractor extractor = graphics.extractor();
-        this.slider.render(extractor, mouseX, mouseY, delta);
+        this.slider.extract(extractor, mouseX, mouseY, delta);
     }
 
     @Override

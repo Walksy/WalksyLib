@@ -60,7 +60,7 @@ public class StringListOptionWidget extends OptionWidget {
             final int off = -1;
             extractor.text(this.screen.getFont(), String.valueOf(i + 1), this.getX() + 5, textBox.getPos().y + 6 + off, -1, true);
             extractor.verticalLine(this.getX() + width + 8, textBox.getPos().y + 1 + off, textBox.getPos().y - 1 + off + textBox.getHeight(), (textBox.hovered || textBox.isFocused()) ? -1 : new Color(255, 255, 255, 180).getRGB());
-            textBox.render(extractor, mouseX, mouseY, delta);
+            textBox.extract(extractor, mouseX, mouseY, delta);
             this.removeButtons.get(i).extractRenderState(extractor, mouseX, mouseY, delta);
         }
     }

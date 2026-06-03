@@ -32,18 +32,17 @@ public class SliderSubWidget<T> extends SubWidget {
     }
 
     @Override
-    public void render(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
+    public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
         this.sliderPositionAnimation.update(delta);
         this.sliderPosition = this.sliderPositionAnimation.getCurrentValue();
 
         this.isHovered = mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
 
-        final Graphics g = new Graphics(extractor);
-        g.fillRoundedRect(this.x, this.y, this.width, this.height, 1, new Color(255, 255, 255, 20).getRGB());
-        g.fillRoundedRectOutline(this.x, this.y, this.width, this.height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
+        graphics.fillRoundedRect(this.x, this.y, this.width, this.height, 1, new Color(255, 255, 255, 20).getRGB());
+        graphics.fillRoundedRectOutline(this.x, this.y, this.width, this.height, 1, 1, MainColors.OUTLINE_BLACK.getRGB());
 
         final int v = this.isHovered ? 220 : 155;
-        g.fillRoundedRect(
+        graphics.fillRoundedRect(
                 this.x + (this.sliderPosition * (this.width - 10)),
                 this.y + (float) (this.height - 10) / 2,
                 10, 10,
@@ -51,7 +50,7 @@ public class SliderSubWidget<T> extends SubWidget {
                 new Color(v, v, v, 255).getRGB()
         );
 
-        extractor.text(
+        graphics.extractor().text(
                 Minecraft.getInstance().font,
                 this.adapter.format(this.value),
                 this.isRight ? this.x + this.width + 3 : this.x - Minecraft.getInstance().font.width(this.adapter.format(this.adapter.getMax())) - 3,
