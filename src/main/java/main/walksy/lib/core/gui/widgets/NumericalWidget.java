@@ -39,7 +39,7 @@ public class NumericalWidget<T extends Number> extends OptionWidget {
     @Override
     public void extract(final Graphics graphics, final int mouseX, final int mouseY, final float delta) {
         final GuiGraphicsExtractor extractor = graphics.extractor();
-        this.slider.extract(extractor, mouseX, mouseY, delta);
+        this.slider.extract(graphics, mouseX, mouseY, delta);
     }
 
     @Override
