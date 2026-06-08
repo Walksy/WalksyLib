@@ -211,7 +211,7 @@ public class WalksyLibShieldStateManager {
 
     private boolean isHoldingAnimationItemMainHand(final Player entity) {
         return entity.getMainHandItem().getUseDuration(entity) != 0
-                && !entity.getOffhandItem().is(Items.SHIELD);
+                && !entity.getMainHandItem().is(Items.SHIELD);
     }
 
     public boolean disablesShield(final Player player) {
