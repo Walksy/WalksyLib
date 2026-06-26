@@ -218,6 +218,12 @@ public class WalksyLibConfigScreen extends BaseScreen {
     }
 
     @Override
+    public void extractRenderState(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
+        this.currentGraphicsContext = new Graphics(extractor);
+        super.extractRenderState(extractor, mouseX, mouseY, delta);
+    }
+
+    @Override
     protected void extract(final Graphics graphics, final int mouseX, final int mouseY) {
         this.currentGraphicsContext = graphics;
         final GuiGraphicsExtractor extractor = graphics.extractor();

@@ -33,7 +33,6 @@ public class ModMenuIntegration implements ModMenuApi {
                     if (overridableScreen == null && config == null) {
                         return null;
                     }
-
                     return Map.entry(c.getProvider().getMetadata().getId(), (ConfigScreenFactory<?>) parent -> {
                                 final BaseScreen screen = entryPoint.getOverridableScreen(parent);
                                 if (screen != null && config != null) {

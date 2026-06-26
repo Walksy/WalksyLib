@@ -224,7 +224,7 @@ public record Graphics(GuiGraphicsExtractor extractor) {
     public void drawFilledRectangle(final float x1, final float y1, final float x2, final float y2, final Color color, final boolean blend) {
         final ScreenRectangle current = this.extractor.scissorStack.peek();
         this.extractor.pose().pushMatrix();
-        this.setGlProperty(2848, false);
+       // this.setGlProperty(2848, false);
         this.extractor.guiRenderState.addGuiElement(new ColoredFloatQuadGuiElementRenderState(
                 blend ? RenderPipelines.GUI_INVERT : RenderPipelines.GUI,
                 TextureSetup.noTexture(),

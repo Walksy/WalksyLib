@@ -16,12 +16,6 @@
 	"icon": "assets/walksylib/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"test.TestMod"
-		],
-		"walksylib": [
-			"test.TestConfigImplementation"
-		],
 		"modmenu": [
 			"main.walksy.lib.core.integration.ModMenuIntegration"
 		]

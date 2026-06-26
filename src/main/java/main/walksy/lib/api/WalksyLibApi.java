@@ -6,7 +6,9 @@ import net.minecraft.client.gui.screens.Screen;
 
 public interface WalksyLibApi {
 
-    ModConfig getConfig();
+    default ModConfig getConfig() {
+        return null;
+    }
 
     default BaseScreen getOverridableScreen(Screen parent) {
         return null;
