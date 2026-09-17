@@ -56,6 +56,9 @@ public class WalksyLibShieldStateManager {
         final long now = System.currentTimeMillis();
         final Minecraft client = Minecraft.getInstance();
         if (client.level == null) {
+            this.shieldUseTicks.clear();
+            this.attackedPlayerEntries.clear();
+            this.pendingBreak = null;
             return;
         }
         this.currentTick++;
@@ -67,6 +70,7 @@ public class WalksyLibShieldStateManager {
                 this.shieldUseTicks.put(player, 0);
             }
         }
+        this.shieldUseTicks.keySet().removeIf(player -> !client.level.players().contains(player));
         if (client.player != null && client.player.getCooldowns().isOnCooldown(new ItemStack(Items.SHIELD))) {
             this.localShieldCooldownTicks++;
         } else {
