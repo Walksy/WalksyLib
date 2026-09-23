@@ -10,7 +10,7 @@
 		"ScreenAccessor",
 		"MinecraftClientMixin",
 		"GameRendererMixin",
-		"InputUtilMixin",
+		"MouseHandlerMixin",
 		"EditBoxAccessor"
 	],
 	"injectors": {

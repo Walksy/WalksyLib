@@ -1,6 +1,6 @@
 package main.walksy.lib.core.gui;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import main.walksy.lib.core.config.local.options.type.PixelGrid;
 import net.fabricmc.api.EnvType;

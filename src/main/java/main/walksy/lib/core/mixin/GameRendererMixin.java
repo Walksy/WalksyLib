@@ -17,7 +17,7 @@ public class GameRendererMixin {
     @Final
     private Minecraft minecraft;
 
-    @ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/world/phys/Vec3;Z)V"))
+    @ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJFILnet/minecraft/world/phys/Vec3;Z)V"))
     public void modifyGlobalSettings(final Args args) {
         if (this.minecraft.gui.screen() instanceof BaseScreen) {
             args.set(5, 15);

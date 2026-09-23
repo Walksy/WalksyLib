@@ -1,9 +1,9 @@
 package main.walksy.lib.core.callback;
 
 import main.walksy.lib.core.utils.log.WalksyLibLogger;
-import org.lwjgl.glfw.GLFWDropCallback;
 
 import java.nio.file.InvalidPathException;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class WalksyLibDropCallback {
@@ -18,13 +18,11 @@ public class WalksyLibDropCallback {
         dropCallback = null;
     }
 
-    public static void onFileDrop(final int count, final long names) {
-        if (dropCallback == null) {
+    public static void onFileDrop(final List<String> paths) {
+        if (dropCallback == null || paths == null) {
             return;
         }
-        for (int i = 0; i < count; ++i) {
-            final String name = GLFWDropCallback.getName(names, i);
-
+        for (final String name : paths) {
             try {
                 dropCallback.accept(name);
             } catch (InvalidPathException e) {

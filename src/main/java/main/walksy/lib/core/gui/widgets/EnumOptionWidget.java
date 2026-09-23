@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.awt.*;
 
@@ -61,7 +61,7 @@ public class EnumOptionWidget<E extends Enum<E>> extends OptionWidget {
             final int currentIndex = this.option.getValue().ordinal();
             final int nextIndex;
 
-            if (click.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            if (click.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
                 nextIndex = (currentIndex - 1 + constants.length) % constants.length;
             } else {
                 nextIndex = (currentIndex + 1) % constants.length;

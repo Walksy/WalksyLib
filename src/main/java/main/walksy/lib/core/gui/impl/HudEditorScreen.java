@@ -11,7 +11,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec2;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.awt.Color;
 
@@ -116,10 +116,10 @@ public class HudEditorScreen extends BaseScreen {
             return super.keyPressed(input);
         }
         switch (input.key()) {
-            case GLFW.GLFW_KEY_UP    -> pixelGridAnimation.addOffset(0, -MOVE_AMOUNT);
-            case GLFW.GLFW_KEY_DOWN  -> pixelGridAnimation.addOffset(0, MOVE_AMOUNT);
-            case GLFW.GLFW_KEY_LEFT  -> pixelGridAnimation.addOffset(-MOVE_AMOUNT, 0);
-            case GLFW.GLFW_KEY_RIGHT -> pixelGridAnimation.addOffset(MOVE_AMOUNT, 0);
+            case InputConstants.KEY_UP    -> pixelGridAnimation.addOffset(0, -MOVE_AMOUNT);
+            case InputConstants.KEY_DOWN  -> pixelGridAnimation.addOffset(0, MOVE_AMOUNT);
+            case InputConstants.KEY_LEFT  -> pixelGridAnimation.addOffset(-MOVE_AMOUNT, 0);
+            case InputConstants.KEY_RIGHT -> pixelGridAnimation.addOffset(MOVE_AMOUNT, 0);
             default -> {
                 return super.keyPressed(input);
             }

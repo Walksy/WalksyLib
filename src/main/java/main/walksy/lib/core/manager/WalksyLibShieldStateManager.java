@@ -2,8 +2,8 @@ package main.walksy.lib.core.manager;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
@@ -215,7 +215,7 @@ public class WalksyLibShieldStateManager {
     }
 
     public boolean disablesShield(final Player player) {
-        return player.getWeaponItem().getItem() instanceof AxeItem;
+        return player.getWeaponItem().is(ItemTags.AXES);
     }
 
     private record AttackEntry(Vec3 attackPos, Vec3 targetPos, long time, boolean wasBlocking) {}
