@@ -1,17 +1,13 @@
 package main.walksy.lib.api;
 
-import main.walksy.lib.core.config.impl.ModConfig;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import main.walksy.lib.api.config.Config;
+import main.walksy.lib.core.config.ConfigRegistry;
 
 public interface WalksyLibConfig {
 
-    public static Map<Class<? extends WalksyLibConfig>, ModConfig> CACHE = new ConcurrentHashMap<>();
+    Config define();
 
-    ModConfig define();
-
-    default ModConfig getOrCreateConfig() {
-        return CACHE.computeIfAbsent(this.getClass(), clazz -> this.define());
+    default Config getOrCreateConfig()   {
+        return ConfigRegistry.getOrCreate(this);
     }
 }

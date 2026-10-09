@@ -11,12 +11,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MultiPlayerGameMode.class)
 public class MultiPlayerGameModeMixin {
-
-    @Inject(method = "attack",
-            at = @At("HEAD"))
+    @Inject(method = "attack", at = @At("HEAD"))
     public void onAttackEntity(final Player player, final Entity target, final CallbackInfo ci) {
         if (target instanceof Player targetPlayer) {
-            WalksyLib.getInstance().getShieldStateManager().handlePlayerAttack(targetPlayer);
+            WalksyLib.getInstance().getShieldStateData().handlePlayerAttack(targetPlayer);
         }
     }
 }

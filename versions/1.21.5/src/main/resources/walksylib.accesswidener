@@ -1,0 +1,17 @@
+accessWidener v2 named
+accessible class net/minecraft/client/gui/components/AbstractSelectionList$Entry
+accessible class net/minecraft/client/gui/GuiGraphics$ScissorStack
+accessible field net/minecraft/client/gui/GuiGraphics scissorStack Lnet/minecraft/client/gui/GuiGraphics$ScissorStack;
+accessible field net/minecraft/client/gui/GuiGraphics$ScissorStack stack Ljava/util/Deque;
+accessible field net/minecraft/client/gui/screens/Screen renderables Ljava/util/List;
+accessible method com/mojang/blaze3d/opengl/GlDevice getOrCompilePipeline (Lcom/mojang/blaze3d/pipeline/RenderPipeline;)Lcom/mojang/blaze3d/opengl/GlRenderPipeline;
+accessible class net/minecraft/client/renderer/RenderType$CompositeRenderType
+accessible field net/minecraft/client/renderer/RenderType$CompositeRenderType state Lnet/minecraft/client/renderer/RenderType$CompositeState;
+accessible field net/minecraft/client/renderer/RenderType$CompositeState textureState Lnet/minecraft/client/renderer/RenderStateShard$EmptyTextureStateShard;
+accessible method net/minecraft/client/renderer/RenderStateShard$EmptyTextureStateShard cutoutTexture ()Ljava/util/Optional;
+accessible method net/minecraft/client/renderer/RenderStateShard$TextureStateShard cutoutTexture ()Ljava/util/Optional;
+accessible field com/mojang/blaze3d/textures/GpuTexture addressModeU Lcom/mojang/blaze3d/textures/AddressMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture addressModeV Lcom/mojang/blaze3d/textures/AddressMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture minFilter Lcom/mojang/blaze3d/textures/FilterMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture magFilter Lcom/mojang/blaze3d/textures/FilterMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture useMipmaps Z

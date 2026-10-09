@@ -9,12 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LocalPlayer.class)
 public class LocalPlayerMixin {
-
-    @Inject(method = "tick",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/player/AbstractClientPlayer;tick()V",
-                    shift = At.Shift.AFTER))
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;tick()V", shift = At.Shift.AFTER))
     public void onTick(final CallbackInfo ci) {
-        WalksyLib.getInstance().getShieldStateManager().tick();
+        WalksyLib.getInstance().onLocalPlayerTick();
     }
 }

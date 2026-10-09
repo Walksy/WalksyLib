@@ -16,6 +16,9 @@
 	"icon": "assets/walksylib/icon.png",
 	"environment": "client",
 	"entrypoints": {
+		"client": [
+			"main.walksy.lib.core.WalksyLibEntrypoint"
+		],
 		"modmenu": [
 			"main.walksy.lib.core.integration.ModMenuIntegration"
 		]
@@ -23,10 +26,32 @@
 	"mixins": [
 		"walksylib.mixins.json"
 	],
+	"accessWidener": "walksylib.accesswidener",
 	"depends": {
-		"fabricloader": "*",
-		"minecraft": "*",
-		"java": ">=17"
+		"fabricloader": ">=0.19",
+		"fabric-api": "*",
+		"minecraft": "${minecraft_dependency}",
+		"java": ">=${java_version}"
+	},
+	"recommends": {
+		"modmenu": "*"
+	},
+	"breaks": {
+		"ambience": "<2.2.0",
+		"anchoroptimizer": "<1.3.0",
+		"clientkits": "<2.1.0",
+		"clientprojectiles": "<1.1.0",
+		"consumableoptimizer": "<2.2.3",
+		"crossbowoptimizer": "<1.1.0",
+		"crosshairaddons": "<2.2.0",
+		"customhitboxes": "<3.0.0",
+		"nodeathanimation": "<2.1.0",
+		"rebindquickswap": "<2.1.0",
+		"shieldfixes": "<2.1.0",
+		"shieldstatus": "<4.2.0",
+		"speareffects": "<1.1.0",
+		"walksypopchams": "<1.1.0",
+		"rawinputbuffer": "<1.2.0"
 	},
 	"custom": {
 		"modmenu": {

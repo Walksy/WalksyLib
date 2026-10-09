@@ -1,0 +1,10 @@
+accessWidener v2 named
+accessible class net/minecraft/client/gui/components/AbstractSelectionList$Entry
+accessible class net/minecraft/client/gui/GuiGraphics$ScissorStack
+accessible field net/minecraft/client/gui/GuiGraphics scissorStack Lnet/minecraft/client/gui/GuiGraphics$ScissorStack;
+accessible field net/minecraft/client/gui/GuiGraphics guiRenderState Lnet/minecraft/client/gui/render/state/GuiRenderState;
+accessible field com/mojang/blaze3d/textures/GpuTexture addressModeU Lcom/mojang/blaze3d/textures/AddressMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture addressModeV Lcom/mojang/blaze3d/textures/AddressMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture minFilter Lcom/mojang/blaze3d/textures/FilterMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture magFilter Lcom/mojang/blaze3d/textures/FilterMode;
+accessible field com/mojang/blaze3d/textures/GpuTexture useMipmaps Z

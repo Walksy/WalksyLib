@@ -1,0 +1,35 @@
+{
+	"required": true,
+	"package": "main.walksy.lib.core.mixin",
+	"plugin": "main.walksy.lib.core.integration.WalksyLibMixinPlugin",
+	"compatibilityLevel": "JAVA_${java_version}",
+	"client": [
+		"modmenu.ModListEntryMixin",
+		"modmenu.ModsScreenMixin",
+		"modmenu.ModListWidgetMixin",
+		"events.ClientPlayNetworkMixin",
+		"events.ConnectionMixin",
+		"events.HudMixin",
+		"events.KeyboardHandlerMixin",
+		"events.LevelRendererMixin",
+		"events.LocalPlayerMixin",
+		"events.MinecraftMixin",
+		"events.MouseHandlerMixin",
+		"events.MultiPlayerGameModeMixin",
+		"core.render.liquidglass.client.ScreenRenderMixin",
+		"core.render.perf.LoadingOverlayWarmupMixin",
+		"core.render.liquidglass.logical.LiquidGlassGameRendererMixin",
+		"core.render.msdf.MsdfGuiRendererMixin",
+		"core.render.preview.PictureInPictureCaptureMixin",
+		"core.render.preview.GuiRendererPreviewItemsMixin",
+		"core.render.toast.ToastManagerMixin",
+		"core.keys.KeyMappingCategoryMixin",
+		"mods.ClientPacketListenerMixin",
+		"mods.LivingEntityMixin",
+		"mods.LocalPlayerMixin",
+		"mods.MultiPlayerGameModeMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

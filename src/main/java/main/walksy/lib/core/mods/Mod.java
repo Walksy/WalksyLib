@@ -1,80 +1,111 @@
 package main.walksy.lib.core.mods;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import main.walksy.lib.core.config.impl.ModConfig;
-import main.walksy.lib.core.gui.impl.BaseScreen;
-import main.walksy.lib.core.utils.log.WalksyLibLogger;
+import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.api.config.Config;
+import main.walksy.lib.core.mods.remote.ModSuggestion;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
-public class Mod {
+public final class Mod {
     private final ModContainer container;
-    private final Identifier modIcon;
-    private final ModConfig config;
-    private final Function<Screen, BaseScreen> overridableScreenFactory;
-    private final String[] conflictedButtonTitles;
+    private final Supplier<Config> config;
+    private final String displayName;
+    private final ModSuggestion suggestion;
+    private final Identifier iconIdentifier;
+    private final Path iconPath;
+    private Identifier modIcon;
 
-    public Mod(final ModContainer container, final ModConfig config, final Function<Screen, BaseScreen> overridableScreenFactory, final String[] conflictedButtonTitles) {
+    public Mod(final ModContainer container, final Config config) {
+        this(container, config, null);
+    }
+
+    public Mod(final ModContainer container, final Config config, final String displayName) {
+        this(container, () -> config, displayName);
+    }
+
+    public static Mod ofDynamicConfig(final ModContainer container, final Supplier<Config> config, final String displayName) {
+        return new Mod(container, config, displayName);
+    }
+
+    public Mod(final ModSuggestion suggestion) {
+        this.container = null;
+        this.config = null;
+        this.displayName = suggestion.title();
+        this.suggestion = suggestion;
+        this.iconIdentifier = null;
+        this.iconPath = null;
+    }
+
+    private Mod(final ModContainer container, final Supplier<Config> config, final String displayName) {
         this.container = container;
         this.config = config;
-        this.overridableScreenFactory = overridableScreenFactory;
-        this.conflictedButtonTitles = conflictedButtonTitles;
-        /**
-         * Credit to uku for this code:
-         * https://github.com/uku3lig/ukulib/blob/de3c36f921f3dba6401601eb05912337d2c602ee/src/main/java/net/uku3lig/ukulib/config/impl/EntrypointList.java#L67
-         */
-        final Identifier identifier = Identifier.fromNamespaceAndPath("walksylib", this.getContainer().getMetadata().getId() + "_icon");
-        final int ICON_SIZE = 32;
-        this.modIcon = this.getContainer().getMetadata().getIconPath(ICON_SIZE)
-                .flatMap(this.getContainer()::findPath)
-                .flatMap(path -> {
-                    try (final InputStream inputStream = Files.newInputStream(path)) {
-                        final NativeImage image = NativeImage.read(Objects.requireNonNull(inputStream));
+        this.displayName = displayName;
+        this.suggestion = null;
+        this.iconIdentifier = Identifier.fromNamespaceAndPath("walksylib", container.getMetadata().getId() + "_icon");
+        this.iconPath = container.getMetadata().getIconPath(32).flatMap(container::findPath).orElse(null);
+    }
 
-                    return Optional.of(new DynamicTexture(identifier::toString, image));
-                    } catch (IOException e) {
-                        WalksyLibLogger.err("Failed to load icon from mod jar: " + " " + path + " " + e);
-                        return Optional.empty();
-                    }
-                })
-                .map(tex -> {
-                    Minecraft.getInstance().getTextureManager().register(identifier, tex);
-                    return identifier;
-                })
-                .orElse(Identifier.withDefaultNamespace("textures/misc/unknown_pack.png"));
+    public String getDisplayName() {
+        if (this.displayName != null) {
+            return this.displayName;
+        }
+        return this.container == null ? "" : this.container.getMetadata().getName();
+    }
+
+    public boolean isLibraryPage() {
+        return this.suggestion == null && this.displayName != null;
+    }
+
+    public boolean isSuggestion() {
+        return this.suggestion != null;
+    }
+
+    public ModSuggestion getSuggestion() {
+        return this.suggestion;
     }
 
     public ModContainer getContainer() {
         return this.container;
     }
 
-    public ModConfig getConfig() {
-        return this.config;
-    }
-
-    public BaseScreen getOverridableConfigScreen(final Screen parent) {
-        return this.overridableScreenFactory.apply(parent);
-    }
-
-    public String[] getConflictedButtonTitles() {
-        return this.conflictedButtonTitles;
+    public Config getConfig() {
+        return this.config == null ? null : this.config.get();
     }
 
     public boolean hasConfig() {
-        return this.config != null;
+        return this.getConfig() != null;
     }
 
     public Identifier getModIcon() {
+        if (this.suggestion != null) {
+            return WalksyLib.getInstance().getSuggestedMods().icon(this.suggestion);
+        }
+        if (this.modIcon != null) {
+            return this.modIcon;
+        }
+        if (this.iconPath != null) {
+            try (final InputStream inputStream = Files.newInputStream(this.iconPath)) {
+                final NativeImage image = NativeImage.read(Objects.requireNonNull(inputStream));
+                final DynamicTexture tex = new DynamicTexture(this.iconIdentifier::toString, image);
+                Minecraft.getInstance().getTextureManager().register(this.iconIdentifier, tex);
+                this.modIcon = this.iconIdentifier;
+            } catch (final IOException e) {
+                WalksyLib.getLogger().err("Failed to load icon from mod jar: " + this.iconPath + " " + e);
+                this.modIcon = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+            }
+        } else {
+            this.modIcon = Identifier.withDefaultNamespace("textures/misc/unknown_pack.png");
+        }
         return this.modIcon;
     }
 }

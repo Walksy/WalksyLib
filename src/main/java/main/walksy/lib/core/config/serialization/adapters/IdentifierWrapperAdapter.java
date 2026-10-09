@@ -1,13 +1,18 @@
 package main.walksy.lib.core.config.serialization.adapters;
 
-import com.google.gson.*;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import main.walksy.lib.core.utils.IdentifierWrapper;
 import net.minecraft.resources.Identifier;
 
 import java.lang.reflect.Type;
 
-public class IdentifierWrapperAdapter implements JsonSerializer<IdentifierWrapper>, JsonDeserializer<IdentifierWrapper> {
-
+public final class IdentifierWrapperAdapter implements JsonSerializer<IdentifierWrapper>, JsonDeserializer<IdentifierWrapper> {
     @Override
     public JsonElement serialize(final IdentifierWrapper src, final Type typeOfSrc, final JsonSerializationContext extractor) {
         final JsonObject obj = new JsonObject();
@@ -19,10 +24,8 @@ public class IdentifierWrapperAdapter implements JsonSerializer<IdentifierWrappe
     @Override
     public IdentifierWrapper deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext extractor) throws JsonParseException {
         final JsonObject obj = json.getAsJsonObject();
-
         final Identifier id = Identifier.tryParse(obj.get("id").getAsString());
         final String fileName = obj.has("fileName") ? obj.get("fileName").getAsString() : "";
-
         return new IdentifierWrapper(id, fileName);
     }
 }

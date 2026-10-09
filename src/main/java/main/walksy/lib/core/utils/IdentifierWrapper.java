@@ -4,8 +4,7 @@ import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
-public class IdentifierWrapper {
-
+public final class IdentifierWrapper {
     private Identifier identifier;
     private String fileName;
 
@@ -36,12 +35,16 @@ public class IdentifierWrapper {
 
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj) return true;
-        if (obj == null || this.getClass() != obj.getClass()) return false;
-
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || this.getClass() != obj.getClass()) {
+            return false;
+        }
         final IdentifierWrapper other = (IdentifierWrapper) obj;
-
-        if ((!Objects.equals(other.identifier.getPath(), this.identifier.getPath())) || (!Objects.equals(other.identifier.getNamespace(), this.identifier.getNamespace()))) return false;
+        if ((!Objects.equals(other.identifier.getPath(), this.identifier.getPath())) || (!Objects.equals(other.identifier.getNamespace(), this.identifier.getNamespace()))) {
+            return false;
+        }
         return other.fileName.equals(this.fileName);
     }
 }

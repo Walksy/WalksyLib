@@ -1,0 +1,5 @@
+import net\.minecraft\.client\.input\.(MouseButtonEvent|MouseButtonInfo|KeyEvent|CharacterEvent|InputWithModifiers); => import main.walksy.lib.core.platform.input.$1;
+\.handle\(\) => .getWindow()
+InputConstants\.getKey\(event\) => InputConstants.getKey(event.key(), event.scancode())
+import net\.minecraft\.client\.renderer\.Sheets; => import net.minecraft.client.renderer.texture.TextureAtlas;
+Sheets\.GUI_SHEET => TextureAtlas.LOCATION_BLOCKS

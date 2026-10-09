@@ -1,0 +1,6 @@
+\bIdentifier\b => ResourceLocation
+\.identifier\(\) => .location()
+import net\.minecraft\.util\.Util; => import net.minecraft.Util;
+TextureAtlas\.LOCATION_ITEMS => TextureAtlas.LOCATION_BLOCKS
+import net\.minecraft\.client\.renderer\.rendertype\.RenderType; => import net.minecraft.client.renderer.RenderType;
+screen\.init\(width, height\) => screen.init(Minecraft.getInstance(), width, height)

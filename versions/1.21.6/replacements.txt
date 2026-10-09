@@ -1,0 +1,2 @@
+RenderPipelines\.GUI_INVERT => RenderPipelines.GUI_TEXT_HIGHLIGHT
+\bTrackingItemStackRenderState\b => ItemStackRenderState

@@ -1,0 +1,18 @@
+BuiltInRegistries\.BLOCK\.getValue\( => BuiltInRegistries.BLOCK.get(
+BuiltInRegistries\.ITEM\.get\(id\)\.orElse\(null\) => BuiltInRegistries.ITEM.getHolder(id).orElse(null)
+graphics\.blitSprite\(RenderType::guiTextured, => graphics.blitSprite(
+minecraft\.getDeltaTracker\(\) => minecraft.getTimer()
+isOnCooldown\(new ItemStack\(Items\.SHIELD\)\) => isOnCooldown(Items.SHIELD)
+getCooldownPercent\(new ItemStack\(Items\.SHIELD\), 0\) => getCooldownPercent(Items.SHIELD, 0)
+client\.player\.setOldRot\(\) => client.player.setOldPosAndRot()
+new TextureTarget\(width, height, false\) => new TextureTarget(width, height, false, Minecraft.ON_OSX)
+GlStateManager\._clear\(GL11\.GL_COLOR_BUFFER_BIT\) => GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT, Minecraft.ON_OSX)
+image\.getPixelsABGR\(\) => image.getPixelsRGBA()
+tag -> tag\.isBound\(\) && tag\.size\(\) > 0 => tag -> tag.getSecond().size() > 0
+import net\.minecraft\.world\.item\.equipment\.Equippable; => import net.minecraft.world.item.Equipable;
+final Equippable equippable = stack\.get\(DataComponents\.EQUIPPABLE\); => final Equipable equippable = Equipable.get(stack);
+equippable\.slot\(\) == equipment => equippable.getEquipmentSlot() == equipment
+Minecraft\.getInstance\(\)\.schedule\(task\) => Minecraft.getInstance().tell(task)
+\b(source|image)\.getPixel\( => WLImages.getArgb($1,
+\b(out|image|canvas)\.setPixel\( => WLImages.setArgb($1,
+^package main\.walksy\.lib\.core\.(render\.texture|mods\.remote|render\.font\.msdf); => package main.walksy.lib.core.$1; import main.walksy.lib.core.platform.WLImages;

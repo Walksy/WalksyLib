@@ -1,0 +1,12 @@
+new ClickEvent\.RunCommand\( => new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+new HoverEvent\.ShowText\( => new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+new DynamicTexture\((?:[\w.]+::toString|\(\) -> \w+), => new DynamicTexture(
+canvas\.setPixelABGR\(destX, destY, abgr\) => canvas.setPixel(destX, destY, (abgr & 0xFF00FF00) | ((abgr >> 16) & 0xFF) | ((abgr & 0xFF) << 16))
+\.getNonEquipmentItems\(\) => .items
+stack\.set\(DataComponents\.UNBREAKABLE, Unit\.INSTANCE\) => stack.set(DataComponents.UNBREAKABLE, new Unbreakable(true))
+import net\.minecraft\.util\.Unit; => import net.minecraft.util.Unit; import net.minecraft.world.item.component.Unbreakable;
+TagParser\.parseCompoundFully\( => TagParser.parseTag(
+tag\.getCompound\("components"\)\.orElse\(null\) => (tag.contains("components") ? tag.getCompound("components") : null)
+texture\.getTexture\(\)\.getWidth\(0\) => WLRenderSystem.texture(texture).width()
+texture\.getTexture\(\)\.getHeight\(0\) => WLRenderSystem.texture(texture).height()
+import net\.minecraft\.client\.renderer\.texture\.DynamicTexture; => import net.minecraft.client.renderer.texture.DynamicTexture; import main.walksy.lib.core.render.WLRenderSystem;
