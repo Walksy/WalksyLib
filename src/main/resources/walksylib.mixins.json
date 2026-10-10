@@ -16,6 +16,7 @@
 		"events.MinecraftMixin",
 		"events.MouseHandlerMixin",
 		"events.MultiPlayerGameModeMixin",
+		"events.PacketHandleMixin",
 		"core.render.liquidglass.client.ScreenRenderMixin",
 		"core.render.perf.LoadingOverlayWarmupMixin",
 		"core.render.liquidglass.logical.LiquidGlassGameRendererMixin",

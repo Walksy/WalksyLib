@@ -16,9 +16,4 @@ public class ScreenRenderMixin {
         WLRenderSystem.glassUniforms().requestScreenBlur(GuiContext.graphics(context));
         ci.cancel();
     }
-
-    @Inject(method = "renderTransparentBackground(Lnet/minecraft/client/gui/GuiGraphics;)V", at = @At("HEAD"), cancellable = true)
-    private void walksylib$onRenderDarkening(final GuiGraphics context, final CallbackInfo ci) {
-        ci.cancel();
-    }
 }

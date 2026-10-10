@@ -37,7 +37,6 @@ public abstract class ScreenBridge extends Screen {
     }
 
     protected void extractTransparentBackground(final WLGraphics2D graphics) {
-        super.extractTransparentBackground(graphics.context().extractor());
     }
 
     @Override

@@ -63,6 +63,19 @@ public final class WalksyLibEvents {
             callback.receive(packet, listener, ensureRunningOnSameThread, cancellable);
         }
     });
+    public static final Event<MainThreadPacketEvent> START_RECEIVE_PACKET_MAIN = EventFactory.createArrayBacked(MainThreadPacketEvent.class, callbacks -> (packet, listener, cancellable) -> {
+        for (final MainThreadPacketEvent callback : callbacks) {
+            callback.receive(packet, listener, cancellable);
+            if (cancellable.isCancelled()) {
+                break;
+            }
+        }
+    });
+    public static final Event<MainThreadPacketEvent> END_RECEIVE_PACKET_MAIN = EventFactory.createArrayBacked(MainThreadPacketEvent.class, callbacks -> (packet, listener, cancellable) -> {
+        for (final MainThreadPacketEvent callback : callbacks) {
+            callback.receive(packet, listener, cancellable);
+        }
+    });
     public static final Event<FileDropEvent> FILE_DROP = EventFactory.createArrayBacked(FileDropEvent.class, callbacks -> (files, failedCount) -> {
         for (final FileDropEvent callback : callbacks) {
             callback.dropFile(files, failedCount);

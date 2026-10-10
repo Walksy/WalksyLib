@@ -1,9 +1,14 @@
 package main.walksy.lib.core.mixin.events;
 
-import main.walksy.lib.core.WalksyLib;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import main.walksy.lib.api.event.Cancellable;
 import main.walksy.lib.api.event.WalksyLibEvents;
+import main.walksy.lib.core.WalksyLib;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.PacketListener;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,5 +27,16 @@ public class ClientPlayNetworkMixin {
     private void walksylib$onLeftServer(final CallbackInfo ci) {
         WalksyLibEvents.CLIENT_LEFT_SERVER.invoker().leave();
         Minecraft.getInstance().execute(() -> WalksyLib.getInstance().onLeftServer());
+    }
+
+    @WrapOperation(method = "handleBundlePacket", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V"))
+    private void walksylib$onBundledPacket(final Packet<?> packet, final PacketListener listener, final Operation<Void> original) {
+        final Cancellable cancellable = new Cancellable();
+        WalksyLibEvents.START_RECEIVE_PACKET_MAIN.invoker().receive(packet, listener, cancellable);
+        if (cancellable.isCancelled()) {
+            return;
+        }
+        original.call(packet, listener);
+        WalksyLibEvents.END_RECEIVE_PACKET_MAIN.invoker().receive(packet, listener, new Cancellable());
     }
 }
