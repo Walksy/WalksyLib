@@ -1,6 +1,14 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
 import java.nio.file.Path
 
 def versionsRoot = rootProject.file('versions')
+def modId = 'walksylib'
+
+def neoforge = project.name.startsWith('neoforge-')
+def versionName = neoforge ? project.name.substring('neoforge-'.length()) : project.name
+def versionDir = new File(versionsRoot, versionName)
 
 def readProps = { File dir ->
     def props = new Properties()
@@ -9,7 +17,7 @@ def readProps = { File dir ->
 }
 
 def chain = []
-def cursor = project.projectDir
+def cursor = versionDir
 while (cursor != null) {
     if (chain.contains(cursor)) {
         throw new GradleException("Version folder parent cycle at ${cursor.name}")
@@ -24,15 +32,20 @@ while (cursor != null) {
 def layers = chain + [rootProject.projectDir]
 ext.walksylibLayers = layers
 
-def minecraftVersion = project.property('minecraft_version') as String
-def remap = (minecraftVersion.tokenize('.')[0] as int) < 26
-def javaVersion = (project.property('java_version') as String) as int
-def mcVersions = (project.findProperty('mc_versions') ?: minecraftVersion).toString().split(',')*.trim().findAll { it }
+def versionProps = readProps(versionDir)
+def minecraftVersion = versionProps.getProperty('minecraft_version')
+def remap = !neoforge && (minecraftVersion.tokenize('.')[0] as int) < 26
+def javaVersion = versionProps.getProperty('java_version') as int
+def mcVersions = (versionProps.getProperty('mc_versions') ?: minecraftVersion).toString().split(',')*.trim().findAll { it }
 
-apply plugin: remap ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+if (neoforge) {
+    apply plugin: 'net.neoforged.moddev'
+} else {
+    apply plugin: remap ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+}
 apply plugin: 'maven-publish'
 
-version = "${rootProject.mod_version}+${project.name}"
+version = "${rootProject.mod_version}+${versionName}"
 group = rootProject.maven_group
 
 base {
@@ -52,12 +65,19 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 def layeredFile = { String relative ->
-    layers.collect { new File(it, relative) }.find { it.file }
+    def candidates = []
+    layers.each { layer ->
+        if (neoforge && relative.startsWith('src/main/')) {
+            candidates << new File(layer, 'src/neoforge/' + relative.substring('src/main/'.length()))
+        }
+        candidates << new File(layer, relative)
+    }
+    candidates.find { it.file }
 }
 
 def ideSync = System.getProperty('idea.sync.active') == 'true'
 def active = rootProject.findProperty('walksylib.active')?.toString()?.trim()
-def isActive = project.name == active
+def isActive = !neoforge && project.name == active
 
 def loadRules = { String fileName ->
     def rules = []
@@ -81,8 +101,44 @@ def replacementRules = loadRules('replacements.txt')
 def resourceRules = loadRules('resource-replacements.txt')
 def filteredResources = ['**/*.vsh', '**/*.fsh', '**/*.glsl']
 
+if (neoforge) {
+    def compat = 'main.walksy.lib.core.platform.compat'
+    [
+            ['net\\.fabricmc\\.api\\.(ModInitializer|ClientModInitializer|EnvType|Environment)', 'api'],
+            ['net\\.fabricmc\\.loader\\.api\\.(FabricLoader|ModContainer|Version|VersionParsingException)', 'loader'],
+            ['net\\.fabricmc\\.loader\\.api\\.metadata\\.(ModMetadata|ModOrigin|Person)', 'loader.metadata'],
+            ['net\\.fabricmc\\.fabric\\.api\\.event\\.(Event|EventFactory)', 'event'],
+            ['net\\.fabricmc\\.fabric\\.api\\.client\\.command\\.v2\\.(FabricClientCommandSource|ClientCommandRegistrationCallback)', 'command'],
+            ['net\\.fabricmc\\.fabric\\.api\\.client\\.networking\\.v1\\.(ClientPlayNetworking)', 'networking'],
+            ['net\\.fabricmc\\.fabric\\.api\\.networking\\.v1\\.(PayloadTypeRegistry)', 'networking'],
+            ['net\\.fabricmc\\.fabric\\.api\\.client\\.keymapping\\.v1\\.(KeyMappingHelper)', 'keybinding'],
+            ['net\\.fabricmc\\.fabric\\.api\\.client\\.keybinding\\.v1\\.(KeyBindingHelper)', 'keybinding']
+    ].each { pattern, subPackage ->
+        replacementRules << [java.util.regex.Pattern.compile('import ' + pattern + ';'), 'import ' + compat + '.' + subPackage + '.$1;']
+    }
+
+    def reservedIndices = '393216'
+    [
+            '\\.getBuffer\\(Math\\.max\\(6, vertexCount / 4 \\* 6\\)\\)'              : ".getBuffer(Math.max(${reservedIndices}, Math.max(6, vertexCount / 4 * 6)))",
+            '\\.getBuffer\\(Math\\.max\\(6, bytesNeeded / MIN_STRIDE / 4 \\* 6\\)\\)' : ".getBuffer(Math.max(${reservedIndices}, Math.max(6, bytesNeeded / MIN_STRIDE / 4 * 6)))",
+            '\\.getBuffer\\(6\\);'                                                   : ".getBuffer(${reservedIndices});"
+    ].each { pattern, replacement ->
+        replacementRules << [java.util.regex.Pattern.compile(pattern), replacement.toString()]
+    }
+}
+
+def neoforgeGenerated = layout.buildDirectory.dir("${modId}/neoforge")
+def neoforgeJavaDir = neoforgeGenerated.map { it.dir('java') }
+def neoforgeResourceDir = neoforgeGenerated.map { it.dir('resources') }
+
 ['java', 'resources'].each { kind ->
-    def dirs = layers.collect { new File(it, "src/main/${kind}") }
+    def dirs = []
+    layers.each { layer ->
+        if (neoforge) {
+            dirs << new File(layer, "src/neoforge/${kind}")
+        }
+        dirs << new File(layer, "src/main/${kind}")
+    }
     def dirPaths = dirs.collect { it.toPath().toAbsolutePath().normalize() }
     def set = sourceSets.main."${kind}"
     if (ideSync && !isActive) {
@@ -93,7 +149,7 @@ def filteredResources = ['**/*.vsh', '**/*.fsh', '**/*.glsl']
     def patterns = kind == 'java' ? ['**/*.java'] : filteredResources
     if (!rules.isEmpty()) {
         def prepare = tasks.register(kind == 'java' ? 'prepareVersionSources' : 'prepareVersionResources', Sync) {
-            into layout.buildDirectory.dir("walksylib/generated-${kind}")
+            into layout.buildDirectory.dir("${modId}/generated-${kind}")
             includeEmptyDirs = false
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             dirs.eachWithIndex { File dir, int index ->
@@ -139,21 +195,25 @@ def filteredResources = ['**/*.vsh', '**/*.fsh', '**/*.glsl']
     set.exclude '**/*.removed'
 }
 
-loom {
-    def widener = layeredFile('src/main/resources/walksylib.accesswidener')
-    if (widener != null && remap) {
-        def generated = layout.buildDirectory.file('walksylib/walksylib.accesswidener').get().asFile
-        generated.parentFile.mkdirs()
-        def lines = widener.readLines()
-        generated.text = (['accessWidener v2 named'] + lines.drop(1)).join('\n') + '\n'
-        widener = generated
-    }
-    if (widener != null) {
-        accessWidenerPath = widener
-    }
-    runConfigs.configureEach {
-        ideConfigGenerated(isActive)
-        runDir = "../../run/${project.name}"
+def widenerName = 'walksylib.accesswidener'
+
+if (!neoforge) {
+    loom {
+        def widener = widenerName ? layeredFile("src/main/resources/${widenerName}") : null
+        if (widener != null && remap) {
+            def generated = layout.buildDirectory.file("${modId}/${widenerName}").get().asFile
+            generated.parentFile.mkdirs()
+            def lines = widener.readLines()
+            generated.text = (['accessWidener v2 named'] + lines.drop(1)).join('\n') + '\n'
+            widener = generated
+        }
+        if (widener != null) {
+            accessWidenerPath = widener
+        }
+        runConfigs.configureEach {
+            ideConfigGenerated(isActive)
+            runDir = "../../run/${project.name}"
+        }
     }
 }
 
@@ -179,20 +239,149 @@ repositories {
     }
 }
 
-dependencies {
-    minecraft "com.mojang:minecraft:${minecraftVersion}"
-    if (remap) {
-        mappings loom.officialMojangMappings()
-        modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
-        modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-        modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
-        if (project.hasProperty('vulkanmod_version')) {
-            modCompileOnly "maven.modrinth:vulkanmod:${project.vulkanmod_version}"
+if (neoforge) {
+    def atFile = null
+    def widenerSource = widenerName ? layeredFile("src/main/resources/${widenerName}") : null
+    if (widenerSource != null) {
+        def lines = []
+        widenerSource.eachLine { String raw ->
+            def line = raw.trim()
+            if (!line || line.startsWith('#') || line.startsWith('accessWidener')) {
+                return
+            }
+            def parts = line.split(/\s+/)
+            def kind = parts[1]
+            def owner = parts[2].replace('/', '.')
+            def modifier = parts[0] == 'accessible' ? 'public' : (parts[0] == 'extendable' ? 'public-f' : 'public-f')
+            if (kind == 'class') {
+                lines << "${modifier} ${owner}".toString()
+            } else if (kind == 'field') {
+                lines << "${modifier} ${owner} ${parts[3]}".toString()
+            } else if (kind == 'method') {
+                lines << "${modifier} ${owner} ${parts[3]}${parts[4]}".toString()
+            }
         }
-    } else {
-        implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
-        implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-        implementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+        if (!lines.isEmpty()) {
+            atFile = new File(neoforgeResourceDir.get().asFile, 'META-INF/accesstransformer.cfg')
+            atFile.parentFile.mkdirs()
+            atFile.text = lines.join('\n') + '\n'
+        }
+    }
+
+    neoForge {
+        version = versionProps.getProperty('neoforge_version')
+        if (atFile != null) {
+            accessTransformers.from(atFile)
+        }
+        runs {
+            client {
+                client()
+                gameDirectory.set(rootProject.file("run/neoforge-${versionName}"))
+            }
+        }
+        mods {
+            "${modId}" {
+                sourceSet(sourceSets.main)
+            }
+        }
+    }
+
+    def fabricJson = layeredFile('src/main/resources/fabric.mod.json')
+    def meta = new JsonSlurper().parse(fabricJson)
+    def javaOut = neoforgeJavaDir.get().asFile
+    def resourceOut = neoforgeResourceDir.get().asFile
+    def entryPackage = "${rootProject.maven_group}.neoforge".toString()
+    def entryClass = "${rootProject.archives_base_name}NeoForge".toString()
+    def tomlEscape = { String text -> (text ?: '').replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ') }
+    def minecraftRange = mcVersions.size() == 1 ? "[${mcVersions[0]}]" : "[${mcVersions.first()},${mcVersions.last()}]"
+    def firstMinecraft = mcVersions.first().tokenize('.')
+    def neoforgeFloor = firstMinecraft[0] == '1' ? "${firstMinecraft[1]}.${firstMinecraft.size() > 2 ? firstMinecraft[2] : '0'}" : "${firstMinecraft[0]}.${firstMinecraft[1]}"
+    def contact = meta.contact ?: [:]
+    def entrypoints = meta.entrypoints ?: [:]
+    def mixinConfigs = (meta.mixins ?: []).collect { it instanceof String ? it : it.config }
+    def walksylibEntry = (entrypoints.walksylib ?: []).collect { it instanceof String ? it : it.value }
+    def libraryRequirement = ((meta.depends ?: [:]).walksylib ?: '*').toString().replaceAll('^>=', '')
+
+    def toml = new StringBuilder()
+    toml << 'modLoader = "javafml"\n'
+    toml << 'loaderVersion = "[1,)"\n'
+    toml << "license = \"${tomlEscape(meta.license ?: 'MIT')}\"\n"
+    if (contact.issues) {
+        toml << "issueTrackerURL = \"${tomlEscape(contact.issues)}\"\n"
+    }
+    toml << '\n[[mods]]\n'
+    toml << "modId = \"${meta.id}\"\n"
+    toml << "version = \"${project.version}\"\n"
+    toml << "displayName = \"${tomlEscape(meta.name)}\"\n"
+    toml << "description = \"${tomlEscape(meta.description)}\"\n"
+    toml << "authors = \"${tomlEscape((meta.authors ?: ['Walksy']).collect { it instanceof String ? it : it.name }.join(', '))}\"\n"
+    if (contact.homepage) {
+        toml << "displayURL = \"${tomlEscape(contact.homepage)}\"\n"
+    }
+    if (meta.icon) {
+        toml << "logoFile = \"${tomlEscape(meta.icon)}\"\n"
+    }
+    mixinConfigs.each { config ->
+        toml << "\n[[mixins]]\nconfig = \"${config}\"\n"
+    }
+    if (atFile != null) {
+        toml << '\n[[accessTransformers]]\nfile = "META-INF/accesstransformer.cfg"\n'
+    }
+    toml << "\n[modproperties.${meta.id}]\n"
+    if (walksylibEntry) {
+        toml << "walksylib = \"${walksylibEntry[0]}\"\n"
+    }
+    toml << "authors = \"${tomlEscape((meta.authors ?: ['Walksy']).collect { it instanceof String ? it : it.name }.join(', '))}\"\n"
+    ['sources', 'homepage', 'issues'].each { key ->
+        if (contact[key]) {
+            toml << "${key} = \"${tomlEscape(contact[key])}\"\n"
+        }
+    }
+    def dependency = { String id, String range, String ordering ->
+        toml << "\n[[dependencies.${meta.id}]]\nmodId = \"${id}\"\ntype = \"required\"\nversionRange = \"${range}\"\nordering = \"${ordering}\"\nside = \"CLIENT\"\n"
+    }
+    dependency('neoforge', "[${neoforgeFloor},)", 'NONE')
+    dependency('minecraft', minecraftRange, 'NONE')
+    if (meta.id != 'walksylib') {
+        dependency('walksylib', "[${libraryRequirement},)", 'AFTER')
+    }
+
+    def tomlFile = new File(resourceOut, 'META-INF/neoforge.mods.toml')
+    tomlFile.parentFile.mkdirs()
+    tomlFile.text = toml.toString()
+
+    if (!ideSync || isActive) {
+        sourceSets.main.java.srcDir(javaOut)
+        sourceSets.main.resources.srcDir(resourceOut)
+    }
+    sourceSets.main.resources.exclude('fabric.mod.json', '*.accesswidener')
+
+    jar {
+        archiveClassifier = 'neoforge'
+    }
+} else {
+    def modmenuVersion = versionProps.getProperty('modmenu_version')
+    def fabricVersion = versionProps.getProperty('fabric_version')
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${minecraftVersion}"
+        if (remap) {
+            mappings loom.officialMojangMappings()
+            modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+            modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
+            if (modmenuVersion) {
+                modImplementation "com.terraformersmc:modmenu:${modmenuVersion}"
+            }
+            if (versionProps.getProperty('vulkanmod_version')) {
+                modCompileOnly "maven.modrinth:vulkanmod:${versionProps.getProperty('vulkanmod_version')}"
+            }
+        } else {
+            implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+            implementation "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
+            if (modmenuVersion) {
+                implementation "com.terraformersmc:modmenu:${modmenuVersion}"
+            }
+        }
     }
 }
 
@@ -203,12 +392,33 @@ processResources {
             java_version        : javaVersion
     ]
     inputs.properties expansions
-    filesMatching(['fabric.mod.json', 'walksylib.mixins.json']) {
+    filesMatching(['fabric.mod.json', '*.mixins.json', 'mixin.*.json']) {
         expand expansions
     }
-    if (remap) {
-        filesMatching('walksylib.accesswidener') {
+    if (remap && widenerName) {
+        filesMatching(widenerName) {
             filter { String line -> line.startsWith('accessWidener ') ? 'accessWidener v2 named' : line }
+        }
+    }
+    if (neoforge) {
+        doLast {
+            def classRoots = sourceSets.main.output.classesDirs.files
+            def hasClass = { String mixin ->
+                classRoots.any { new File(it, 'main/walksy/lib/core/mixin/' + mixin.replace('.', '/') + '.class').file }
+            }
+            fileTree(destinationDir).matching { include '*.mixins.json' }.each { File config ->
+                def json = new JsonSlurper().parse(config)
+                ['client', 'mixins', 'server'].each { key ->
+                    if (json[key] instanceof List) {
+                        json[key] = json[key].findAll { !it.toString().startsWith('modmenu.') }
+                    }
+                }
+                def neoforgeOnly = ['core.render.GuiRendererIndexReserveMixin']
+                if (json.client instanceof List) {
+                    neoforgeOnly.findAll { hasClass(it) && !json.client.contains(it) }.each { json.client = json.client + [it] }
+                }
+                config.text = JsonOutput.prettyPrint(JsonOutput.toJson(json)) + '\n'
+            }
         }
     }
 }

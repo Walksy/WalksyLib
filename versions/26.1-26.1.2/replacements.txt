@@ -1,0 +1,2 @@
+import com\.mojang\.blaze3d\.PrimitiveTopology; => import com.mojang.blaze3d.vertex.VertexFormat;
+getSequentialBuffer\(PrimitiveTopology\.QUADS\) => getSequentialBuffer(VertexFormat.Mode.QUADS)

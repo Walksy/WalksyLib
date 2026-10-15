@@ -1,2 +1,3 @@
 VanillaRegistries\.createLookup\(\) => VanillaRegistries.createWorldLookup()
 try \(final VanillaPackResources vanilla = ServerPacksSource\.createVanillaPackSource\(\); final var resources = new MultiPackResourceManager\(PackType\.SERVER_DATA, List\.of\(vanilla\)\)\) \{ => try (final var resources = new MultiPackResourceManager(PackType.SERVER_DATA, List.of(ServerPacksSource.createVanillaPackSource().fullResources()))) {
+import com\.mojang\.blaze3d\.PrimitiveTopology; => import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;

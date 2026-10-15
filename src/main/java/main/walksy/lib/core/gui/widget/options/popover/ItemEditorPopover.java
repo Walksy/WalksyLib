@@ -705,14 +705,7 @@ public final class ItemEditorPopover implements PopoverHost.PopoverContent {
         final float textSize = Math.max(Type.CAPTION2.size() * s, h * 0.46f);
         final float w = Fonts.SFPRO_DISPLAY.width(this.editNbtButton.getLabel(), textSize) + 14f * s;
         this.layoutPill(this.editNbtButton, x0, y, w, h, alpha);
-        if (!this.extractTrigger(graphics, this.editNbtButton, mouseX, mouseY, delta)) {
-            return;
-        }
-        if (this.current().hasExtraNbt()) {
-            final float dot = 4f * s;
-            final int color = ColorUtils.withAlpha(this.style().accent(), alpha);
-            graphics.fillRoundedGradient(x0 + w + 5f * s, y + (h - dot) / 2f, x0 + w + 5f * s + dot, y + (h + dot) / 2f, color, color, color, color, dot / 2f);
-        }
+        this.extractTrigger(graphics, this.editNbtButton, mouseX, mouseY, delta);
     }
 
     private float extractPropertiesCard(final WLGraphics2D graphics, final float x0, final float x1, final float y, final int mouseX, final int mouseY, final float delta, final float dtSeconds, final float alpha) {
@@ -1062,7 +1055,17 @@ public final class ItemEditorPopover implements PopoverHost.PopoverContent {
 
     private void openNbtEditor() {
         final NbtEditorPopover sheet = new NbtEditorPopover(this::currentOrNull, this::edit, this.nbtHost::close, () -> this.editNbtButton.style().scaled(this.uiScale).layer(this.nbtHost.panelLayer()), this.uiScale, this.nbtHost.panelLayer(), FadeKeys.next()).withTriggerHandoff((g, handoff) -> this.extractTriggerLabel(g, this.editNbtButton, handoff));
+        final int widestSide = Math.max(this.sideRoom(true), this.sideRoom(false));
+        if (widestSide < sheet.preferredWidth()) {
+            sheet.limitWidth(widestSide);
+        }
         this.openBeside(this.nbtHost, sheet, this.editNbtButton, true);
+    }
+
+    private int sideRoom(final boolean left) {
+        final int gap = Math.round(10f * this.s());
+        final int margin = Math.round(PopoverHost.screenMargin());
+        return left ? this.lastPanelX - gap - margin : Minecraft.getInstance().getWindow().getGuiScaledWidth() - (this.lastPanelX + this.lastPanelW) - gap - margin;
     }
 
     private ItemSpec currentOrNull() {
@@ -1090,8 +1093,8 @@ public final class ItemEditorPopover implements PopoverHost.PopoverContent {
         final int pickerH = content.preferredHeight();
         final int gap = Math.round(10f * this.s());
         final int margin = Math.round(PopoverHost.screenMargin());
-        final int rightRoom = screenW - (this.lastPanelX + this.lastPanelW) - gap - margin;
-        final int leftRoom = this.lastPanelX - gap - margin;
+        final int rightRoom = this.sideRoom(false);
+        final int leftRoom = this.sideRoom(true);
         final int left = this.lastPanelX - gap - pickerW;
         final int right = this.lastPanelX + this.lastPanelW + gap;
         final int boundsX;

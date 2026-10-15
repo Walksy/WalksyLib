@@ -30,6 +30,7 @@ import main.walksy.lib.core.gui.widget.CategoryHolder;
 import main.walksy.lib.core.gui.widget.SidebarActionRow;
 import main.walksy.lib.core.gui.widget.options.AllModsPaneWidget;
 import main.walksy.lib.core.gui.widget.options.ChangelogPaneWidget;
+import main.walksy.lib.core.gui.widget.options.UpdateHeroWidget;
 import main.walksy.lib.core.gui.widget.options.SuggestionPaneWidget;
 import main.walksy.lib.core.mods.remote.ModUpdate;
 import main.walksy.lib.core.mods.remote.ModSuggestion;
@@ -999,6 +1000,21 @@ public class WalksyLibPanelScreen extends WLScreen {
         this.detailWidgets.add(scroll);
     }
 
+    private void buildUpdatePane() {
+        WalksyLib.getInstance().getChangelogPage().config();
+        final ModUpdate update = WalksyLib.getInstance().getModUpdates().library();
+        final int scrollY = this.paneContentTop();
+        final int scrollH = Math.max(1, (this.contentY + this.contentH) - scrollY);
+        final ScrollPanel scroll = new ScrollPanel(this.contentX, scrollY, this.contentW, scrollH);
+        scroll.setTopEdge(scrollY);
+        scroll.setContentInsetTop(Math.round(ALL_MODS_CONTENT_TOP_INSET * this.uiScale));
+        scroll.addChild(0, (x, y, w) -> new UpdateHeroWidget(update, x, y, w));
+        scroll.addChild(0, (x, y, w) -> new ChangelogPaneWidget(x, y, w, true));
+        scroll.relayout();
+        this.addRenderableWidget(scroll);
+        this.detailWidgets.add(scroll);
+    }
+
     private void rebuildDetailPane() {
         final CategoryTabBar previousTabBar = this.tabBar;
         for (final AbstractWidget widget : this.detailWidgets) {
@@ -1028,6 +1044,10 @@ public class WalksyLibPanelScreen extends WLScreen {
         }
         if (this.selectedMod == this.changelogLibraryMod && this.searchQuery.isBlank()) {
             this.buildChangelogPane();
+            return;
+        }
+        if (this.selectedMod == this.updateLibraryMod && this.searchQuery.isBlank()) {
+            this.buildUpdatePane();
             return;
         }
         if (!this.selectedMod.hasConfig()) {
@@ -1376,7 +1396,7 @@ public class WalksyLibPanelScreen extends WLScreen {
                 rebuildWidgets();
             } else if ((this.bannerUpdateFor(this.selectedMod) != null) != this.builtWithBanner) {
                 this.rebuildDetailPane();
-            } else if (this.selectedMod != null && this.selectedMod == this.changelogLibraryMod && !this.showingAllMods && WalksyLib.getInstance().getChangelogPage().isStale()) {
+            } else if (this.selectedMod != null && (this.selectedMod == this.changelogLibraryMod || this.selectedMod == this.updateLibraryMod) && !this.showingAllMods && WalksyLib.getInstance().getChangelogPage().isStale()) {
                 this.rebuildDetailPane();
             }
         }

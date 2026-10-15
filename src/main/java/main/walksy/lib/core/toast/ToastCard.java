@@ -280,7 +280,7 @@ final class ToastCard {
         final int titleColor = ColorUtils.withAlpha(TITLE_COLOR, alpha);
         if (this.titleOverflow() > 0f) {
             final float column = Math.max(0f, Math.min(this.textWidth, x + w - padX - textX));
-            this.extractMarquee(graphics, textX, column, lineTop, y, h, scale, titleSize, titleColor);
+            this.extractMarquee(graphics, textX, column, lineTop, x, y, w, h, scale, titleSize, titleColor);
         } else {
             extractLine(graphics, Type.HEADLINE.emphasized(), this.title, textX, lineTop, TITLE_LINE * scale, titleSize, titleColor);
         }
@@ -309,7 +309,7 @@ final class ToastCard {
         return MARQUEE_START_HOLD + overflow / (MARQUEE_SPEED * this.uiScale) + MARQUEE_END_HOLD;
     }
 
-    private void extractMarquee(final WLGraphics2D graphics, final float textX, final float column, final float lineTop, final float cardY, final float cardH, final float scale, final float size, final int color) {
+    private void extractMarquee(final WLGraphics2D graphics, final float textX, final float column, final float lineTop, final float cardX, final float cardY, final float cardW, final float cardH, final float scale, final float size, final int color) {
         if (column <= 0f) {
             return;
         }
@@ -320,11 +320,11 @@ final class ToastCard {
         final float offset = t <= MARQUEE_START_HOLD ? 0f : (t - MARQUEE_START_HOLD) * speed;
         final MsdfFont font = Type.HEADLINE.emphasized();
         final float lineHeight = TITLE_LINE * scale;
-        graphics.enableScissor((int) Math.floor(textX), (int) Math.floor(cardY), (int) Math.ceil(textX + column), (int) Math.ceil(cardY + cardH));
+        graphics.enableScissor((int) Math.floor(cardX), (int) Math.floor(cardY), (int) Math.ceil(cardX + cardW), (int) Math.ceil(cardY + cardH));
         try {
             extractLine(graphics, font, this.title, textX - offset, lineTop, lineHeight, size, color);
             final float trailing = textX - offset + travel;
-            if (trailing < textX + column) {
+            if (trailing < cardX + cardW) {
                 extractLine(graphics, font, this.title, trailing, lineTop, lineHeight, size, color);
             }
         } finally {

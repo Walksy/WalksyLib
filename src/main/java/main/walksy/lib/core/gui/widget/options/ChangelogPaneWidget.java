@@ -9,6 +9,8 @@ import main.walksy.lib.core.gui.widget.ResetButton;
 import main.walksy.lib.core.gui.widget.WLWidget;
 import main.walksy.lib.core.gui.widget.options.control.ControlLayers;
 import main.walksy.lib.core.mods.remote.Changelog;
+import main.walksy.lib.core.mods.remote.ModUpdate;
+import main.walksy.lib.core.mods.remote.ModrinthApi;
 import main.walksy.lib.core.platform.WLClient;
 import main.walksy.lib.core.render.Cursors;
 import main.walksy.lib.core.render.WLGraphics2D;
@@ -18,6 +20,7 @@ import main.walksy.lib.core.render.font.msdf.MsdfFont;
 import main.walksy.lib.core.render.glass.api.GlassStyle;
 import main.walksy.lib.core.utils.ColorUtils;
 import main.walksy.lib.core.utils.MathUtils;
+import net.fabricmc.loader.api.Version;
 import net.minecraft.client.input.MouseButtonEvent;
 
 import java.util.ArrayList;
@@ -55,6 +58,7 @@ public final class ChangelogPaneWidget extends WLWidget {
     private final GlassStyle cardStyle = ResetButton.knobStyle(ControlLayers.BASE);
     private final Changelog.State state;
     private final String installed;
+    private final boolean sinceInstalled;
     private final List<Block> blocks = new ArrayList<>();
     private float[] hoverAnim = new float[0];
     private float linkX0, linkY0, linkX1, linkY1;
@@ -67,14 +71,37 @@ public final class ChangelogPaneWidget extends WLWidget {
     private record Block(Changelog.Release release, String type, int typeColor, boolean installed, boolean latest, String date, String versions, List<Line> lines, int hidden, float offset, float height) {}
 
     public ChangelogPaneWidget(final int x, final int y, final int width) {
+        this(x, y, width, false);
+    }
+
+    public ChangelogPaneWidget(final int x, final int y, final int width, final boolean sinceInstalled) {
         super(x, y, width, 1);
         this.state = WalksyLib.getInstance().getChangelog().state();
         this.installed = WalksyLib.getInstance().getChangelogPage().installedVersion();
-        if (this.state == Changelog.State.LOADED && !WalksyLib.getInstance().getChangelog().releases().isEmpty()) {
-            this.layout(WalksyLib.getInstance().getChangelog().releases());
+        this.sinceInstalled = sinceInstalled;
+        final List<Changelog.Release> releases = sinceInstalled ? this.newerThanInstalled(WalksyLib.getInstance().getChangelog().releases()) : WalksyLib.getInstance().getChangelog().releases();
+        if (this.state == Changelog.State.LOADED && !releases.isEmpty()) {
+            this.layout(releases);
         } else {
             this.setHeight(Math.round(STATE_HEIGHT * this.uiScale));
         }
+    }
+
+    private List<Changelog.Release> newerThanInstalled(final List<Changelog.Release> releases) {
+        final String game = ModrinthApi.gameVersion();
+        final List<Changelog.Release> forThisGame = releases.stream().filter(release -> release.gameVersions().isEmpty() || release.gameVersions().contains(game)).toList();
+        final Version current = ModUpdate.parse(this.installed);
+        final List<Changelog.Release> newer = current == null ? List.of() : forThisGame.stream().filter(release -> {
+            final Version version = ModUpdate.parse(release.versionNumber());
+            return version != null && version.compareTo(current) > 0;
+        }).toList();
+        if (!newer.isEmpty()) {
+            return newer;
+        }
+        if (!forThisGame.isEmpty()) {
+            return forThisGame.subList(0, 1);
+        }
+        return releases.isEmpty() ? releases : releases.subList(0, 1);
     }
 
     private float s(final float v) {
@@ -116,7 +143,7 @@ public final class ChangelogPaneWidget extends WLWidget {
     private void layout(final List<Changelog.Release> releases) {
         final float textW = this.cardW() - this.s(PAD_X) * 2f;
         final float bodySize = this.bodySize();
-        float offset = this.s(HERO_HEIGHT + HERO_GAP);
+        float offset = this.sinceInstalled ? 0f : this.s(HERO_HEIGHT + HERO_GAP);
         for (int r = 0; r < releases.size(); r++) {
             final Changelog.Release release = releases.get(r);
             final List<ChangelogConfig.Note> notes = WalksyLib.getInstance().getChangelogPage().notes(release.changelog());
@@ -184,7 +211,9 @@ public final class ChangelogPaneWidget extends WLWidget {
             return;
         }
         final float dt = WLRenderSystem.frameDeltaSeconds();
-        this.extractHero(graphics, mouseX, mouseY, dt, alpha);
+        if (!this.sinceInstalled) {
+            this.extractHero(graphics, mouseX, mouseY, dt, alpha);
+        }
         this.extractRail(graphics, alpha);
         for (int i = 0; i < this.blocks.size(); i++) {
             final Block block = this.blocks.get(i);

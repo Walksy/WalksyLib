@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.WalksyLibConstants;
+import main.walksy.lib.core.platform.WLLoader;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.Version;
@@ -20,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -118,19 +121,42 @@ public final class SupersededJars {
         return false;
     }
 
+    private static final Pattern NEOFORGE_MOD = Pattern.compile("\\[\\[mods\\]\\][\\s\\S]*?modId\\s*=\\s*\"([^\"]+)\"[\\s\\S]*?version\\s*=\\s*\"([^\"]+)\"");
+    private static final Pattern NEOFORGE_LIBRARY_DEPENDENCY = Pattern.compile("\\[\\[dependencies\\.[^\\]]+\\]\\]\\s*modId\\s*=\\s*\"" + WalksyLibConstants.NAMESPACE + "\"");
+
     private static @Nullable JsonObject readModJson(final Path jar) {
         try (ZipFile zip = new ZipFile(jar.toFile())) {
-            final ZipEntry entry = zip.getEntry("fabric.mod.json");
+            final ZipEntry entry = zip.getEntry(WLLoader.isNeoForge() ? "META-INF/neoforge.mods.toml" : "fabric.mod.json");
             if (entry == null) {
                 return null;
             }
             try (InputStream in = zip.getInputStream(entry)) {
-                final JsonElement root = JsonParser.parseString(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+                final String text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                if (WLLoader.isNeoForge()) {
+                    return neoForgeSummary(text);
+                }
+                final JsonElement root = JsonParser.parseString(text);
                 return root.isJsonObject() ? root.getAsJsonObject() : null;
             }
         } catch (final IOException | RuntimeException e) {
             return null;
         }
+    }
+
+    private static @Nullable JsonObject neoForgeSummary(final String toml) {
+        final Matcher mod = NEOFORGE_MOD.matcher(toml);
+        if (!mod.find()) {
+            return null;
+        }
+        final JsonObject summary = new JsonObject();
+        summary.addProperty("id", mod.group(1));
+        summary.addProperty("version", mod.group(2));
+        if (NEOFORGE_LIBRARY_DEPENDENCY.matcher(toml).find()) {
+            final JsonObject depends = new JsonObject();
+            depends.addProperty(WalksyLibConstants.NAMESPACE, "*");
+            summary.add("depends", depends);
+        }
+        return summary;
     }
 
     private static @Nullable String string(final JsonObject json, final String key) {

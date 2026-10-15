@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.WalksyLibConstants;
+import main.walksy.lib.core.platform.WLLoader;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,7 @@ public final class ModrinthApi {
     }
 
     static boolean isForThisClient(final JsonObject version, final String gameVersion) {
-        return strings(version, "game_versions").contains(gameVersion) && strings(version, "loaders").stream().anyMatch("fabric"::equalsIgnoreCase);
+        return strings(version, "game_versions").contains(gameVersion) && strings(version, "loaders").stream().anyMatch(WLLoader.modrinthLoader()::equalsIgnoreCase);
     }
 
     static @Nullable JsonObject primaryFile(final JsonObject version) {

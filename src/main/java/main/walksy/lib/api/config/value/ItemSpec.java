@@ -65,7 +65,7 @@ public final class ItemSpec implements CopyableValue<ItemSpec> {
 
     public ItemSpec(final String itemId, final int count) {
         this.itemId = normalizeId(itemId);
-        this.count = clampCount(count);
+        this.count = Math.max(1, count);
         this.customName = "";
         this.lore = new ArrayList<>();
         this.enchantments = new LinkedHashMap<>();
@@ -150,7 +150,7 @@ public final class ItemSpec implements CopyableValue<ItemSpec> {
     }
 
     public void setCount(final int count) {
-        this.count = clampCount(count);
+        this.count = Math.max(1, count);
     }
 
     public int maxStackSize() {
@@ -187,14 +187,8 @@ public final class ItemSpec implements CopyableValue<ItemSpec> {
         slots.set(to, moving);
     }
 
-    private int clampCount(final int count) {
-        final Holder.Reference<Item> holder = resolveHolder();
-        final int limit = holder != null && WLRegistries.componentsBound(holder) ? Math.max(1, WLRegistries.components(holder).getOrDefault(DataComponents.MAX_STACK_SIZE, MAX_COUNT)) : MAX_COUNT;
-        return Math.max(1, Math.min(limit, count));
-    }
-
     private void clampCountToStack() {
-        this.count = clampCount(this.count);
+        this.count = Math.max(1, Math.min(maxStackSize(), this.count));
     }
 
     public int getDamage() {

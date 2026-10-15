@@ -1,6 +1,7 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+    id 'net.neoforged.moddev' version "${moddev_version}" apply false
 }
 
 subprojects {
@@ -9,7 +10,7 @@ subprojects {
 
 tasks.register('collectJars', Copy) {
     group = 'build'
-    description = 'Builds every Minecraft version and copies the release jars into build/libs.'
+    description = 'Builds every Minecraft version for every loader and copies the release jars into build/libs.'
     into layout.buildDirectory.dir('libs')
     subprojects.each { sub ->
         def jarTask = sub.tasks.names.contains('remapJar') ? 'remapJar' : 'jar'

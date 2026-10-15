@@ -24,6 +24,7 @@ import main.walksy.lib.core.gui.widget.options.OptionRowWidget;
 public final class NbtEditorPopover implements PopoverHost.PopoverContent {
     public static final float WIDTH = 300f;
     public static final float HEIGHT = 260f;
+    public static final float MIN_WIDTH = 170f;
     private static final float PAD = 14f;
     private static final float BUTTON_H = 16f;
     private static final float BUTTON_GAP = 6f;
@@ -44,6 +45,7 @@ public final class NbtEditorPopover implements PopoverHost.PopoverContent {
     private boolean statusIsError;
     private final String original;
     private BiConsumer<WLGraphics2D, Float> triggerHandoff;
+    private int widthLimit = Integer.MAX_VALUE;
 
     public NbtEditorPopover(final Supplier<ItemSpec> spec, final Consumer<Consumer<ItemSpec>> edit, final Runnable requestClose, final Supplier<GlassStyle> originStyle, final float uiScale, final int panelLayer, final long fadeKeyBase) {
         this.spec = spec;
@@ -77,6 +79,11 @@ public final class NbtEditorPopover implements PopoverHost.PopoverContent {
 
     public NbtEditorPopover withTriggerHandoff(final BiConsumer<WLGraphics2D, Float> drawer) {
         this.triggerHandoff = drawer;
+        return this;
+    }
+
+    public NbtEditorPopover limitWidth(final int maxWidth) {
+        this.widthLimit = Math.max(Math.round(MIN_WIDTH * this.s()), maxWidth);
         return this;
     }
 
@@ -119,7 +126,7 @@ public final class NbtEditorPopover implements PopoverHost.PopoverContent {
 
     @Override
     public int preferredWidth() {
-        return Math.round(WIDTH * this.s());
+        return Math.min(Math.round(WIDTH * this.s()), this.widthLimit);
     }
 
     @Override
@@ -188,8 +195,9 @@ public final class NbtEditorPopover implements PopoverHost.PopoverContent {
         Fonts.SFPRO_DISPLAY_BOLD.extract(graphics, "NBT", x0, titleTop, titleSize, ColorUtils.withAlpha(OptionRowWidget.LABEL_COLOR(), a));
         final ItemSpec item = this.spec.get();
         if (item != null) {
-            final String subtitle = item.itemDisplayName();
             final float subSize = Type.FOOTNOTE.size() * s;
+            final float titleW = Fonts.SFPRO_DISPLAY_BOLD.width("NBT", titleSize);
+            final String subtitle = Fonts.SFPRO_DISPLAY.truncate(item.itemDisplayName(), subSize, Math.max(0f, x1 - x0 - titleW - 8f * s));
             final float subW = Fonts.SFPRO_DISPLAY.width(subtitle, subSize);
             Fonts.SFPRO_DISPLAY.extract(graphics, subtitle, x1 - subW, Fonts.SFPRO_DISPLAY.topForBaseline(titleTop + titleSize * 0.8f, subSize), subSize, ColorUtils.withAlpha(this.style().tertiaryLabel(), a));
         }

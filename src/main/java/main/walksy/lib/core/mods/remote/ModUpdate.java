@@ -169,7 +169,7 @@ public final class ModUpdate {
         return "";
     }
 
-    static @Nullable Version parse(final String raw) {
+    public static @Nullable Version parse(final String raw) {
         final String cleaned = raw.startsWith("v") || raw.startsWith("V") ? raw.substring(1) : raw;
         if (cleaned.isBlank()) {
             return null;
