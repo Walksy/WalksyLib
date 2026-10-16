@@ -9,8 +9,11 @@ import main.walksy.lib.api.config.option.OptionDescription;
 import main.walksy.lib.api.config.option.OptionGroup;
 import main.walksy.lib.api.config.option.Options;
 import main.walksy.lib.core.mods.remote.Changelog;
+import main.walksy.lib.core.mods.remote.ModUpdate;
+import main.walksy.lib.core.mods.remote.ModrinthApi;
 import main.walksy.lib.api.config.PathUtils;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.Version;
 import main.walksy.lib.core.platform.WLClient;
 
 import java.time.ZoneId;
@@ -23,9 +26,12 @@ public final class ChangelogConfig {
     public static final String PAGE = "Changelog";
     private static final String GROUP = "Recent Updates";
     private static final int MAX_CHANGELOG_LINES = 12;
+    public static final int MAX_RELEASES = 10;
+    public static final String ALL_VERSIONS = "";
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH).withZone(ZoneId.systemDefault());
     private Config config;
     private int builtRevision = -1;
+    private String versionFilter;
 
     public record Note(boolean heading, boolean bullet, String text) {}
 
@@ -57,6 +63,47 @@ public final class ChangelogConfig {
 
     public String formatDate(final Changelog.Release release) {
         return DATE.format(release.published());
+    }
+
+    public List<String> gameVersions(final List<Changelog.Release> releases) {
+        final List<String> versions = new ArrayList<>();
+        for (final Changelog.Release release : releases) {
+            for (final String version : release.gameVersions()) {
+                if (!versions.contains(version)) {
+                    versions.add(version);
+                }
+            }
+        }
+        versions.sort(ChangelogConfig::compareGameVersions);
+        return versions;
+    }
+
+    private static int compareGameVersions(final String a, final String b) {
+        final Version left = ModUpdate.parse(a);
+        final Version right = ModUpdate.parse(b);
+        if (left == null || right == null) {
+            return b.compareTo(a);
+        }
+        return right.compareTo(left);
+    }
+
+    public String versionFilter(final List<String> available) {
+        if (this.versionFilter != null && (this.versionFilter.equals(ALL_VERSIONS) || available.contains(this.versionFilter))) {
+            return this.versionFilter;
+        }
+        final String game = ModrinthApi.gameVersion();
+        return available.contains(game) ? game : ALL_VERSIONS;
+    }
+
+    public void setVersionFilter(final String version) {
+        this.versionFilter = version;
+    }
+
+    public List<Changelog.Release> forGameVersion(final List<Changelog.Release> releases, final String version) {
+        if (version.equals(ALL_VERSIONS)) {
+            return releases;
+        }
+        return releases.stream().filter(release -> release.gameVersions().isEmpty() || release.gameVersions().contains(version)).toList();
     }
 
     public Config config() {
@@ -98,7 +145,7 @@ public final class ChangelogConfig {
             return;
         }
         final String installed = this.installedVersion();
-        for (final Changelog.Release release : releases) {
+        for (final Changelog.Release release : releases.subList(0, Math.min(MAX_RELEASES, releases.size()))) {
             final String label = release.versionNumber().equals(installed) ? release.versionNumber() + "  (Installed)" : release.versionNumber();
             final String description = this.describe(release);
             group.option(Options.ofButton(label, () -> WLClient.openUri(WalksyLib.getInstance().getChangelog().versionUrl(release)))

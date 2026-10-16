@@ -26,23 +26,23 @@ public final class Config {
     private final boolean shared;
     private final Path previousPath;
     private final Path seedPath;
-    private final String updateUrl;
+    private final boolean updateChecks;
     private final ServerOptOut serverOptOut;
     private JsonObject notifiedState;
 
-    public Config(final Path path, final List<Category> categories, final Runnable saveListener, final boolean shared, final Path previousPath, final Path seedPath, final String updateUrl, final ServerOptOut serverOptOut) {
+    public Config(final Path path, final List<Category> categories, final Runnable saveListener, final boolean shared, final Path previousPath, final Path seedPath, final boolean updateChecks, final ServerOptOut serverOptOut) {
         this.path = path;
         this.categories = List.copyOf(categories);
         this.saveListener = saveListener;
         this.shared = shared;
         this.previousPath = previousPath;
         this.seedPath = seedPath;
-        this.updateUrl = updateUrl;
+        this.updateChecks = updateChecks;
         this.serverOptOut = serverOptOut;
     }
 
-    public String updateUrl() {
-        return this.updateUrl;
+    public boolean checksForUpdates() {
+        return this.updateChecks;
     }
 
     public ServerOptOut serverOptOut() {

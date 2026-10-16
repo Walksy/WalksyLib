@@ -194,8 +194,8 @@ public final class WalksyLib {
         this.modUpdates.library();
         for (final Mod mod : this.modEntryPointList.getMods()) {
             final ModContainer container = mod.getContainer();
-            if (mod.hasConfig() && container != null) {
-                this.modUpdates.register(container.getMetadata().getId(), mod.getConfig().updateUrl());
+            if (container != null && (!mod.hasConfig() || mod.getConfig().checksForUpdates())) {
+                this.modUpdates.registerIfPublished(container.getMetadata().getId());
             }
         }
         SupersededJars.sweepAsync(this.modUpdates.trackedIds());

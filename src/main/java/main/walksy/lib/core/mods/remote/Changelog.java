@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Changelog {
-    private static final int MAX_RELEASES = 10;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicInteger revision = new AtomicInteger();
     private volatile State state = State.IDLE;
@@ -100,7 +99,7 @@ public final class Changelog {
             all.add(new Release(id, ModrinthApi.string(version, "version_number", ""), ModrinthApi.string(version, "version_type", "release"), this.published(ModrinthApi.string(version, "date_published", "")), List.copyOf(ModrinthApi.strings(version, "game_versions")), ModrinthApi.string(version, "changelog", "")));
         }
         all.sort(Comparator.comparing(Release::published).reversed());
-        return List.copyOf(all.subList(0, Math.min(MAX_RELEASES, all.size())));
+        return List.copyOf(all);
     }
 
     private Instant published(final String raw) {

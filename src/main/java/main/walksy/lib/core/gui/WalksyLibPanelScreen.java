@@ -994,10 +994,14 @@ public class WalksyLibPanelScreen extends WLScreen {
         final ScrollPanel scroll = new ScrollPanel(this.contentX, scrollY, this.contentW, scrollH);
         scroll.setTopEdge(scrollY);
         scroll.setContentInsetTop(Math.round(ALL_MODS_CONTENT_TOP_INSET * this.uiScale));
-        scroll.addChild(0, (x, y, w) -> new ChangelogPaneWidget(x, y, w));
+        scroll.addChild(0, (x, y, w) -> new ChangelogPaneWidget(x, y, w, this.rowContext(), scroll::relayout));
         scroll.relayout();
         this.addRenderableWidget(scroll);
         this.detailWidgets.add(scroll);
+    }
+
+    private RowContext rowContext() {
+        return new RowContext(option -> { }, (anchor, content) -> this.activePopover.open(anchor, this.width, this.height, content), (anchor, content) -> this.activePopover.openCentered(anchor, this.targetX, this.targetY, this.targetW, this.targetH, this.width, this.height, content), (anchor, x, y, content) -> this.activePopover.openAt(anchor, x, y, this.width, this.height, content), this.activePopover::close);
     }
 
     private void buildUpdatePane() {
@@ -1137,7 +1141,7 @@ public class WalksyLibPanelScreen extends WLScreen {
         }
         scroll.setTopEdge(edgeTop);
         scroll.setScrollbarInsets(CONTENT_SCROLLBAR_END_INSET, 0f);
-        final RowContext ctx = new RowContext(option -> { }, (anchor, content) -> this.activePopover.open(anchor, this.width, this.height, content), (anchor, content) -> this.activePopover.openCentered(anchor, this.targetX, this.targetY, this.targetW, this.targetH, this.width, this.height, content), (anchor, x, y, content) -> this.activePopover.openAt(anchor, x, y, this.width, this.height, content), this.activePopover::close);
+        final RowContext ctx = this.rowContext();
         if (searching) {
             final String query = this.searchQuery.trim();
             OptionWidgetFactory.populateSearchScopes(scroll, this.searchScopes(), this.searchQuery, ctx, (x, y, w) -> new EmptyStateWidget("No options found", "Nothing in this window matches \"" + query + "\"", x, y, w, EmptyStateWidget.preferredHeight()));

@@ -38,6 +38,7 @@ final class ToastCard {
     private static final float MARQUEE_GAP = 28f;
     private static final float MARQUEE_END_HOLD = 1.5f;
     private static final float MARQUEE_TOLERANCE = 0.5f;
+    private static final float MARQUEE_FADE = 10f;
 
     private static final int TITLE_COLOR = 0xFFFFFFFF;
     private static final float MESSAGE_LABEL_ALPHA = 0.72f;
@@ -179,9 +180,10 @@ final class ToastCard {
         final String rawMessage = this.spec.getMessage();
         final float roomForText = Math.max(1f, ceiling - padX * 2f - iconSpan);
         final float natural = Math.max(titleFont.width(rawTitle, titleSize), rawMessage == null ? 0f : messageFont.width(rawMessage, messageSize));
-        final float textWidth = Math.max(Math.min(roomForText, MIN_WIDTH * scale - padX * 2f - iconSpan), Math.min(roomForText, natural));
+        final float fitted = Math.max(Math.min(roomForText, MIN_WIDTH * scale - padX * 2f - iconSpan), Math.min(roomForText, natural));
         this.title = rawTitle;
         this.titleWidth = titleFont.width(rawTitle, titleSize);
+        final float textWidth = Math.max(fitted, Math.min(Math.max(1f, available - padX * 2f - iconSpan), this.titleWidth));
         this.textWidth = textWidth;
         this.messageLines = rawMessage == null ? null : ToastText.wrap(messageFont, rawMessage, messageSize, textWidth, MAX_MESSAGE_LINES);
         final int lines = this.messageLines == null ? 0 : this.messageLines.size();
@@ -280,7 +282,7 @@ final class ToastCard {
         final int titleColor = ColorUtils.withAlpha(TITLE_COLOR, alpha);
         if (this.titleOverflow() > 0f) {
             final float column = Math.max(0f, Math.min(this.textWidth, x + w - padX - textX));
-            this.extractMarquee(graphics, textX, column, lineTop, x, y, w, h, scale, titleSize, titleColor);
+            this.extractMarquee(graphics, textX, column, lineTop, y, h, scale, titleSize, titleColor);
         } else {
             extractLine(graphics, Type.HEADLINE.emphasized(), this.title, textX, lineTop, TITLE_LINE * scale, titleSize, titleColor);
         }
@@ -309,8 +311,10 @@ final class ToastCard {
         return MARQUEE_START_HOLD + overflow / (MARQUEE_SPEED * this.uiScale) + MARQUEE_END_HOLD;
     }
 
-    private void extractMarquee(final WLGraphics2D graphics, final float textX, final float column, final float lineTop, final float cardX, final float cardY, final float cardW, final float cardH, final float scale, final float size, final int color) {
-        if (column <= 0f) {
+    private void extractMarquee(final WLGraphics2D graphics, final float textX, final float column, final float lineTop, final float cardY, final float cardH, final float scale, final float size, final int color) {
+        final int left = (int) Math.ceil(textX);
+        final int right = (int) Math.floor(textX + column);
+        if (right <= left) {
             return;
         }
         final float speed = MARQUEE_SPEED * scale;
@@ -318,13 +322,33 @@ final class ToastCard {
         final float cycle = MARQUEE_START_HOLD + travel / speed;
         final float t = this.marqueeClock % cycle;
         final float offset = t <= MARQUEE_START_HOLD ? 0f : (t - MARQUEE_START_HOLD) * speed;
+        final float start = textX - offset;
+        final int top = (int) Math.floor(cardY);
+        final int bottom = (int) Math.ceil(cardY + cardH);
+        final int fade = Math.min(Math.round(MARQUEE_FADE * scale), (right - left) / 4);
+        final int leftFade = fade <= 0 ? 0 : Math.round(fade * Math.min(1f, offset / fade));
+        this.extractMarqueeBand(graphics, left + leftFade, right - fade, top, bottom, start, travel, lineTop, scale, size, color);
+        for (int i = 0; i < leftFade; i++) {
+            this.extractMarqueeBand(graphics, left + i, left + i + 1, top, bottom, start, travel, lineTop, scale, size, ColorUtils.withAlpha(color, (i + 0.5f) / leftFade));
+        }
+        for (int i = 0; i < fade; i++) {
+            this.extractMarqueeBand(graphics, right - i - 1, right - i, top, bottom, start, travel, lineTop, scale, size, ColorUtils.withAlpha(color, (i + 0.5f) / fade));
+        }
+    }
+
+    private void extractMarqueeBand(final WLGraphics2D graphics, final int x0, final int x1, final int y0, final int y1, final float start, final float travel, final float lineTop, final float scale, final float size, final int color) {
+        if (x1 <= x0 || (color >>> 24) == 0) {
+            return;
+        }
         final MsdfFont font = Type.HEADLINE.emphasized();
         final float lineHeight = TITLE_LINE * scale;
-        graphics.enableScissor((int) Math.floor(cardX), (int) Math.floor(cardY), (int) Math.ceil(cardX + cardW), (int) Math.ceil(cardY + cardH));
+        graphics.enableScissor(x0, y0, x1, y1);
         try {
-            extractLine(graphics, font, this.title, textX - offset, lineTop, lineHeight, size, color);
-            final float trailing = textX - offset + travel;
-            if (trailing < cardX + cardW) {
+            if (start + this.titleWidth > x0) {
+                extractLine(graphics, font, this.title, start, lineTop, lineHeight, size, color);
+            }
+            final float trailing = start + travel;
+            if (trailing < x1) {
                 extractLine(graphics, font, this.title, trailing, lineTop, lineHeight, size, color);
             }
         } finally {

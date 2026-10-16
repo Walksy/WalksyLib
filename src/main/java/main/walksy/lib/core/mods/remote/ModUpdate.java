@@ -24,7 +24,6 @@ public final class ModUpdate {
     private volatile Install install = Install.NONE;
     private volatile String error = "";
     private volatile String installError = "";
-    private volatile String installNote = "";
     private volatile String latestVersion = "";
     private volatile String changelog = "";
     private volatile @Nullable String downloadUrl;
@@ -91,10 +90,6 @@ public final class ModUpdate {
 
     public String installError() {
         return this.installError;
-    }
-
-    public String installNote() {
-        return this.installNote;
     }
 
     public String displayName() {
@@ -232,7 +227,6 @@ public final class ModUpdate {
             ModrinthDownload.writeToMods(bytes, fileName);
         }
         awaitPresent(target, ours ? bytes.length : -1L);
-        this.installNote = "Restart Minecraft to finish - " + this.displayName() + " " + this.latestVersion() + " loads the next time you launch.";
     }
 
     private static void awaitPresent(final Path target, final long expectedSize) throws IOException, InterruptedException {

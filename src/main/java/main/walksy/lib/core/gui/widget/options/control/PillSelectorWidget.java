@@ -1,6 +1,7 @@
 package main.walksy.lib.core.gui.widget.options.control;
 
 import main.walksy.lib.core.gui.widget.ResetButton;
+import main.walksy.lib.core.gui.widget.ScrollGlide;
 import main.walksy.lib.core.render.WLRenderSystem;
 import main.walksy.lib.core.gui.style.Theme;
 import main.walksy.lib.core.gui.liquid.LiquidRect;
@@ -37,6 +38,10 @@ public final class PillSelectorWidget<T> {
     private static final float MATERIALIZE_IN_SPEED = 20f;
     private static final float MATERIALIZE_OUT_SPEED = 12f;
     private static final int GLASS_BLUR = LiquidGlassConstants.BLUR_POPOVER;
+    private static final float SCROLL_GLIDE_SPEED = 18f;
+    private static final float SCROLL_BAR_W = 1.5f;
+    private static final float SCROLL_BAR_INSET = 2.5f;
+    private static final float SCROLL_BAR_END_INSET = 6f;
     private final Supplier<T> value;
     private final Consumer<T> onChange;
     private final List<T> values;
@@ -55,6 +60,7 @@ public final class PillSelectorWidget<T> {
     private float screenW;
     private float screenH;
     private boolean localAnchors;
+    private int maxVisibleRows = Integer.MAX_VALUE;
     private boolean popoverActive;
     private float landing;
     private float hoverAnim;
@@ -73,6 +79,11 @@ public final class PillSelectorWidget<T> {
 
     public PillSelectorWidget<T> localAnchors() {
         this.localAnchors = true;
+        return this;
+    }
+
+    public PillSelectorWidget<T> maxVisibleRows(final int rows) {
+        this.maxVisibleRows = Math.max(1, rows);
         return this;
     }
 
@@ -197,6 +208,9 @@ public final class PillSelectorWidget<T> {
         private final GlassStyle flatBase;
         private final GlassStyle glassBase;
         private final GlassStyle hoverShade;
+        private final ScrollGlide glide = new ScrollGlide();
+        private float scrollY;
+        private float scrollTarget;
         private float materialize;
         private float hostAlpha = 1f;
         private boolean closing;
@@ -250,6 +264,7 @@ public final class PillSelectorWidget<T> {
         @Override
         public void onCloseBegan() {
             this.closing = true;
+            this.scrollTarget = 0f;
             this.confirmedForClose = PillSelectorWidget.this.value.get();
         }
 
@@ -286,13 +301,49 @@ public final class PillSelectorWidget<T> {
 
         @Override
         public int preferredHeight() {
-            return Math.round(this.rowHeight * this.constants.size());
+            return Math.round(this.rowHeight * Math.min(this.constants.size(), PillSelectorWidget.this.maxVisibleRows));
+        }
+
+        private float maxScroll(final float panelH) {
+            return Math.max(0f, this.rowHeight * this.constants.size() - panelH);
         }
 
         @Override
         public void extract(final WLGraphics2D graphics, final int panelX, final int panelY, final int panelW, final int panelH, final int mouseX, final int mouseY, final float delta, final float reveal) {
-            final float uiScale = PillSelectorWidget.this.uiScale;
             final float dtSeconds = delta / 20f;
+            final float max = this.maxScroll(panelH);
+            if (max <= 0f) {
+                this.extractRows(graphics, panelX, panelY, panelW, panelH, mouseX, mouseY, dtSeconds, reveal, 0f);
+                return;
+            }
+            this.scrollTarget = Mth.clamp(this.scrollTarget, 0f, max);
+            this.scrollY = Mth.clamp(this.glide.step(this.scrollY, this.scrollTarget, SCROLL_GLIDE_SPEED, dtSeconds), 0f, max);
+            graphics.enableScissor(panelX, panelY, panelX + panelW, panelY + panelH);
+            try {
+                this.extractRows(graphics, panelX, panelY, panelW, panelH, mouseX, mouseY, dtSeconds, reveal, ScrollGlide.shown(this.scrollY));
+                this.extractScrollIndicator(graphics, panelX, panelY, panelW, panelH, max, reveal);
+            } finally {
+                graphics.disableScissor();
+            }
+        }
+
+        private void extractScrollIndicator(final WLGraphics2D graphics, final float x, final float y, final float w, final float h, final float max, final float alpha) {
+            final float uiScale = PillSelectorWidget.this.uiScale;
+            final float trackTop = y + SCROLL_BAR_END_INSET * uiScale;
+            final float trackH = h - SCROLL_BAR_END_INSET * uiScale * 2f;
+            if (trackH <= 0f || alpha <= 0.01f) {
+                return;
+            }
+            final float thumbH = Math.max(this.rowHeight * 0.5f, trackH * (trackH / (trackH + max)));
+            final float thumbY = trackTop + (trackH - thumbH) * Mth.clamp(this.scrollY / max, 0f, 1f);
+            final float barW = SCROLL_BAR_W * uiScale;
+            final float x0 = x + w - SCROLL_BAR_INSET * uiScale - barW;
+            final int color = ColorUtils.withAlpha(Theme.get().label(), 0.28f * alpha);
+            graphics.fillRoundedGradient(x0, thumbY, x0 + barW, thumbY + thumbH, color, color, color, color, barW / 2f);
+        }
+
+        private void extractRows(final WLGraphics2D graphics, final int panelX, final int panelY, final int panelW, final int panelH, final int mouseX, final int mouseY, final float dtSeconds, final float reveal, final float scroll) {
+            final float uiScale = PillSelectorWidget.this.uiScale;
             this.materialize = MathUtils.approach(this.materialize, this.closing ? 0f : 1f, this.closing ? MATERIALIZE_OUT_SPEED : MATERIALIZE_IN_SPEED, dtSeconds);
             final float capHeight = this.textSize * 0.59043f;
             final float rowInsetX = ROW_INSET_X * uiScale;
@@ -302,9 +353,12 @@ public final class PillSelectorWidget<T> {
                 if (this.confirmedForClose != null && i != 0 && this.constants.get(i).equals(this.confirmedForClose)) {
                     continue;
                 }
-                final float ry0 = panelY + i * this.rowHeight;
+                final float ry0 = panelY + i * this.rowHeight - scroll;
+                if (ry0 + this.rowHeight <= panelY || ry0 >= panelY + panelH) {
+                    continue;
+                }
                 final boolean selected = i == 0;
-                final boolean hovered = !this.closing && mouseX >= panelX && mouseX < panelX + panelW && mouseY >= ry0 && mouseY < ry0 + this.rowHeight;
+                final boolean hovered = !this.closing && mouseX >= panelX && mouseX < panelX + panelW && mouseY >= panelY && mouseY < panelY + panelH && mouseY >= ry0 && mouseY < ry0 + this.rowHeight;
                 WLRenderSystem.cursors().requestIf(hovered, Cursors.Cursor.POINTER);
                 this.hoverAnim[i] = MathUtils.approach(this.hoverAnim[i], hovered ? 1f : 0f, HOVER_SPEED, dtSeconds);
                 if (!selected && this.hoverAnim[i] > 0.001f) {
@@ -316,7 +370,7 @@ public final class PillSelectorWidget<T> {
                         .extract();
                 }
                 final String text = selected && this.confirmedForClose != null ? PillSelectorWidget.this.label.apply(this.confirmedForClose) : PillSelectorWidget.this.label.apply(this.constants.get(i));
-                final float baseline = selected ? PillSelectorWidget.this.screenY0 + PillSelectorWidget.this.screenH / 2f + capHeight * 0.5f : ry0 + this.rowHeight / 2f + capHeight * 0.5f;
+                final float baseline = selected ? PillSelectorWidget.this.screenY0 + PillSelectorWidget.this.screenH / 2f + capHeight * 0.5f - scroll : ry0 + this.rowHeight / 2f + capHeight * 0.5f;
                 final float top = Fonts.SFPRO_DISPLAY.topForBaseline(baseline, this.textSize);
                 final float textX = (selected ? PillSelectorWidget.this.screenX0 : panelX) + TEXT_INSET * uiScale;
                 final float textAlpha = selected ? this.hostAlpha : reveal;
@@ -327,10 +381,20 @@ public final class PillSelectorWidget<T> {
                 if (selected) {
                     final float chevronSize = this.textSize * 0.7f;
                     final float chevronX = PillSelectorWidget.this.screenX0 + PillSelectorWidget.this.screenW - 8f * uiScale - chevronSize;
-                    final float chevronY = PillSelectorWidget.this.screenY0 + (PillSelectorWidget.this.screenH - chevronSize) / 2f;
+                    final float chevronY = PillSelectorWidget.this.screenY0 + (PillSelectorWidget.this.screenH - chevronSize) / 2f - scroll;
                     Icons.CHEVRON.extractRotated(graphics, chevronX, chevronY, chevronSize, ColorUtils.withAlpha(Theme.get().secondaryLabel(), this.hostAlpha), 90f);
                 }
             }
+        }
+
+        @Override
+        public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX, final double scrollY, final int panelX, final int panelY, final int panelW, final int panelH) {
+            final float max = this.maxScroll(panelH);
+            if (this.closing || max <= 0f) {
+                return false;
+            }
+            this.scrollTarget = Mth.clamp(this.scrollTarget - (float) scrollY * this.rowHeight, 0f, max);
+            return true;
         }
 
         @Override
@@ -338,7 +402,10 @@ public final class PillSelectorWidget<T> {
             if (this.closing) {
                 return false;
             }
-            final int row = (int) ((event.y() - panelY) / this.rowHeight);
+            if (event.y() < panelY || event.y() >= panelY + panelH) {
+                return false;
+            }
+            final int row = (int) ((event.y() - panelY + this.scrollY) / this.rowHeight);
             if (row < 0 || row >= this.constants.size()) {
                 return false;
             }

@@ -8,6 +8,8 @@ import main.walksy.lib.core.gui.WLScreen;
 import main.walksy.lib.core.gui.widget.ResetButton;
 import main.walksy.lib.core.gui.widget.WLWidget;
 import main.walksy.lib.core.gui.widget.options.control.ControlLayers;
+import main.walksy.lib.core.gui.widget.options.control.PillSelectorWidget;
+import main.walksy.lib.core.gui.modal.PopoverHost;
 import main.walksy.lib.core.mods.remote.Changelog;
 import main.walksy.lib.core.mods.remote.ModUpdate;
 import main.walksy.lib.core.mods.remote.ModrinthApi;
@@ -48,9 +50,12 @@ public final class ChangelogPaneWidget extends WLWidget {
     private static final float HERO_HEIGHT = 30f;
     private static final float HERO_GAP = 14f;
     private static final float STATE_HEIGHT = 120f;
+    private static final float FILTER_GAP = 8f;
     private static final float HOVER_SPEED = 14f;
     private static final int MAX_NOTES = 12;
+    private static final String ALL_VERSIONS_LABEL = "All versions";
     private static final int MAX_VERSIONS_LISTED = 3;
+    private static final int FILTER_VISIBLE_ROWS = 5;
     private static final int RELEASE = 3;
     private static final int BETA = 1;
     private static final int ALPHA = 0;
@@ -59,6 +64,12 @@ public final class ChangelogPaneWidget extends WLWidget {
     private final Changelog.State state;
     private final String installed;
     private final boolean sinceInstalled;
+    private final List<Changelog.Release> releases;
+    private final List<String> gameVersions;
+    private final Changelog.Release latestForGame;
+    private final boolean installedForGame;
+    private final PillSelectorWidget<String> filterPill;
+    private final Runnable onResize;
     private final List<Block> blocks = new ArrayList<>();
     private float[] hoverAnim = new float[0];
     private float linkX0, linkY0, linkX1, linkY1;
@@ -70,20 +81,60 @@ public final class ChangelogPaneWidget extends WLWidget {
 
     private record Block(Changelog.Release release, String type, int typeColor, boolean installed, boolean latest, String date, String versions, List<Line> lines, int hidden, float offset, float height) {}
 
-    public ChangelogPaneWidget(final int x, final int y, final int width) {
-        this(x, y, width, false);
+    public ChangelogPaneWidget(final int x, final int y, final int width, final RowContext ctx, final Runnable onResize) {
+        this(x, y, width, false, ctx, onResize);
     }
 
     public ChangelogPaneWidget(final int x, final int y, final int width, final boolean sinceInstalled) {
+        this(x, y, width, sinceInstalled, null, null);
+    }
+
+    private ChangelogPaneWidget(final int x, final int y, final int width, final boolean sinceInstalled, final RowContext ctx, final Runnable onResize) {
         super(x, y, width, 1);
         this.state = WalksyLib.getInstance().getChangelog().state();
         this.installed = WalksyLib.getInstance().getChangelogPage().installedVersion();
         this.sinceInstalled = sinceInstalled;
-        final List<Changelog.Release> releases = sinceInstalled ? this.newerThanInstalled(WalksyLib.getInstance().getChangelog().releases()) : WalksyLib.getInstance().getChangelog().releases();
-        if (this.state == Changelog.State.LOADED && !releases.isEmpty()) {
-            this.layout(releases);
+        this.onResize = onResize;
+        this.releases = WalksyLib.getInstance().getChangelog().releases();
+        final List<Changelog.Release> forThisGame = WalksyLib.getInstance().getChangelogPage().forGameVersion(this.releases, ModrinthApi.gameVersion());
+        this.latestForGame = forThisGame.isEmpty() ? (this.releases.isEmpty() ? null : this.releases.get(0)) : forThisGame.get(0);
+        this.installedForGame = forThisGame.stream().anyMatch(release -> release.versionNumber().equals(this.installed));
+        this.gameVersions = WalksyLib.getInstance().getChangelogPage().gameVersions(this.releases);
+        final List<String> filters = new ArrayList<>();
+        filters.add(ChangelogConfig.ALL_VERSIONS);
+        filters.addAll(this.gameVersions);
+        final boolean filterable = !sinceInstalled && ctx != null && ctx.onOpenPopoverAt() != null && filters.size() > 1;
+        this.filterPill = filterable ? new PillSelectorWidget<>(this::filter, this::applyFilter, filters, ChangelogPaneWidget::filterLabel, PillSelectorWidget.defaultStyle().fadeKey(0xC4A9E104L), this.uiScale, PopoverHost.PANEL_LAYER, ctx.onOpenPopoverAt(), ctx.onClosePopover()).maxVisibleRows(FILTER_VISIBLE_ROWS) : null;
+        final List<Changelog.Release> shown = sinceInstalled ? this.newerThanInstalled(this.releases) : this.filtered();
+        if (this.state == Changelog.State.LOADED && !shown.isEmpty()) {
+            this.layout(shown);
         } else {
             this.setHeight(Math.round(STATE_HEIGHT * this.uiScale));
+        }
+    }
+
+    private static String filterLabel(final String version) {
+        return version.equals(ChangelogConfig.ALL_VERSIONS) ? ALL_VERSIONS_LABEL : version;
+    }
+
+    private String filter() {
+        return WalksyLib.getInstance().getChangelogPage().versionFilter(this.gameVersions);
+    }
+
+    private List<Changelog.Release> filtered() {
+        final List<Changelog.Release> matching = WalksyLib.getInstance().getChangelogPage().forGameVersion(this.releases, this.filter());
+        return matching.subList(0, Math.min(ChangelogConfig.MAX_RELEASES, matching.size()));
+    }
+
+    private void applyFilter(final String version) {
+        if (version.equals(this.filter())) {
+            return;
+        }
+        WalksyLib.getInstance().getChangelogPage().setVersionFilter(version);
+        this.blocks.clear();
+        this.layout(this.filtered());
+        if (this.onResize != null) {
+            this.onResize.run();
         }
     }
 
@@ -96,7 +147,7 @@ public final class ChangelogPaneWidget extends WLWidget {
             return version != null && version.compareTo(current) > 0;
         }).toList();
         if (!newer.isEmpty()) {
-            return newer;
+            return newer.subList(0, Math.min(ChangelogConfig.MAX_RELEASES, newer.size()));
         }
         if (!forThisGame.isEmpty()) {
             return forThisGame.subList(0, 1);
@@ -242,12 +293,10 @@ public final class ChangelogPaneWidget extends WLWidget {
         final String label = this.installed.isEmpty() ? "WalksyLib" : "Installed " + this.installed;
         final float textX = this.getX();
         drawText(graphics, Fonts.SFPRO_DISPLAY_BOLD, label, textX, centerY, size, ColorUtils.withAlpha(Theme.get().label(), alpha));
-        final Block latest = this.blocks.get(0);
-        final boolean listed = this.blocks.stream().anyMatch(Block::installed);
-        if (listed) {
-            final boolean current = latest.installed();
+        if (this.installedForGame && this.latestForGame != null) {
+            final boolean current = this.latestForGame.versionNumber().equals(this.installed);
             final int color = Theme.get().systemPalette()[current ? RELEASE : BETA];
-            this.pill(graphics, current ? "Up to date" : "Update available: " + latest.release().versionNumber(), textX + Fonts.SFPRO_DISPLAY_BOLD.width(label, size) + this.s(PILL_GAP * 2f), centerY, this.metaSize(), color, alpha);
+            this.pill(graphics, current ? "Up to date" : "Update available: " + this.latestForGame.versionNumber(), textX + Fonts.SFPRO_DISPLAY_BOLD.width(label, size) + this.s(PILL_GAP * 2f), centerY, this.metaSize(), color, alpha);
         }
         final String link = "Full changelog";
         final float linkSize = this.metaSize();
@@ -267,6 +316,9 @@ public final class ChangelogPaneWidget extends WLWidget {
             .hover(this.linkHover)
             .extract();
         ResetButton.lift(false, () -> drawText(graphics, Fonts.SFPRO_DISPLAY_MEDIUM, link, this.linkX0 + (linkW - Fonts.SFPRO_DISPLAY_MEDIUM.width(link, linkSize)) / 2f, centerY, linkSize, ColorUtils.withAlpha(Theme.get().accent(), alpha)));
+        if (this.filterPill != null) {
+            this.filterPill.extract(graphics, alpha, this.linkX0 - this.s(FILTER_GAP), y, h, mouseX, mouseY, dt * 20f);
+        }
     }
 
     private void extractRail(final WLGraphics2D graphics, final float alpha) {
@@ -402,6 +454,10 @@ public final class ChangelogPaneWidget extends WLWidget {
     public boolean mouseClicked(final MouseButtonEvent event, final boolean doubleClick) {
         final double mx = event.x();
         final double my = event.y();
+        if (this.filterPill != null && !this.blocks.isEmpty() && !this.filterPill.isOpen() && this.filterPill.isOverPill(mx, my)) {
+            this.filterPill.open();
+            return true;
+        }
         if (this.linkX1 > this.linkX0 && mx >= this.linkX0 && mx < this.linkX1 && my >= this.linkY0 && my < this.linkY1) {
             if (this.blocks.isEmpty()) {
                 WalksyLib.getInstance().getChangelog().refresh();

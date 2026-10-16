@@ -19,7 +19,7 @@ public final class ConfigBuilder {
     private boolean shared;
     private Path previousPath;
     private Path seedPath;
-    private String updateUrl;
+    private boolean updateChecks = true;
     private ServerOptOutResponse serverResponse;
 
     public ConfigBuilder() {
@@ -55,8 +55,8 @@ public final class ConfigBuilder {
         return this;
     }
 
-    public ConfigBuilder checkForUpdatesViaModrinth(final String modrinthPageUrl) {
-        this.updateUrl = modrinthPageUrl;
+    public ConfigBuilder disableUpdateChecks() {
+        this.updateChecks = false;
         return this;
     }
 
@@ -78,6 +78,6 @@ public final class ConfigBuilder {
         if (this.path == null) {
             throw new IllegalStateException("Config requires a .path()");
         }
-        return new Config(this.path, this.categories, this.onSave, this.shared, this.previousPath, this.seedPath, this.updateUrl, new ServerOptOut(this.serverResponse, this.serverFeatures));
+        return new Config(this.path, this.categories, this.onSave, this.shared, this.previousPath, this.seedPath, this.updateChecks, new ServerOptOut(this.serverResponse, this.serverFeatures));
     }
 }

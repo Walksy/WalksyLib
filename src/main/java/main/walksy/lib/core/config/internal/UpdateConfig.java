@@ -46,7 +46,7 @@ public final class UpdateConfig {
     String statusText(final ModUpdate update) {
         return switch (update.installState()) {
             case DOWNLOADING -> "Downloading...";
-            case DONE -> update.installNote();
+            case DONE -> "";
             case FAILED -> "That did not work: " + update.installError();
             case NONE -> "";
         };

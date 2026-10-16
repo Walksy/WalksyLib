@@ -18,8 +18,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public final class ModrinthApi {
     private static final String API = "https://api.modrinth.com/v2";
@@ -76,6 +79,27 @@ public final class ModrinthApi {
         return root != null && root.isJsonObject() ? root.getAsJsonObject() : null;
     }
 
+    static Map<String, JsonObject> versionsOfFiles(final Collection<String> sha1s) throws IOException, InterruptedException {
+        final Map<String, JsonObject> versions = new HashMap<>();
+        if (sha1s.isEmpty()) {
+            return versions;
+        }
+        final JsonArray hashes = new JsonArray();
+        sha1s.forEach(hashes::add);
+        final JsonObject body = new JsonObject();
+        body.add("hashes", hashes);
+        body.addProperty("algorithm", "sha1");
+        final JsonElement root = post(API + "/version_files", body);
+        if (root != null && root.isJsonObject()) {
+            for (final Map.Entry<String, JsonElement> entry : root.getAsJsonObject().entrySet()) {
+                if (entry.getValue().isJsonObject()) {
+                    versions.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue().getAsJsonObject());
+                }
+            }
+        }
+        return versions;
+    }
+
     static byte[] bytes(final String url) throws IOException, InterruptedException {
         final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
             .header("User-Agent", USER_AGENT)
@@ -90,11 +114,20 @@ public final class ModrinthApi {
     }
 
     private static @Nullable JsonElement get(final String url) throws IOException, InterruptedException {
-        final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        return send(url, HttpRequest.newBuilder(URI.create(url)).GET());
+    }
+
+    private static @Nullable JsonElement post(final String url, final JsonElement body) throws IOException, InterruptedException {
+        return send(url, HttpRequest.newBuilder(URI.create(url))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body.toString())));
+    }
+
+    private static @Nullable JsonElement send(final String url, final HttpRequest.Builder builder) throws IOException, InterruptedException {
+        final HttpRequest request = builder
             .header("User-Agent", USER_AGENT)
             .header("Accept", "application/json")
             .timeout(TIMEOUT)
-            .GET()
             .build();
         final HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() / 100 != 2) {

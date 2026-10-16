@@ -66,7 +66,7 @@ public final class ModrinthDownload {
         }
     }
 
-    private static String sha1(final byte[] bytes) throws IOException {
+    static String sha1(final byte[] bytes) throws IOException {
         final byte[] digest;
         try {
             digest = MessageDigest.getInstance("SHA-1").digest(bytes);

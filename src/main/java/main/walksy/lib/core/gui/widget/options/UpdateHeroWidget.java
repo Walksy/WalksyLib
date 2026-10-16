@@ -221,7 +221,7 @@ public final class UpdateHeroWidget extends WLWidget {
     private String statusText() {
         return switch (this.update.installState()) {
             case DOWNLOADING -> "Downloading from Modrinth...";
-            case DONE -> this.update.installNote();
+            case DONE -> "";
             case FAILED -> "That did not work: " + this.update.installError();
             case NONE -> {
                 final String blocked = this.update.blockedReason();
