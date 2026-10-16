@@ -66,9 +66,12 @@ public final class AppearanceConfig {
     private Config config;
     private boolean sidebarCategories;
     private boolean focusRing;
+    private boolean updateChecks = true;
+    private Option<Boolean> updateChecksOption;
 
     public Config config() {
         if (this.config == null) {
+            this.updateChecksOption = Options.ofBoolean("Notify For New Updates", this::checksForUpdates, true, this::setUpdateChecks).visibility(() -> false).build();
             this.config = Config.builder()
                 .path(PathUtils.ofGlobalDir("walksylib"))
                 .sharedFile()
@@ -89,9 +92,10 @@ public final class AppearanceConfig {
                         .option(Options.ofEnum("Corner", this::toastCorner, ToastCorner.TOP_RIGHT, this::setToastCorner, ToastCorner.class)
                             .description(OptionDescription.ofText(() -> "Which corner notifications sit in and animate out of."))
                             .build())
-                        .option(Options.ofNumber("Tint Strength", () -> this.toastOpacity, 100, v -> this.toastOpacity = v).range(PERCENT_MIN, TOAST_OPACITY_MAX, 5).saveKey("Blur").description("How strong the notification tint is").build())
-                        .option(Options.ofNumber("Time On Screen", () -> this.toastTime, 100, v -> this.toastTime = v).range(TOAST_TIME_MIN, TOAST_TIME_MAX, 5).build())
-                        .option(Options.ofButton("Show Me One", this::previewToast).build())
+                            .option(Options.ofNumber("Tint Strength", () -> this.toastOpacity, 100, v -> this.toastOpacity = v).range(PERCENT_MIN, TOAST_OPACITY_MAX, 5).saveKey("Blur").description("How strong the notification tint is").build())
+                            .option(Options.ofNumber("Time On Screen", () -> this.toastTime, 100, v -> this.toastTime = v).range(TOAST_TIME_MIN, TOAST_TIME_MAX, 5).build())
+                            .option(this.updateChecksOption)
+                            .option(Options.ofButton("Show Me One", this::previewToast).build())
                         .build())
                     .group(OptionGroup.builder("Tint")
                         .option(this.tint("Panel", true, PANEL))
@@ -260,6 +264,23 @@ public final class AppearanceConfig {
 
     public boolean focusRing() {
         return this.focusRing;
+    }
+
+    public boolean checksForUpdates() {
+        return this.updateChecks;
+    }
+
+    public Option<Boolean> updateChecksOption() {
+        this.config();
+        return this.updateChecksOption;
+    }
+
+    private void setUpdateChecks(final boolean updateChecks) {
+        final boolean changed = this.updateChecks != updateChecks;
+        this.updateChecks = updateChecks;
+        if (changed) {
+            WalksyLib.getInstance().applyUpdateChecks();
+        }
     }
 
     public boolean sidebarCategories() {

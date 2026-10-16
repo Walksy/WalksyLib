@@ -60,6 +60,11 @@ public final class ConfigBuilder {
         return this;
     }
 
+    @Deprecated
+    public ConfigBuilder checkForUpdatesViaModrinth(final String modrinthPageUrl) {
+        return this;
+    }
+
     public ConfigBuilder allowOptOutFromServer(final ServerOptOutResponse response) {
         this.serverResponse = Objects.requireNonNull(response, "response");
         return this;

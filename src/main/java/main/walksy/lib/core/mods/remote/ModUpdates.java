@@ -30,6 +30,7 @@ public final class ModUpdates {
     private final Map<String, ModUpdate> registered = new ConcurrentHashMap<>();
     private final Set<String> candidates = ConcurrentHashMap.newKeySet();
     private final AtomicBoolean running = new AtomicBoolean(false);
+    private volatile boolean enabled = true;
     private volatile @Nullable Consumer<ModUpdate> installListener;
 
     public void register(final String modId, final @Nullable String modrinthPageUrl) {
@@ -221,7 +222,15 @@ public final class ModUpdates {
         }
     }
 
+    public void stopChecking() {
+        this.enabled = false;
+        for (final ModUpdate update : this.registered.values()) {
+            update.clearCheck();
+        }
+    }
+
     public void checkAll(final Consumer<ModUpdate> onOutdated) {
+        this.enabled = true;
         if ((this.registered.isEmpty() && this.candidates.isEmpty()) || !this.running.compareAndSet(false, true)) {
             return;
         }
@@ -229,7 +238,14 @@ public final class ModUpdates {
             try {
                 this.resolveCandidates();
                 for (final ModUpdate update : List.copyOf(this.registered.values())) {
+                    if (!this.enabled) {
+                        return;
+                    }
                     update.check();
+                    if (!this.enabled) {
+                        update.clearCheck();
+                        return;
+                    }
                     if (update.isOutdated() && onOutdated != null) {
                         onOutdated.accept(update);
                     }

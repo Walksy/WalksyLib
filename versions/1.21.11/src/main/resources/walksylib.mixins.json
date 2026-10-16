@@ -24,6 +24,7 @@
 		"core.render.preview.PictureInPictureCaptureMixin",
 		"core.render.preview.GuiRendererPreviewItemsMixin",
 		"core.render.toast.ToastManagerMixin",
+		"core.render.toast.WindowPresentMixin",
 		"core.keys.KeyMappingCategoryMixin",
 		"mods.ClientPacketListenerMixin",
 		"mods.LivingEntityMixin",

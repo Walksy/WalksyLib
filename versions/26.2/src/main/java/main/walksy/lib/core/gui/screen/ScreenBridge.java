@@ -32,6 +32,23 @@ public abstract class ScreenBridge extends Screen {
     }
 
     @Override
+    public final void extractBackground(final GuiGraphicsExtractor extractor, final int mouseX, final int mouseY, final float delta) {
+        this.extractBackground(GuiContext.graphics(extractor), mouseX, mouseY, delta);
+    }
+
+    protected void extractBackground(final WLGraphics2D graphics, final int mouseX, final int mouseY, final float delta) {
+        super.extractBackground(graphics.context().extractor(), mouseX, mouseY, delta);
+    }
+
+    protected final void extractPanorama(final WLGraphics2D graphics, final float delta) {
+        super.extractPanorama(graphics.context().extractor(), delta);
+    }
+
+    protected final void extractScreenBlur(final WLGraphics2D graphics, final float delta) {
+        this.extractBlurredBackground(graphics.context().extractor());
+    }
+
+    @Override
     public final void extractTransparentBackground(final GuiGraphicsExtractor extractor) {
         this.extractTransparentBackground(GuiContext.graphics(extractor));
     }

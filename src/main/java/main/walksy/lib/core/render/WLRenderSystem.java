@@ -41,6 +41,8 @@ public final class WLRenderSystem {
     private static long lastFrameNanos = -1L;
     private static int motionDepth;
     private static long frameId;
+    private static boolean presentHookSeen;
+    private static boolean topDeferred;
 
     private WLRenderSystem() {
     }
@@ -97,6 +99,21 @@ public final class WLRenderSystem {
 
     public static void renderGlassTop() {
         LiquidGlassComposite.renderTop();
+    }
+
+    public static void finishGuiFrame() {
+        if (presentHookSeen && glassUniforms().getTopCount() > 0) {
+            topDeferred = true;
+            return;
+        }
+        renderGlassTop();
+    }
+
+    public static boolean takeDeferredTop() {
+        presentHookSeen = true;
+        final boolean deferred = topDeferred;
+        topDeferred = false;
+        return deferred;
     }
 
     public static void flushText() {

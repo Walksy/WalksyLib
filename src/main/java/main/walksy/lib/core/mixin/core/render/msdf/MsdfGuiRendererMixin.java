@@ -20,7 +20,7 @@ public class MsdfGuiRendererMixin {
         if (!this.draws.isEmpty()) {
             WLRenderSystem.flushText();
         }
-        WLRenderSystem.renderGlassTop();
+        WLRenderSystem.finishGuiFrame();
         WLRenderSystem.flushDev();
     }
 }

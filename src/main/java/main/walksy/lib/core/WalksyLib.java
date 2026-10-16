@@ -74,6 +74,7 @@ public final class WalksyLib {
     private final ServerOptOuts serverOptOuts;
     private final ServerControlNetworking serverControl;
     private final WLMouseHandler mouseHandler;
+    private boolean updateChecksRegistered;
 
     private WalksyLib() {
         instance = this;
@@ -200,8 +201,20 @@ public final class WalksyLib {
         }
         SupersededJars.sweepAsync(this.modUpdates.trackedIds());
         this.modUpdates.onInstallFinished(this::notifyInstalled);
-        this.modUpdates.checkAll(this::notifyOutdated);
-        WalksyLib.getInstance().getChangelog().ensureLoaded();
+        this.updateChecksRegistered = true;
+        this.applyUpdateChecks();
+    }
+
+    public void applyUpdateChecks() {
+        if (!this.updateChecksRegistered) {
+            return;
+        }
+        if (this.appearancePage.checksForUpdates()) {
+            this.modUpdates.checkAll(this::notifyOutdated);
+            this.changelog.ensureLoaded();
+        } else {
+            this.modUpdates.stopChecking();
+        }
     }
 
     private void notifyInstalled(final ModUpdate update) {

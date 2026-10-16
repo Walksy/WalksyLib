@@ -118,6 +118,14 @@ public final class ModUpdate {
         }
     }
 
+    void clearCheck() {
+        if (this.state == State.CHECKING || this.install != Install.NONE) {
+            return;
+        }
+        this.state = State.IDLE;
+        this.error = "";
+    }
+
     private State resolve() throws IOException, InterruptedException {
         final Version installed = parse(installedVersionString(this.modId));
         if (installed == null) {

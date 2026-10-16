@@ -46,7 +46,9 @@ import main.walksy.lib.core.gui.widget.options.category.CategoryOverflowButton;
 import main.walksy.lib.core.gui.widget.options.category.CategorySidebarWidget;
 import main.walksy.lib.core.gui.widget.options.EmptyStateWidget;
 import main.walksy.lib.core.gui.widget.options.ModUpdateBanner;
+import main.walksy.lib.core.gui.widget.options.OptionGroupHeaderWidget;
 import main.walksy.lib.core.gui.widget.options.OptionWidgetFactory;
+import main.walksy.lib.core.gui.widget.options.types.BooleanOptionWidget;
 import main.walksy.lib.core.gui.widget.options.types.KeybindOptionWidget;
 import main.walksy.lib.core.gui.widget.options.RowContext;
 import main.walksy.lib.core.render.WLGraphics2D;
@@ -138,6 +140,7 @@ public class WalksyLibPanelScreen extends WLScreen {
     private static final String UPDATE_ROW_LABEL = "Update Available";
     private static final int UPDATE_ROW_PALETTE_INDEX = 3;
     private static final float UPDATE_ROW_DARKEN = 0.22f;
+    private static final float CHANGELOG_TOGGLE_GAP = 14f;
     private static WalksyLibPanelScreen active;
     private float panelCornerRadius = PANEL_CORNER_RADIUS;
     private float sidebarCornerRadius = SIDEBAR_CORNER_RADIUS;
@@ -994,7 +997,12 @@ public class WalksyLibPanelScreen extends WLScreen {
         final ScrollPanel scroll = new ScrollPanel(this.contentX, scrollY, this.contentW, scrollH);
         scroll.setTopEdge(scrollY);
         scroll.setContentInsetTop(Math.round(ALL_MODS_CONTENT_TOP_INSET * this.uiScale));
-        scroll.addChild(0, (x, y, w) -> new ChangelogPaneWidget(x, y, w, this.rowContext(), scroll::relayout));
+        final RowContext ctx = this.rowContext();
+        final Option<Boolean> updateChecks = WalksyLib.getInstance().getAppearancePage().updateChecksOption();
+        final int rowHeight = Math.round(OptionWidgetFactory.ROW_HEIGHT_BASE * WLScreen.uiScaleFactor());
+        final OptionGroupHeaderWidget card = scroll.addChild(0, (x, y, w) -> new OptionGroupHeaderWidget("", x, y, w, 0));
+        card.addRow(scroll.addChild(0, updateChecks, (x, y, w) -> new BooleanOptionWidget(updateChecks, ctx, x, y, w, rowHeight)));
+        scroll.addChild(Math.round(CHANGELOG_TOGGLE_GAP * this.uiScale), (x, y, w) -> new ChangelogPaneWidget(x, y, w, ctx, scroll::relayout));
         scroll.relayout();
         this.addRenderableWidget(scroll);
         this.detailWidgets.add(scroll);
@@ -1298,6 +1306,14 @@ public class WalksyLibPanelScreen extends WLScreen {
         final float nx = cur.centerX() + sx * (x - restCx);
         final float ny = cur.centerY() + sy * (y - restCy);
         return new LiquidRect(nx, ny, w * sx, h * sy, radius * Math.min(sx, sy));
+    }
+
+    @Override
+    protected void extractBackground(final WLGraphics2D graphics, final int mouseX, final int mouseY, final float delta) {
+        if (this.minecraft == null || this.minecraft.level == null) {
+            this.extractPanorama(graphics, delta);
+        }
+        this.extractScreenBlur(graphics, delta);
     }
 
     @Override
