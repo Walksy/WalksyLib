@@ -24,6 +24,8 @@
 		"core.render.preview.PictureInPictureCaptureMixin",
 		"core.render.preview.GuiRendererPreviewItemsMixin",
 		"core.render.toast.ToastManagerMixin",
+		"core.render.toast.PresentMixin",
+		"core.render.toast.VulkanModPresentMixin",
 		"mods.ClientPacketListenerMixin",
 		"mods.LivingEntityMixin",
 		"mods.LocalPlayerMixin",

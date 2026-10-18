@@ -24,6 +24,8 @@
 		"core.render.msdf.MsdfGuiRendererMixin",
 		"core.render.preview.PictureInPictureCaptureMixin",
 		"core.render.toast.ToastManagerMixin",
+		"core.render.toast.PresentMixin",
+		"core.render.toast.VulkanModPresentMixin",
 		"core.keys.KeyMappingCategoryMixin",
 		"mods.ClientPacketListenerMixin",
 		"mods.LivingEntityMixin",

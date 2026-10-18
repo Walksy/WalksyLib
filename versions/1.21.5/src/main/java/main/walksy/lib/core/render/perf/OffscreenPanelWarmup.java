@@ -14,8 +14,12 @@ public final class OffscreenPanelWarmup {
     private OffscreenPanelWarmup() {
     }
 
+    public static boolean pending() {
+        return WLRenderSystem.supportsTextureCopy() && WalksyLib.getInstance().getPanelWarmup().pending();
+    }
+
     public static void runIfPending() {
-        if (!WLRenderSystem.supportsTextureCopy() || !WalksyLib.getInstance().getPanelWarmup().pending()) {
+        if (!pending()) {
             return;
         }
         final long startedAt = System.nanoTime();

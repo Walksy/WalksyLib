@@ -24,7 +24,11 @@ public abstract class LiquidGlassGameRendererMixin {
     private void walksylib$endGuiFrame(final DeltaTracker tickCounter, final boolean tick, final CallbackInfo ci) {
         GuiContext.resolveAll();
         WLRenderSystem.flushText();
-        WLRenderSystem.renderGlassTop();
+        if (OffscreenPanelWarmup.pending()) {
+            WLRenderSystem.renderGlassTop();
+        } else {
+            WLRenderSystem.finishGuiFrame();
+        }
         WLRenderSystem.flushDev();
         OffscreenPanelWarmup.runIfPending();
     }

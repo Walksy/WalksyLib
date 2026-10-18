@@ -23,6 +23,8 @@
 		"core.render.preview.MainRenderTargetMixin",
 		"core.render.VanillaScissorMixin",
 		"core.render.toast.ToastManagerMixin",
+		"core.render.toast.PresentMixin",
+		"core.render.toast.VulkanModPresentMixin",
 		"mods.ClientPacketListenerMixin",
 		"mods.LivingEntityMixin",
 		"mods.LocalPlayerMixin",

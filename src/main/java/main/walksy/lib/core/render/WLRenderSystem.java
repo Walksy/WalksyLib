@@ -42,6 +42,7 @@ public final class WLRenderSystem {
     private static int motionDepth;
     private static long frameId;
     private static boolean presentHookSeen;
+    private static boolean frameEndHookSeen;
     private static boolean topDeferred;
 
     private WLRenderSystem() {
@@ -114,6 +115,15 @@ public final class WLRenderSystem {
         final boolean deferred = topDeferred;
         topDeferred = false;
         return deferred;
+    }
+
+    public static boolean takeDeferredTopAtFrameEnd() {
+        frameEndHookSeen = true;
+        return takeDeferredTop();
+    }
+
+    public static boolean frameEndHookSeen() {
+        return frameEndHookSeen;
     }
 
     public static void flushText() {
@@ -299,6 +309,10 @@ public final class WLRenderSystem {
 
     public static boolean supportsTextureCopy() {
         return !VULKANMOD;
+    }
+
+    public static boolean vulkanMod() {
+        return VULKANMOD;
     }
 
     public static boolean renderTargetsBottomUp() {
