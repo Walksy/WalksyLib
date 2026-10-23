@@ -131,6 +131,12 @@ public final class LiquidGlassUniforms {
     private static final int LIT_FROM_BLUR_MAX_RADIUS = 16;
     private static final int CUSTOM_VOLATILE_BYTES = 32;
     private static final float FAST_INTERIOR_EDGE_REACH = 28f;
+    private static final float LENS_ZONE = 3f;
+    private static final float LENS_ZONE_FRAC = 0.9f;
+    private static final float LENS_POWER = 4f;
+    private static final float LENS_SOFT_POWER = 6f;
+    private static final float LENS_FOLD_MIN = 1f;
+    private static final float LENS_FOLD_MAX = 2.5f;
 
     private static final class FadeState {
         float hover;
@@ -988,8 +994,9 @@ public final class LiquidGlassUniforms {
             base = grazing * bevelPx * Math.max(0f, Math.min(4f, s.getRefStrength()));
             inward = true;
         } else if (Math.abs(reachFrac) > 1e-4f) {
-            final float peakCap = 0.75f + 2.25f * Math.max(0f, Math.min(1f, s.getLensFold()));
-            base = Math.min(Math.abs(reachFrac) * Math.min(widgetW, widgetH), peakCap * thickPx);
+            final float zonePx = Math.max(Math.min(LENS_ZONE * thickPx, LENS_ZONE_FRAC * 0.5f * Math.min(widgetW, widgetH)), 1e-4f);
+            final float fold = LENS_FOLD_MIN + (LENS_FOLD_MAX - LENS_FOLD_MIN) * Math.max(0f, Math.min(1f, s.getLensFold()));
+            base = Math.min(Math.abs(reachFrac) * Math.min(widgetW, widgetH), fold * zonePx / (s.isSoftLens() ? LENS_SOFT_POWER : LENS_POWER));
             inward = reachFrac > 0f;
         } else {
             base = grazing * 0.08f * fbH;
@@ -1234,7 +1241,8 @@ public final class LiquidGlassUniforms {
 
     private static float fastInteriorDepth(final GlassStyle s, final float scaleY, final float heightPx) {
         float depth = FAST_INTERIOR_EDGE_REACH;
-        depth = Math.max(depth, s.getRefThickness() * scaleY + 2f);
+        final float lensZone = Math.abs(s.getRefractionReach()) > 1e-4f && s.getBevelHeight() * scaleY <= 1e-4f ? LENS_ZONE : 1f;
+        depth = Math.max(depth, s.getRefThickness() * scaleY * lensZone + 2f);
         if (s.getInnerShadow() > 0.0001f) {
             final float inset = Math.min(7f, 0.5f * heightPx * 0.45f);
             final float width = Math.max(1f, inset * (4f / 7f));

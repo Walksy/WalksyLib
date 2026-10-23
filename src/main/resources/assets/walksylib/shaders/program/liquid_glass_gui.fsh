@@ -403,6 +403,32 @@ SDFResult fieldWidgets(vec2 p, vec2 inSize, vec2 fragCoord, float layer) {
     return f;
 }
 
+const float LENS_ZONE = 3.0;
+const float LENS_ZONE_FRAC = 0.9;
+const float LENS_POWER = 4.0;
+const float LENS_SOFT_POWER = 6.0;
+const float LENS_FOLD_MIN = 1.0;
+const float LENS_FOLD_MAX = 2.5;
+
+float lensZonePx(float bandPx, vec4 rc) {
+    return max(min(LENS_ZONE * bandPx, LENS_ZONE_FRAC * 0.5 * min(rc.z, rc.w)), 1e-4);
+}
+
+vec2 lensNormal(int wi, vec2 p, vec2 inSize, float zonePx, float merged, vec2 fallback) {
+    vec4 rc = Rects[wi];
+    vec2 c = screenToUV(vec2(rc.x + 0.5 * rc.z, rc.y + 0.5 * rc.w), inSize);
+    vec2 b = 0.5 * vec2(rc.z, rc.w) / inSize.y;
+    vec2 pull = Extra5[wi].zw / inSize.y;
+    vec4 extra = Extra0[wi];
+    float scaleOff = (HoverScalePx * extra.y + FocusScalePx * extra.z) / inSize.y;
+    vec3 own = stretchedBox(p - c, b, Rads[wi] / inSize.y, pull);
+    if (abs(own.x - scaleOff - merged) * inSize.y > 1.0) return fallback;
+    vec4 rad = max(Rads[wi], vec4(min(zonePx, 0.5 * min(rc.z, rc.w)))) / inSize.y;
+    vec2 n = stretchedBox(p - c, b, rad, pull).yz;
+    float l = length(n);
+    return l > 1e-6 ? n / l : fallback;
+}
+
 void main() {
     vec2 inSize = InSize;
     if (inSize.x <= 0.0 || inSize.y <= 0.0) inSize = vec2(textureSize(Sampler0, 0));
@@ -656,15 +682,18 @@ void main() {
             if (lensMode) {
                 vec4 rcR = rcW;
                 float bandPx = max(refThickness, 1e-4);
+                float zonePx = lensZonePx(bandPx, rcR);
+                float power = softLens ? LENS_SOFT_POWER : LENS_POWER;
 
-                float peakCap = mix(0.75, 3.0, clamp(lensFoldAmount, 0.0, 1.0));
-                float peakPx = min(abs(reachFrac) * min(rcR.z, rcR.w), peakCap * bandPx);
-                float t = clamp(max(nmerged, 0.0) / bandPx, 0.0, 1.0);
+                float fold = mix(LENS_FOLD_MIN, LENS_FOLD_MAX, clamp(lensFoldAmount, 0.0, 1.0));
+                float peakPx = min(abs(reachFrac) * min(rcR.z, rcR.w), fold * zonePx / power);
+                float u = 1.0 - clamp(max(nmerged, 0.0) / zonePx, 0.0, 1.0);
+                float uTail = pow(u, power - 1.0);
 
                 float lensDir = reachFrac < 0.0 ? 1.0 : -1.0;
-                float lensFalloff = softLens ? (1.0 - t) * (1.0 - t) : 1.0 - t;
-                refrOffset = lensDir * normal * (peakPx * lensFalloff) * vec2(1.0 / inSize.x, 1.0 / inSize.y);
-                warpSlope = lensDir * peakPx / bandPx * (softLens ? 2.0 * (1.0 - t) : 1.0);
+                vec2 lensN = lensNormal(idx, screenToUV(coord, inSize), inSize, zonePx, merged, normal);
+                refrOffset = lensDir * lensN * (peakPx * uTail * u) * vec2(1.0 / inSize.x, 1.0 / inSize.y);
+                warpSlope = lensDir * peakPx * power * uTail / zonePx;
                 lensTextFade = clamp(peakPx / max(0.3 * bandPx, 1e-4), 0.0, 1.0);
             }
 
@@ -713,7 +742,7 @@ void main() {
             if (blurIndex < 0) {
                 float maxReachPx = max(refThickness, 1.0);
                 float reachPx = length(refrOffset * inSize);
-                if (reachPx > maxReachPx) {
+                if (reachPx > maxReachPx && !(lensMode && !bevelMode)) {
                     refrOffset *= maxReachPx / reachPx;
                     warpSlope *= maxReachPx / reachPx;
                 }
