@@ -14,6 +14,11 @@ import java.util.function.Supplier;
 public final class LiquidGlassComposite {
     private static final Supplier<String> GLASS_PASS_LABEL = () -> "walksylib liquid glass pass";
     private static final String[] BLUR_SAMPLERS = {"Sampler1", "Sampler2", "Sampler3", "Sampler4", "Sampler5"};
+    private static final String[] STRATA_SAMPLERS = {"Sampler6", "Sampler7", "Sampler8", "Sampler9", "Sampler10", "Sampler11"};
+    private static final Supplier<String> LAYER_PASS_LABEL = () -> "walksylib liquid glass layer";
+    private static long decidedFrame = -1L;
+    private static boolean decidedLayer;
+    private static long claimedFrame = -1L;
 
     private record Strata(@Nullable WLTexture text, @Nullable WLTexture textBlurred, @Nullable WLTexture content, @Nullable WLTexture contentBlurred, @Nullable WLTexture popover, @Nullable WLTexture popoverBlurred) {
         private static final Strata NONE = new Strata(null, null, null, null, null, null);
@@ -25,6 +30,12 @@ public final class LiquidGlassComposite {
     public static void renderMain() {
         final LiquidGlassUniforms uniforms = WLRenderSystem.glassUniforms();
         if (uniforms.getCount() <= 0) {
+            return;
+        }
+        if (decideLayer()) {
+            if (uniforms.layerUpdate() && uniforms.splitRequested()) {
+                renderLayer(uniforms);
+            }
             return;
         }
         final boolean strataOff = WalksyLibConstants.DEV_BUILD && UiProfiler.isBypassed(UiProfiler.Bypass.STRATA);
@@ -89,6 +100,7 @@ public final class LiquidGlassComposite {
         if (WalksyLibConstants.DEV_BUILD) {
             UiProfiler.begin(UiProfiler.Section.GLASS_UPLOAD);
         }
+        uniforms.setStrataUsed(textUsed, contentUsed, popoverUsed);
         uniforms.upload();
         if (WalksyLibConstants.DEV_BUILD) {
             UiProfiler.end(UiProfiler.Section.GLASS_UPLOAD);
@@ -105,6 +117,81 @@ public final class LiquidGlassComposite {
         }
         uniforms.setStratumBounds(WLRenderSystem.earlyTextBounds().toDeviceRect(), WLRenderSystem.contentBounds().toDeviceRect(), WLRenderSystem.popoverContentBounds().toDeviceRect());
         compositeSlots(uniforms, 0, uniforms.getMainSlotCount(), blurOff, new Strata(textOverlay, textBlurred, contentOverlay, contentBlurred, popoverContentOverlay, popoverContentBlurred));
+    }
+
+    private static boolean decideLayer() {
+        final long frame = WLRenderSystem.frameId();
+        if (decidedFrame == frame) {
+            return decidedLayer;
+        }
+        decidedFrame = frame;
+        final LiquidGlassUniforms uniforms = WLRenderSystem.glassUniforms();
+        if (uniforms.getCount() <= 0) {
+            decidedLayer = false;
+            return false;
+        }
+        final boolean strataOff = WalksyLibConstants.DEV_BUILD && UiProfiler.isBypassed(UiProfiler.Bypass.STRATA);
+        final boolean textUsed = !strataOff && WLRenderSystem.hasEarlyText();
+        final boolean contentUsed = !strataOff && (WLRenderSystem.contentStratum().hasRowContent() || WLRenderSystem.hasContentText());
+        final boolean popoverUsed = !strataOff && (WLRenderSystem.contentStratum().hasPopoverContent() || WLRenderSystem.hasPopoverText());
+        uniforms.setStrataUsed(textUsed, contentUsed, popoverUsed);
+        uniforms.upload();
+        decidedLayer = uniforms.layerMode();
+        return decidedLayer;
+    }
+
+    public static int @Nullable [] layerArea(final long frame) {
+        if (frame != WLRenderSystem.frameId() || claimedFrame == frame) {
+            return null;
+        }
+        if (!decideLayer()) {
+            if (!WLRenderSystem.glassUniforms().splitRequested()) {
+                claimedFrame = frame;
+                renderMain();
+            }
+            return null;
+        }
+        claimedFrame = frame;
+        final LiquidGlassUniforms uniforms = WLRenderSystem.glassUniforms();
+        if (uniforms.layerUpdate() && !uniforms.splitRequested()) {
+            renderLayer(uniforms);
+        }
+        return uniforms.layerArea();
+    }
+
+    private static void renderLayer(final LiquidGlassUniforms uniforms) {
+        final LiquidGlassPrecomputeRuntime runtime = WLRenderSystem.glassRuntime();
+        final WLTexture mainTarget = WLRenderSystem.mainTarget();
+        final int fbW = WLRenderSystem.targetWidth();
+        final int fbH = WLRenderSystem.targetHeight();
+        runtime.beginComposite();
+        final List<Integer> radii = uniforms.getBlurRadiiForSlot(0);
+        if (!uniforms.layerBlurInline()) {
+            runtime.buildBlurs(mainTarget, radii, uniforms.getBlurRegion(0, fbW, fbH));
+        }
+        final int[] area = uniforms.layerArea();
+        try (final WLPass pass = WLRenderSystem.pass(LAYER_PASS_LABEL, runtime.layerTarget())) {
+            pass.pipeline(LiquidGlassPipelines.getGuiPipeline());
+            pass.uniform("SamplerInfo", uniforms.getSamplerInfoBuffer());
+            pass.uniform("CustomUniforms", uniforms.getCustomUniformsBuffer(0));
+            pass.uniform("WidgetInfo", uniforms.getWidgetInfoBuffer(0));
+            pass.uniform("BgConfig", uniforms.getBgConfigBuffer());
+            pass.texture("Sampler0", mainTarget, WLFilter.LINEAR);
+            for (final String sampler : STRATA_SAMPLERS) {
+                pass.texture(sampler, mainTarget, WLFilter.LINEAR);
+            }
+            for (int i = 0; i < BLUR_SAMPLERS.length; i++) {
+                WLTexture view = null;
+                final int widgetLevel = i - 1;
+                if (widgetLevel >= 0 && widgetLevel < radii.size()) {
+                    view = runtime.getBlurredViewForRadius(radii.get(widgetLevel));
+                }
+                pass.texture(BLUR_SAMPLERS[i], view != null ? view : mainTarget, WLFilter.LINEAR);
+            }
+            pass.scissor(area[0], area[1], area[2], area[3]);
+            pass.drawFullscreenQuad();
+        }
+        uniforms.markLayerValid();
     }
 
     public static void renderTop() {
@@ -129,54 +216,47 @@ public final class LiquidGlassComposite {
         if (toSlot <= fromSlot) {
             return;
         }
+        final LiquidGlassPrecomputeRuntime runtime = WLRenderSystem.glassRuntime();
         final WLTexture mainTarget = WLRenderSystem.mainTarget();
         final int fbW = WLRenderSystem.targetWidth();
         final int fbH = WLRenderSystem.targetHeight();
-        int dirtyX = 0;
-        int dirtyY = 0;
-        int dirtyW = fbW;
-        int dirtyH = fbH;
-        boolean needFullCapture = true;
         final boolean unscissored = WLRenderSystem.glassAnim().debugStep() <= 1.5f || (WalksyLibConstants.DEV_BUILD && UiProfiler.isBypassed(UiProfiler.Bypass.SCISSOR));
         final int lastSlot = WalksyLibConstants.DEV_BUILD && UiProfiler.isBypassed(UiProfiler.Bypass.COMPOSITE) ? fromSlot : toSlot;
         if (WalksyLibConstants.DEV_BUILD) {
             UiProfiler.count(UiProfiler.Counter.GLASS_LAYERS, lastSlot - fromSlot);
         }
+        runtime.beginComposite();
         for (int slot = fromSlot; slot < lastSlot; slot++) {
             final int[] area = unscissored ? null : uniforms.getPassScissor(slot, fbW, fbH);
             if (area != null && (area[2] <= 0 || area[3] <= 0)) {
-                final int[] onlyStrata = compositeStrata(uniforms, slot, fbW, fbH, mainTarget, strata);
-                if (onlyStrata != null) {
-                    final int nx0 = Math.min(dirtyX, onlyStrata[0]);
-                    final int ny0 = Math.min(dirtyY, onlyStrata[1]);
-                    final int nx1 = Math.max(dirtyX + dirtyW, onlyStrata[0] + onlyStrata[2]);
-                    final int ny1 = Math.max(dirtyY + dirtyH, onlyStrata[1] + onlyStrata[3]);
-                    dirtyX = nx0;
-                    dirtyY = ny0;
-                    dirtyW = nx1 - nx0;
-                    dirtyH = ny1 - ny0;
-                }
+                markStrataWritten(runtime, compositeStrata(uniforms, slot, fbW, fbH, mainTarget, strata));
                 continue;
             }
-            if (WalksyLibConstants.DEV_BUILD) {
-                UiProfiler.begin(UiProfiler.Section.CAPTURE);
-                UiProfiler.count(UiProfiler.Counter.CAPTURE_PIXELS, needFullCapture ? (long) fbW * fbH : (long) Math.max(0, dirtyW) * Math.max(0, dirtyH));
+            final boolean over = !unscissored && uniforms.slotBlendsOver(slot);
+            final List<Integer> radii = blurOff && !over ? List.of() : uniforms.getBlurRadiiForSlot(slot);
+            final int[] blurRegion = uniforms.getBlurRegion(slot, fbW, fbH);
+            final WLTexture sceneView;
+            if (over) {
+                sceneView = null;
+            } else {
+                if (WalksyLibConstants.DEV_BUILD) {
+                    UiProfiler.begin(UiProfiler.Section.CAPTURE);
+                }
+                final int[] captureRegion = unscissored ? null : union(union(area, uniforms.getReadRegion(slot, fbW, fbH)), runtime.blurSourceRegion(blurRegion, radii));
+                if (WalksyLibConstants.DEV_BUILD) {
+                    UiProfiler.count(UiProfiler.Counter.CAPTURE_PIXELS, captureRegion == null ? (long) fbW * fbH : (long) captureRegion[2] * captureRegion[3]);
+                }
+                sceneView = runtime.captureSceneRegion(captureRegion);
+                if (WalksyLibConstants.DEV_BUILD) {
+                    UiProfiler.end(UiProfiler.Section.CAPTURE);
+                }
             }
-            final boolean captureOff = WalksyLibConstants.DEV_BUILD && UiProfiler.isBypassed(UiProfiler.Bypass.CAPTURE);
-            final WLTexture sceneView = needFullCapture ? WLRenderSystem.glassRuntime()
-                .captureScene() : captureOff ? WLRenderSystem.glassRuntime()
-                .lastSceneView() : WLRenderSystem.glassRuntime()
-                .captureSceneRegion(dirtyX, dirtyY, dirtyW, dirtyH);
-            needFullCapture = false;
-            if (WalksyLibConstants.DEV_BUILD) {
-                UiProfiler.end(UiProfiler.Section.CAPTURE);
-            }
-            final List<Integer> radii = blurOff ? List.of() : uniforms.getBlurRadiiForSlot(slot);
             if (WalksyLibConstants.DEV_BUILD) {
                 UiProfiler.begin(UiProfiler.Section.BLUR);
             }
-            WLRenderSystem.glassRuntime().buildBlurs(sceneView, radii, uniforms.getBlurRegion(slot, fbW, fbH));
+            runtime.buildBlurs(over ? mainTarget : sceneView, radii, blurRegion);
             final int[][] boxes = unscissored ? null : uniforms.getPassScissors(slot, fbW, fbH);
+            final WLTexture fallback = over ? runtime.getBlurredViewForRadius(radii.get(0)) : sceneView;
             if (WalksyLibConstants.DEV_BUILD) {
                 UiProfiler.end(UiProfiler.Section.BLUR);
                 UiProfiler.begin(UiProfiler.Section.COMPOSITE);
@@ -192,25 +272,25 @@ public final class LiquidGlassComposite {
                 UiProfiler.count(UiProfiler.Counter.RENDER_PASSES, 1L);
             }
             try (final WLPass pass = WLRenderSystem.pass(GLASS_PASS_LABEL, mainTarget)) {
-                pass.pipeline(LiquidGlassPipelines.getGuiPipeline());
+                pass.pipeline(over ? LiquidGlassPipelines.getGuiOverPipeline() : LiquidGlassPipelines.getGuiPipeline());
                 pass.uniform("SamplerInfo", uniforms.getSamplerInfoBuffer());
                 pass.uniform("CustomUniforms", uniforms.getCustomUniformsBuffer(slot));
                 pass.uniform("WidgetInfo", uniforms.getWidgetInfoBuffer(slot));
                 pass.uniform("BgConfig", uniforms.getBgConfigBuffer());
-                pass.texture("Sampler0", sceneView, WLFilter.LINEAR);
-                pass.texture("Sampler6", orScene(strata.text(), sceneView), WLFilter.LINEAR);
-                pass.texture("Sampler7", orScene(strata.content(), sceneView), WLFilter.LINEAR);
-                pass.texture("Sampler8", orScene(strata.contentBlurred(), sceneView), WLFilter.LINEAR);
-                pass.texture("Sampler9", orScene(strata.popover(), sceneView), WLFilter.LINEAR);
-                pass.texture("Sampler10", orScene(strata.popoverBlurred(), sceneView), WLFilter.LINEAR);
-                pass.texture("Sampler11", orScene(strata.textBlurred(), sceneView), WLFilter.LINEAR);
+                pass.texture("Sampler0", fallback, WLFilter.LINEAR);
+                pass.texture("Sampler6", orScene(strata.text(), fallback), WLFilter.LINEAR);
+                pass.texture("Sampler7", orScene(strata.content(), fallback), WLFilter.LINEAR);
+                pass.texture("Sampler8", orScene(strata.contentBlurred(), fallback), WLFilter.LINEAR);
+                pass.texture("Sampler9", orScene(strata.popover(), fallback), WLFilter.LINEAR);
+                pass.texture("Sampler10", orScene(strata.popoverBlurred(), fallback), WLFilter.LINEAR);
+                pass.texture("Sampler11", orScene(strata.textBlurred(), fallback), WLFilter.LINEAR);
                 for (int i = 0; i < BLUR_SAMPLERS.length; i++) {
                     WLTexture view = null;
                     final int widgetLevel = i - 1;
                     if (widgetLevel >= 0 && widgetLevel < radii.size()) {
-                        view = WLRenderSystem.glassRuntime().getBlurredViewForRadius(radii.get(widgetLevel));
+                        view = runtime.getBlurredViewForRadius(radii.get(widgetLevel));
                     }
-                    pass.texture(BLUR_SAMPLERS[i], view != null ? view : sceneView, WLFilter.LINEAR);
+                    pass.texture(BLUR_SAMPLERS[i], view != null ? view : fallback, WLFilter.LINEAR);
                 }
                 if (boxes == null) {
                     pass.noScissor();
@@ -225,29 +305,32 @@ public final class LiquidGlassComposite {
             if (WalksyLibConstants.DEV_BUILD) {
                 UiProfiler.end(UiProfiler.Section.COMPOSITE);
             }
-            if (area == null) {
-                dirtyX = 0;
-                dirtyY = 0;
-                dirtyW = fbW;
-                dirtyH = fbH;
-            } else {
-                dirtyX = area[0];
-                dirtyY = area[1];
-                dirtyW = area[2];
-                dirtyH = area[3];
-            }
-            final int[] composited = compositeStrata(uniforms, slot, fbW, fbH, mainTarget, strata);
-            if (composited != null) {
-                final int nx0 = Math.min(dirtyX, composited[0]);
-                final int ny0 = Math.min(dirtyY, composited[1]);
-                final int nx1 = Math.max(dirtyX + dirtyW, composited[0] + composited[2]);
-                final int ny1 = Math.max(dirtyY + dirtyH, composited[1] + composited[3]);
-                dirtyX = nx0;
-                dirtyY = ny0;
-                dirtyW = nx1 - nx0;
-                dirtyH = ny1 - ny0;
-            }
+            runtime.markTargetWritten(area);
+            markStrataWritten(runtime, compositeStrata(uniforms, slot, fbW, fbH, mainTarget, strata));
         }
+    }
+
+    private static void markStrataWritten(final LiquidGlassPrecomputeRuntime runtime, @Nullable final int[] written) {
+        if (written != null) {
+            runtime.markTargetWritten(written);
+        }
+    }
+
+    private static int[] union(@Nullable final int[] a, @Nullable final int[] b) {
+        if (a == null || b == null) {
+            return null;
+        }
+        if (b[2] <= 0 || b[3] <= 0) {
+            return a;
+        }
+        if (a[2] <= 0 || a[3] <= 0) {
+            return b;
+        }
+        final int x0 = Math.min(a[0], b[0]);
+        final int y0 = Math.min(a[1], b[1]);
+        final int x1 = Math.max(a[0] + a[2], b[0] + b[2]);
+        final int y1 = Math.max(a[1] + a[3], b[1] + b[3]);
+        return new int[] {x0, y0, x1 - x0, y1 - y0};
     }
 
     private static WLTexture orScene(@Nullable final WLTexture view, final WLTexture scene) {

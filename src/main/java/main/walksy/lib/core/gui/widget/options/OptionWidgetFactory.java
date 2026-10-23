@@ -55,6 +55,14 @@ public final class OptionWidgetFactory {
     }
 
     public static void populate(final ScrollPanel scroll, final Category category, final RowContext ctx, final ScrollPanel.ChildFactory<? extends AbstractWidget> emptyState) {
+        populate(scroll, category.groups(), category.options(), ctx, emptyState);
+    }
+
+    public static void populateGroups(final ScrollPanel scroll, final List<OptionGroup> groups, final RowContext ctx, final ScrollPanel.ChildFactory<? extends AbstractWidget> emptyState) {
+        populate(scroll, groups, List.of(), ctx, emptyState);
+    }
+
+    private static void populate(final ScrollPanel scroll, final List<OptionGroup> groups, final List<Option<?>> looseOptions, final RowContext ctx, final ScrollPanel.ChildFactory<? extends AbstractWidget> emptyState) {
         final float scale = WLScreen.uiScaleFactor();
         final int groupHeaderHeight = Math.round(GROUP_HEADER_HEIGHT_BASE * scale);
         final int rowHeight = Math.round(ROW_HEIGHT_BASE * scale);
@@ -63,16 +71,15 @@ public final class OptionWidgetFactory {
         final int looseRowGap = Math.round(LOOSE_ROW_GAP_BASE * scale);
         final Runnable rebuild = () -> scroll.defer(() -> {
             scroll.clear();
-            populate(scroll, category, ctx, emptyState);
+            populate(scroll, groups, looseOptions, ctx, emptyState);
         });
         final ShownWatch watch = new ShownWatch();
         boolean anyGroup = false;
-        final List<OptionGroup> groups = category.groups();
         final List<Option<?>> hiddenByAvailability = new ArrayList<>();
         for (final OptionGroup group : groups) {
             collectHidden(group.getOptions(), watch, hiddenByAvailability);
         }
-        collectHidden(category.options(), watch, hiddenByAvailability);
+        collectHidden(looseOptions, watch, hiddenByAvailability);
         for (final OptionGroup group : groups) {
             if (!watch.anyShown(group.getOptions())) {
                 continue;
@@ -87,7 +94,7 @@ public final class OptionWidgetFactory {
             }
         }
         boolean firstLoose = true;
-        for (final Option<?> option : category.options()) {
+        for (final Option<?> option : looseOptions) {
             final int gapBefore = firstLoose ? (anyGroup ? groupGap : 0) : looseRowGap;
             final OptionGroupHeaderWidget card = scroll.addChild(gapBefore, (x, y, w) -> new OptionGroupHeaderWidget("", x, y, w, 0));
             for (final AbstractWidget row : addRow(scroll, option, ctx, 0, rowHeight, rebuild, watch)) {

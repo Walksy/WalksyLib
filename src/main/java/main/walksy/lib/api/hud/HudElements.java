@@ -5,6 +5,7 @@ import main.walksy.lib.api.config.value.PixelGridAnimation;
 import main.walksy.lib.core.render.WLGraphics2D;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -40,6 +41,16 @@ public final class HudElements {
             }
 
             @Override
+            public boolean snapScale() {
+                return element.snapScale();
+            }
+
+            @Override
+            public List<String> hudOptions() {
+                return element.hudOptions();
+            }
+
+            @Override
             public float height(final float scale) {
                 return element.height(scale);
             }
@@ -47,6 +58,16 @@ public final class HudElements {
             @Override
             public boolean visible() {
                 return element.visible() && condition.getAsBoolean();
+            }
+
+            @Override
+            public float defaultAnchorX() {
+                return element.defaultAnchorX();
+            }
+
+            @Override
+            public float defaultAnchorY() {
+                return element.defaultAnchorY();
             }
 
             @Override
@@ -115,6 +136,11 @@ public final class HudElements {
             public float scaleStep() {
                 final PixelGridAnimation value = animation.get();
                 return value == null || value.getSize() <= 0f ? 1f : 1f / value.getSize();
+            }
+
+            @Override
+            public boolean snapScale() {
+                return true;
             }
 
             @Override

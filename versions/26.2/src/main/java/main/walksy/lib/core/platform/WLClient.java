@@ -27,6 +27,11 @@ public final class WLClient {
         return Minecraft.getInstance().gui.overlay();
     }
 
+    public static int refreshRate() {
+        final int rate = Minecraft.getInstance().getWindow().getRefreshRate();
+        return rate > 0 ? rate : 60;
+    }
+
     public static void schedule(final Runnable task) {
         Minecraft.getInstance().schedule(task);
     }

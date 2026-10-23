@@ -11,7 +11,9 @@ import main.walksy.lib.core.render.element.WLElement;
 import main.walksy.lib.core.render.element.WLElementKind;
 import main.walksy.lib.core.render.element.WLRect;
 import main.walksy.lib.core.render.glass.api.GlassStyle;
+import main.walksy.lib.core.render.glass.LiquidGlassUniforms;
 import main.walksy.lib.core.render.glass.gui.LiquidGlassGuiElementRenderState;
+import main.walksy.lib.core.render.glass.gui.LiquidGlassLayerElement;
 import main.walksy.lib.core.render.gpu.WLFilter;
 import main.walksy.lib.core.render.gpu.WLTexture;
 import net.fabricmc.loader.api.FabricLoader;
@@ -465,8 +467,18 @@ public final class WLGraphics2D {
                 WLRenderSystem.glassUniforms().addTopWidget(element);
                 return;
             }
-            WLRenderSystem.glassUniforms().requestGlassPass(this.graphics);
-            WLRenderSystem.glassUniforms().addWidget(element);
+            final LiquidGlassUniforms uniforms = WLRenderSystem.glassUniforms();
+            final boolean hud = WLRenderSystem.inHud();
+            if (!hud || (!WLRenderSystem.hudBatching() && uniforms.hudLayerNeedsSplit())) {
+                uniforms.requestGlassPass(this.graphics);
+            }
+            uniforms.addWidget(element, hud);
+            if (hud && uniforms.claimLayerElement()) {
+                final float scale = DevicePixels.perLogicalX();
+                final WLRect screen = new WLRect(0, 0, (int) Math.ceil(WLRenderSystem.targetWidth() / scale), (int) Math.ceil(WLRenderSystem.targetHeight() / scale));
+                this.graphics.context().submit(new LiquidGlassLayerElement(WLRenderSystem.glassRuntime().layerTexture(), screen));
+                return;
+            }
             this.graphics.context().submit(element);
         }
     }

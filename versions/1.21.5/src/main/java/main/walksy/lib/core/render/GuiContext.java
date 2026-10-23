@@ -173,6 +173,14 @@ public final class GuiContext {
         this.vanilla(graphics -> minecraft.gui.render(graphics, minecraft.getDeltaTracker()));
     }
 
+    public void flushHud() {
+        this.flushDirect();
+    }
+
+    public static boolean vanillaBatching() {
+        return false;
+    }
+
     public void submit(final WLElement element) {
         final boolean glass = element instanceof LiquidGlassGuiElementRenderState;
         if (this.recording()) {
@@ -189,7 +197,9 @@ public final class GuiContext {
             return;
         }
         WLRenderSystem.contentStratum().addDirect(element);
-        this.flushDirect();
+        if (!WLRenderSystem.inHud()) {
+            this.flushDirect();
+        }
     }
 
     public void immediate(final Consumer<GuiGraphics> body) {

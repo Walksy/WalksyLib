@@ -10,7 +10,9 @@ public enum WLElementKind {
     GRAYSCALE(WLVertexFormat.POSITION_TEX_COLOR),
     ROUNDED_TEXTURED(WLVertexFormat.POSITION_TEX_COLOR),
     CORNER(WLVertexFormat.POSITION_TEX_COLOR),
-    CHECKER(WLVertexFormat.POSITION_TEX_COLOR);
+    CHECKER(WLVertexFormat.POSITION_TEX_COLOR),
+    BITMAP_TEXT(WLVertexFormat.POSITION_TEX_COLOR),
+    BITMAP_TEXT_PIXEL(WLVertexFormat.POSITION_TEX_COLOR);
 
     private final WLVertexFormat format;
 
@@ -23,6 +25,6 @@ public enum WLElementKind {
     }
 
     public boolean textured() {
-        return this == TEXTURED || this == PREMULTIPLIED || this == GRAYSCALE || this == ROUNDED_TEXTURED;
+        return this == TEXTURED || this == PREMULTIPLIED || this == GRAYSCALE || this == ROUNDED_TEXTURED || this == BITMAP_TEXT || this == BITMAP_TEXT_PIXEL;
     }
 }

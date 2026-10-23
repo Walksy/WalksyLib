@@ -18,11 +18,13 @@ import net.minecraft.client.Minecraft;
 import org.joml.Matrix3x2f;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +45,41 @@ public final class LiquidGlassUniforms {
     private final WLUniformBuffer samplerInfo;
     private final WLUniformBuffer[] customUniforms = new WLUniformBuffer[MAX_LAYERS];
     private final WLUniformBuffer[] widgetInfoBySlot = new WLUniformBuffer[MAX_LAYERS];
+    private final ByteBuffer[] widgetInfoStaging = new ByteBuffer[MAX_LAYERS];
+    private final ByteBuffer[] widgetInfoUploaded = new ByteBuffer[MAX_LAYERS];
+    private final int widgetInfoSize;
+    private final ByteBuffer[] customStaging = new ByteBuffer[MAX_LAYERS];
+    private final ByteBuffer[] customUploaded = new ByteBuffer[MAX_LAYERS];
+    private final int customUniformsSize;
+    private ByteBuffer bgStaging;
+    private ByteBuffer bgUploaded;
+    private final int bgConfigSize;
+    private int samplerInfoW = -1;
+    private int samplerInfoH = -1;
+    private int hudWidgetCount;
+    private boolean layerElementSubmitted;
+    private boolean splitThisFrame;
+    private boolean splitFromHud;
+    private boolean layerMode;
+    private boolean layerUpdate;
+    private boolean layerValid;
+    private double layerClock;
+    private final int[] layerArea = new int[4];
+    private final int[] lastLayerArea = new int[4];
+    private int lastLayerW = -1;
+    private int lastLayerH = -1;
+    private int refreshRate = 60;
+    private long refreshCheckedAt;
+    private final List<LiquidGlassGuiElementRenderState> reuseWidgets = new ArrayList<>();
+    private final List<LiquidGlassGuiElementRenderState> reuseCandidate = new ArrayList<>();
+    private int[] reuseStyleHashes = new int[8];
+    private final List<Integer> reuseRadii = new ArrayList<>();
+    private boolean layerBlurInline;
+    private float reuseScaleX;
+    private float reuseScaleY;
+    private float reuseDebugStep;
+    private long reuseFrame = -1L;
+    private final boolean[] slotHasFocus = new boolean[MAX_LAYERS];
     private final WLUniformBuffer bgConfig;
     private int slotCount;
     private int mainSlotCount;
@@ -55,6 +92,8 @@ public final class LiquidGlassUniforms {
     private final boolean[] popoverAtStart = new boolean[MAX_LAYERS];
     private final boolean[] popoverAtEnd = new boolean[MAX_LAYERS];
     private int textCompositePass;
+    private int earlyTextBoundary = EARLY_TEXT_LAYER;
+    private boolean passHeld;
     private int contentCompositePass;
     private int popoverCompositePass;
     private final List<LiquidGlassGuiElementRenderState> widgets = new ArrayList<>();
@@ -71,6 +110,13 @@ public final class LiquidGlassUniforms {
     private final int[] slotWidgetBoundsCount = new int[MAX_LAYERS];
     private final float[] slotBlurRegion = new float[MAX_LAYERS * 4];
     private final boolean[] slotBlurRegionEmpty = new boolean[MAX_LAYERS];
+    private final float[] slotReadRegion = new float[MAX_LAYERS * 4];
+    private final boolean[] slotReadRegionEmpty = new boolean[MAX_LAYERS];
+    private final boolean[] slotNeedsScene = new boolean[MAX_LAYERS];
+    private final float[] slotFastRect = new float[MAX_LAYERS * 8];
+    private boolean textUsed = true;
+    private boolean contentUsed = true;
+    private boolean popoverUsed = true;
     private float[] textStratumBounds;
     private float[] contentStratumBounds;
     private float[] popoverStratumBounds;
@@ -82,6 +128,9 @@ public final class LiquidGlassUniforms {
     private final float[] layerValues = new float[MAX_LAYERS];
     private final int[] distinctRadii = new int[MAX_BLUR_LEVELS - 1];
     private static final float INVISIBLE = 1.0e-4f;
+    private static final int LIT_FROM_BLUR_MAX_RADIUS = 16;
+    private static final int CUSTOM_VOLATILE_BYTES = 32;
+    private static final float FAST_INTERIOR_EDGE_REACH = 28f;
 
     private static final class FadeState {
         float hover;
@@ -119,13 +168,20 @@ public final class LiquidGlassUniforms {
         calc.putFloat();
         calc.putFloat();
         calc.putFloat();
+        calc.putFloat();
+        calc.putFloat();
+        calc.putFloat();
+        calc.putVec4();
+        calc.putVec4();
+        calc.putVec4();
         final int customUniformsSize = calc.get();
+        this.customUniformsSize = customUniformsSize;
         for (int i = 0; i < MAX_LAYERS; i++) {
             this.customUniforms[i] = WLRenderSystem.uniformBuffer("walksylib CustomUniforms slot " + i, customUniformsSize);
         }
-        final int widgetInfoSize = 16 + MAX_LAYERS * 16 + MAX_WIDGETS * (16 * 16);
+        this.widgetInfoSize = 16 + MAX_LAYERS * 16 + MAX_WIDGETS * (16 * 16);
         for (int i = 0; i < MAX_LAYERS; i++) {
-            this.widgetInfoBySlot[i] = WLRenderSystem.uniformBuffer("walksylib WidgetInfo slot " + i, widgetInfoSize);
+            this.widgetInfoBySlot[i] = WLRenderSystem.uniformBuffer("walksylib WidgetInfo slot " + i, this.widgetInfoSize);
         }
         final Std140Size bcalc = new Std140Size();
         bcalc.putFloat();
@@ -133,6 +189,7 @@ public final class LiquidGlassUniforms {
         bcalc.putVec2();
         final int bgConfigSize = bcalc.get();
         this.bgConfig = WLRenderSystem.uniformBuffer("walksylib BgConfig", bgConfigSize);
+        this.bgConfigSize = bgConfigSize;
     }
 
     private static float red(final int argb) {
@@ -156,6 +213,32 @@ public final class LiquidGlassUniforms {
         this.topWidgets.clear();
         this.topWidgetsPerLayer.clear();
         this.dtSeconds = Math.max(0.0, dtSeconds);
+        this.hudWidgetCount = 0;
+        this.layerElementSubmitted = false;
+        this.splitThisFrame = false;
+        this.layerMode = false;
+        this.layerUpdate = false;
+        this.earlyTextBoundary = EARLY_TEXT_LAYER;
+        this.passHeld = false;
+    }
+
+    public boolean hudLayerNeedsSplit() {
+        if (!this.layerValid) {
+            return true;
+        }
+        return this.layerClock + this.dtSeconds >= 1.0 / this.refreshRate;
+    }
+
+    public boolean splitRequested() {
+        return this.splitThisFrame;
+    }
+
+    public boolean claimLayerElement() {
+        if (this.layerElementSubmitted) {
+            return false;
+        }
+        this.layerElementSubmitted = true;
+        return true;
     }
 
     public void beginMainPass() {
@@ -176,32 +259,279 @@ public final class LiquidGlassUniforms {
             return;
         }
         this.uploaded = true;
+        final long frame = WLRenderSystem.frameId();
+        if (this.tryReuseLayer(frame)) {
+            this.reuseFrame = frame;
+            return;
+        }
+        this.reuseCandidate.clear();
+        this.reuseCandidate.addAll(this.widgets);
         this.uploadWidgetInfo();
-        this.uploadSharedUniforms();
+        final float popoverBoundary = (float) WLRenderSystem.contentStratum().popoverContentBoundary();
+        this.scheduleOverlays(popoverBoundary);
+        this.layerMode = this.computeLayerMode();
+        this.stageSharedUniforms(popoverBoundary);
+        this.rememberForReuse(frame);
+        if (this.layerMode) {
+            this.decideLayerUpdate();
+            if (!this.layerUpdate) {
+                this.commitAll(this.mainSlotCount);
+                return;
+            }
+        } else {
+            this.layerValid = false;
+            this.layerUpdate = false;
+        }
+        this.commitAll(0);
     }
 
-    public void uploadSharedUniforms() {
+    private float @org.jetbrains.annotations.Nullable [] layerInlineBlur() {
+        final List<Integer> radii = this.blurRadiiForSlot(0);
+        final float[] inline = radii.size() == 1 ? LiquidGlassPrecomputeRuntime.inlineBlur(radii.get(0)) : null;
+        this.layerBlurInline = inline != null;
+        return inline;
+    }
+
+    public boolean layerBlurInline() {
+        return this.layerBlurInline;
+    }
+
+    private boolean tryReuseLayer(final long frame) {
+        if (!this.layerValid || this.reuseFrame != frame - 1L || !this.layerElementSubmitted || this.splitThisFrame) {
+            return false;
+        }
+        if (!this.topWidgets.isEmpty() || this.textUsed || this.contentUsed || this.popoverUsed) {
+            return false;
+        }
+        final int count = this.widgets.size();
+        if (count == 0 || this.hudWidgetCount != count || count != this.reuseWidgets.size()) {
+            return false;
+        }
+        if (WLRenderSystem.targetWidth() != this.lastLayerW || WLRenderSystem.targetHeight() != this.lastLayerH) {
+            return false;
+        }
+        if (DevicePixels.perLogicalX() != this.reuseScaleX || DevicePixels.perLogicalY() != this.reuseScaleY || WLRenderSystem.glassAnim().debugStep() != this.reuseDebugStep) {
+            return false;
+        }
+        for (int i = 0; i < count; i++) {
+            final LiquidGlassGuiElementRenderState now = this.widgets.get(i);
+            if (!sameWidget(now, this.reuseWidgets.get(i)) || styleHash(now.style()) != this.reuseStyleHashes[i]) {
+                return false;
+            }
+            final FadeState fade = this.fades.get(fadeKey(now));
+            if (fade == null || fade.hover != Math.max(0f, Math.min(1f, now.hover())) || fade.focus != Math.max(0f, Math.min(1f, now.focus()))) {
+                return false;
+            }
+        }
+        for (int i = 0; i < count; i++) {
+            this.fadesSeen.add(fadeKey(this.widgets.get(i)));
+        }
+        this.reuseWidgets.clear();
+        this.reuseWidgets.addAll(this.widgets);
+        this.slotCount = 1;
+        this.mainSlotCount = 1;
+        final List<Integer> radii = this.blurRadiiForSlot(0);
+        radii.clear();
+        radii.addAll(this.reuseRadii);
+        final double interval = 1.0 / this.refreshRate;
+        this.layerClock += this.dtSeconds;
+        this.layerMode = true;
+        this.layerUpdate = this.layerClock >= interval;
+        if (this.layerUpdate) {
+            this.layerClock = Math.min(this.layerClock - interval, interval);
+        }
+        return true;
+    }
+
+    private void rememberForReuse(final long frame) {
+        this.reuseWidgets.clear();
+        if (!this.layerMode) {
+            this.reuseFrame = -1L;
+            return;
+        }
+        this.reuseWidgets.addAll(this.reuseCandidate);
+        if (this.reuseStyleHashes.length < this.reuseWidgets.size()) {
+            this.reuseStyleHashes = new int[this.reuseWidgets.size() * 2];
+        }
+        for (int i = 0; i < this.reuseWidgets.size(); i++) {
+            this.reuseStyleHashes[i] = styleHash(this.reuseWidgets.get(i).style());
+        }
+        this.reuseRadii.clear();
+        this.reuseRadii.addAll(this.blurRadiiForSlot(0));
+        this.reuseScaleX = DevicePixels.perLogicalX();
+        this.reuseScaleY = DevicePixels.perLogicalY();
+        this.reuseDebugStep = WLRenderSystem.glassAnim().debugStep();
+        this.reuseFrame = frame;
+    }
+
+    private static long fadeKey(final LiquidGlassGuiElementRenderState w) {
+        final GlassStyle s = w.style();
+        return s.hasFadeKey() ? s.getFadeKey() : rectKey(w.x1(), w.y1(), w.x2(), w.y2());
+    }
+
+    private static boolean sameWidget(final LiquidGlassGuiElementRenderState a, final LiquidGlassGuiElementRenderState b) {
+        return a.x1() == b.x1() && a.y1() == b.y1() && a.x2() == b.x2() && a.y2() == b.y2() && a.cornerRadius() == b.cornerRadius()
+            && a.hover() == b.hover() && a.focus() == b.focus() && a.stretchX() == b.stretchX() && a.stretchY() == b.stretchY()
+            && a.text() == b.text() && a.pose().equals(b.pose()) && Objects.equals(a.scissorArea(), b.scissorArea());
+    }
+
+    private static int styleHash(final GlassStyle s) {
+        int h = s.getLayer();
+        h = h * 31 + s.getBlurRadius();
+        h = h * 31 + (s.hasBlurFalloff() ? 1 : 0);
+        h = h * 31 + s.getTintColor();
+        h = h * 31 + Float.floatToIntBits(s.getTintAlpha());
+        h = h * 31 + Float.floatToIntBits(s.getOpacity());
+        h = h * 31 + Float.floatToIntBits(s.getRefThickness());
+        h = h * 31 + Float.floatToIntBits(s.getRefFactor());
+        h = h * 31 + Float.floatToIntBits(s.getRefStrength());
+        h = h * 31 + Float.floatToIntBits(s.getRefractionReach());
+        h = h * 31 + Float.floatToIntBits(s.getChroma());
+        h = h * 31 + Float.floatToIntBits(s.getToneFloor());
+        h = h * 31 + Float.floatToIntBits(s.getToneCeiling());
+        h = h * 31 + Float.floatToIntBits(s.getSmoothing());
+        h = h * 31 + Float.floatToIntBits(s.getShadowFactor());
+        h = h * 31 + Float.floatToIntBits(s.getShadowExpand());
+        h = h * 31 + Float.floatToIntBits(s.getShadowColorAlpha());
+        h = h * 31 + Float.floatToIntBits(s.getEdgeDarken());
+        h = h * 31 + Float.floatToIntBits(s.getBevelHeight());
+        h = h * 31 + Float.floatToIntBits(s.getInnerShadow());
+        h = h * 31 + Float.floatToIntBits(s.getLensFold());
+        h = h * 31 + Float.floatToIntBits(s.getGlareFactor());
+        h = h * 31 + Float.floatToIntBits(s.getRimLightIntensity());
+        return h * 31 + (s.getBakesText() ? 1 : 0);
+    }
+
+    private boolean computeLayerMode() {
+        if (!this.layerElementSubmitted || this.widgets.isEmpty() || this.hudWidgetCount != this.widgets.size() || this.mainSlotCount != 1 || (this.splitThisFrame && !this.splitFromHud)) {
+            return false;
+        }
+        if (this.textUsed || this.contentUsed || this.popoverUsed || this.slotHasStrata(0) || this.slotHasFocus[0] || this.slotBoundsEmpty[0]) {
+            return false;
+        }
+        return WLRenderSystem.glassAnim().debugStep() > 1.5f;
+    }
+
+    private void decideLayerUpdate() {
+        final long now = System.nanoTime();
+        if (now - this.refreshCheckedAt > 1_000_000_000L || this.refreshCheckedAt == 0L) {
+            this.refreshRate = Math.max(1, main.walksy.lib.core.platform.WLClient.refreshRate());
+            this.refreshCheckedAt = now;
+        }
+        final int fbW = WLRenderSystem.targetWidth();
+        final int fbH = WLRenderSystem.targetHeight();
+        final int[] area = this.getPassScissor(0, fbW, fbH);
+        if (area == null) {
+            this.layerArea[0] = 0;
+            this.layerArea[1] = 0;
+            this.layerArea[2] = fbW;
+            this.layerArea[3] = fbH;
+        } else {
+            System.arraycopy(area, 0, this.layerArea, 0, 4);
+        }
+        boolean changed = !this.layerValid || fbW != this.lastLayerW || fbH != this.lastLayerH || !Arrays.equals(this.layerArea, this.lastLayerArea);
+        changed = changed || differs(this.widgetInfoStaging[0], this.widgetInfoUploaded[0], 0);
+        changed = changed || differs(this.customStaging[0], this.customUploaded[0], CUSTOM_VOLATILE_BYTES);
+        changed = changed || differs(this.bgStaging, this.bgUploaded, 0);
+        final double interval = 1.0 / this.refreshRate;
+        this.layerClock += this.dtSeconds;
+        if (changed) {
+            this.layerUpdate = true;
+            this.layerClock = 0.0;
+        } else if (this.layerClock >= interval) {
+            this.layerUpdate = true;
+            this.layerClock = Math.min(this.layerClock - interval, interval);
+        } else {
+            this.layerUpdate = false;
+        }
+        if (this.layerUpdate) {
+            this.lastLayerW = fbW;
+            this.lastLayerH = fbH;
+            System.arraycopy(this.layerArea, 0, this.lastLayerArea, 0, 4);
+        }
+    }
+
+    private static boolean differs(@org.jetbrains.annotations.Nullable final ByteBuffer staged, @org.jetbrains.annotations.Nullable final ByteBuffer uploaded, final int skip) {
+        if (staged == null || uploaded == null) {
+            return true;
+        }
+        final int length = staged.capacity() - skip;
+        return staged.slice(skip, length).mismatch(uploaded.slice(skip, length)) >= 0;
+    }
+
+    public boolean layerMode() {
+        return this.layerMode;
+    }
+
+    public boolean layerUpdate() {
+        return this.layerUpdate;
+    }
+
+    public int[] layerArea() {
+        return this.layerArea;
+    }
+
+    public void markLayerValid() {
+        this.layerValid = true;
+    }
+
+    private void commitAll(final int fromSlot) {
+        final int outW = WLRenderSystem.targetWidth();
+        final int outH = WLRenderSystem.targetHeight();
+        if (outW != this.samplerInfoW || outH != this.samplerInfoH) {
+            this.samplerInfoW = outW;
+            this.samplerInfoH = outH;
+            try (final WLMapping map = this.samplerInfo.map()) {
+                final Std140Writer b = map.writer();
+                b.putVec2((float) outW, (float) outH);
+                b.putVec2((float) outW, (float) outH);
+            }
+        }
+        for (int slot = fromSlot; slot < this.slotCount; slot++) {
+            this.widgetInfoUploaded[slot] = commit(this.widgetInfoBySlot[slot], this.widgetInfoStaging[slot], this.widgetInfoUploaded[slot]);
+            this.customUploaded[slot] = commit(this.customUniforms[slot], this.customStaging[slot], this.customUploaded[slot]);
+        }
+        this.bgUploaded = commit(this.bgConfig, this.bgStaging, this.bgUploaded);
+    }
+
+    private static ByteBuffer commit(final WLUniformBuffer target, final ByteBuffer staged, @org.jetbrains.annotations.Nullable ByteBuffer uploaded) {
+        staged.clear();
+        if (uploaded != null && staged.mismatch(uploaded.clear()) < 0) {
+            return uploaded;
+        }
+        try (final WLMapping map = target.map()) {
+            map.data().put(staged);
+        }
+        if (uploaded == null) {
+            uploaded = ByteBuffer.allocateDirect(staged.capacity()).order(ByteOrder.nativeOrder());
+        }
+        uploaded.clear().put(staged.clear());
+        staged.clear();
+        return uploaded;
+    }
+
+    private static ByteBuffer staging(final ByteBuffer[] buffers, final int slot, final int size) {
+        if (buffers[slot] == null) {
+            buffers[slot] = ByteBuffer.allocateDirect(size).order(ByteOrder.nativeOrder());
+        }
+        return buffers[slot].clear();
+    }
+
+    private void stageSharedUniforms(final float popoverBoundary) {
         final AppearanceConfig appearance = WalksyLib.getInstance().getAppearancePage();
         final LiquidGlassAnim anim = WLRenderSystem.glassAnim();
         final Minecraft mc = Minecraft.getInstance();
-        final int outW = WLRenderSystem.targetWidth();
         final int outH = WLRenderSystem.targetHeight();
-        try (final WLMapping map = this.samplerInfo.map()) {
-            final Std140Writer b = map.writer();
-            b.putVec2((float) outW, (float) outH);
-            b.putVec2((float) outW, (float) outH);
-        }
         final double cursorX = mc.mouseHandler.xpos();
         final double cursorY = mc.mouseHandler.ypos();
         final float scaleX = DevicePixels.perLogicalX();
         final float scaleY = DevicePixels.perLogicalY();
         final int fbH = outH;
         final float time = (System.nanoTime() - START_NANOS) / NANOS_PER_SECOND;
-        final float popoverBoundary = (float) WLRenderSystem.contentStratum().popoverContentBoundary();
-        this.scheduleOverlays(popoverBoundary);
+        this.layerBlurInline = false;
         for (int slot = 0; slot < this.slotCount; slot++) {
-            try (final WLMapping map = this.customUniforms[slot].map()) {
-                final Std140Writer b = map.writer();
+            {
+                final Std140Writer b = Std140Writer.into(staging(this.customStaging, slot, this.customUniformsSize));
                 b.putFloat(time);
                 b.align(16);
                 final float x = (float) (cursorX * scaleX);
@@ -235,10 +565,33 @@ public final class LiquidGlassUniforms {
                 b.putFloat(top || (this.textCompositePass >= 0 && slot > this.textCompositePass) ? 1f : 0f);
                 b.putFloat(top || (this.contentCompositePass >= 0 && slot > this.contentCompositePass) ? 1f : 0f);
                 b.putFloat(top || (this.popoverCompositePass >= 0 && slot > this.popoverCompositePass) ? 1f : 0f);
+                final boolean layered = this.layerMode && slot < this.mainSlotCount;
+                final boolean over = this.slotBlendsOver(slot);
+                b.putFloat(layered || over ? 1f : 0f);
+                b.putFloat(this.textUsed ? 1f : 0f);
+                b.putFloat(over && !layered ? 1f : 0f);
+                final boolean strata = this.slotHasStrata(slot);
+                for (int rect = 0; rect < 2; rect++) {
+                    final int at = slot * 8 + rect * 4;
+                    if (strata) {
+                        b.putVec4(1f, 1f, 0f, 0f);
+                    } else {
+                        b.putVec4(this.slotFastRect[at], this.slotFastRect[at + 1], this.slotFastRect[at + 2], this.slotFastRect[at + 3]);
+                    }
+                }
+                final float[] inline = layered && slot == 0 ? this.layerInlineBlur() : null;
+                if (inline != null) {
+                    b.putVec4(inline[0], inline[1], inline[2], 1f);
+                } else {
+                    b.putVec4(0f, 0f, 0f, 0f);
+                }
             }
         }
-        try (final WLMapping map = this.bgConfig.map()) {
-            final Std140Writer b = map.writer();
+        if (this.bgStaging == null) {
+            this.bgStaging = ByteBuffer.allocateDirect(this.bgConfigSize).order(ByteOrder.nativeOrder());
+        }
+        {
+            final Std140Writer b = Std140Writer.into(this.bgStaging.clear());
             b.putFloat(anim.shadowExpand());
             b.putFloat(anim.shadowFactor());
             b.putVec2(anim.shadowOffsetX() * scaleX, anim.shadowOffsetY() * scaleY);
@@ -252,13 +605,19 @@ public final class LiquidGlassUniforms {
         Arrays.fill(this.contentAtEnd, false);
         Arrays.fill(this.popoverAtStart, false);
         Arrays.fill(this.popoverAtEnd, false);
-        this.textCompositePass = this.scheduleOverlay(EARLY_TEXT_LAYER, this.textAtStart, this.textAtEnd);
-        this.contentCompositePass = this.scheduleOverlay(CONTENT_LAYER, this.contentAtStart, this.contentAtEnd);
-        this.popoverCompositePass = this.scheduleOverlay(popoverBoundary, this.popoverAtStart, this.popoverAtEnd);
+        this.textCompositePass = this.scheduleOverlay(this.textUsed, this.earlyTextBoundary, this.textAtStart, this.textAtEnd);
+        this.contentCompositePass = this.scheduleOverlay(this.contentUsed, CONTENT_LAYER, this.contentAtStart, this.contentAtEnd);
+        this.popoverCompositePass = this.scheduleOverlay(this.popoverUsed, popoverBoundary, this.popoverAtStart, this.popoverAtEnd);
     }
 
-    private int scheduleOverlay(final float boundary, final boolean[] atStart, final boolean[] atEnd) {
-        if (this.mainSlotCount <= 0) {
+    public void setStrataUsed(final boolean text, final boolean content, final boolean popover) {
+        this.textUsed = text;
+        this.contentUsed = content;
+        this.popoverUsed = popover;
+    }
+
+    private int scheduleOverlay(final boolean used, final float boundary, final boolean[] atStart, final boolean[] atEnd) {
+        if (!used || this.mainSlotCount <= 0) {
             return -1;
         }
         if (this.layerValuesBySlot[0] > boundary + 0.5f) {
@@ -284,15 +643,35 @@ public final class LiquidGlassUniforms {
         return this.vanillaBlurWanted;
     }
 
+    public void lowerEarlyTextBoundary(final int layer) {
+        this.earlyTextBoundary = Math.min(this.earlyTextBoundary, layer);
+    }
+
+    public void holdGlassPass() {
+        this.passHeld = true;
+    }
+
+    public void releaseGlassPass() {
+        this.passHeld = false;
+    }
+
     public void requestGlassPass(final WLGraphics2D graphics) {
-        if (!this.blurPassRequested) {
+        if (!this.blurPassRequested && !this.passHeld) {
             graphics.blurBeforeThisStratum();
             this.blurPassRequested = true;
+            if (!this.splitThisFrame) {
+                this.splitThisFrame = true;
+                this.splitFromHud = WLRenderSystem.inHud();
+            }
         }
     }
 
-    public void addWidget(final LiquidGlassGuiElementRenderState element) {
+    public void addWidget(final LiquidGlassGuiElementRenderState element, final boolean hud) {
+        final int before = this.widgets.size();
         add(element, this.widgets, this.widgetsPerLayer);
+        if (hud && this.widgets.size() > before) {
+            this.hudWidgetCount++;
+        }
     }
 
     public void addTopWidget(final LiquidGlassGuiElementRenderState element) {
@@ -424,8 +803,9 @@ public final class LiquidGlassUniforms {
             final List<LiquidGlassGuiElementRenderState> slotWidgets = renderWidgets.subList(from, from + count);
             final int slotSize = slotWidgets.size();
             this.accumulateSlotBounds(slotIdx, slotWidgets, scaleX, scaleY, outW, fbH);
-            try (final WLMapping map = this.widgetInfoBySlot[slotIdx].map()) {
-                final ByteBuffer raw = map.data();
+            {
+                final ByteBuffer raw = staging(this.widgetInfoStaging, slotIdx, this.widgetInfoSize);
+                this.slotHasFocus[slotIdx] = false;
                 final Std140Writer b = Std140Writer.into(raw);
                 b.putFloat((float) slotWidgets.size());
                 b.align(16);
@@ -522,12 +902,18 @@ public final class LiquidGlassUniforms {
                     if (radius > 0 && wSlot >= 0 && wSlot < this.blurRadiiBySlot.size()) {
                         idx = this.blurRadiiBySlot.get(wSlot).indexOf(radius);
                     }
+                    if (idx < 0 && s.getOpacity() > 0f) {
+                        this.slotNeedsScene[slotIdx] = true;
+                    }
                     final var w = slotWidgets.get(i);
                     final long key = s.hasFadeKey() ? s.getFadeKey() : rectKey(w.x1(), w.y1(), w.x2(), w.y2());
                     this.fadesSeen.add(key);
                     final FadeState fs = this.fades.computeIfAbsent(key, k -> new FadeState());
                     fs.hover = this.smoothToward(fs.hover, Math.max(0f, Math.min(1f, w.hover())), this.dtSeconds, 0.12f);
                     fs.focus = this.smoothToward(fs.focus, Math.max(0f, Math.min(1f, w.focus())), this.dtSeconds, 0.18f);
+                    if (fs.focus > 0f || w.focus() > 0f) {
+                        this.slotHasFocus[slotIdx] = true;
+                    }
                     final float blurCode = idx >= 0 && s.hasBlurFalloff() ? idx + BLUR_FALLOFF_BIAS : idx;
                     b.putVec4(blurCode, fs.hover, fs.focus, s.getRefractionShift() * scaleY);
                 }
@@ -551,7 +937,7 @@ public final class LiquidGlassUniforms {
                 skipVec4s(raw, MAX_WIDGETS - slotSize);
                 for (int i = 0; i < slotSize; i++) {
                     final GlassStyle s = slotWidgets.get(i).style();
-                    final boolean bakes = s.getBakesText() && slotIdx < this.mainSlotCount;
+                    final boolean bakes = s.getBakesText() && slotIdx < this.mainSlotCount && this.earlyTextBoundary == EARLY_TEXT_LAYER;
                     final float foldCode = s.getLensFold() + (s.isSoftLens() ? SOFT_LENS_FLAG : 0f);
                     final float fold = bakes ? foldCode : -(foldCode + 1f);
                     b.putVec4(s.getInnerShadow(), fold, s.getToneFloor(), s.getToneCeiling());
@@ -604,7 +990,7 @@ public final class LiquidGlassUniforms {
         } else if (Math.abs(reachFrac) > 1e-4f) {
             final float peakCap = 0.75f + 2.25f * Math.max(0f, Math.min(1f, s.getLensFold()));
             base = Math.min(Math.abs(reachFrac) * Math.min(widgetW, widgetH), peakCap * thickPx);
-            inward = false;
+            inward = reachFrac > 0f;
         } else {
             base = grazing * 0.08f * fbH;
             inward = true;
@@ -639,14 +1025,30 @@ public final class LiquidGlassUniforms {
         final AppearanceConfig appearance = WalksyLib.getInstance().getAppearancePage();
         this.slotBoundsEmpty[slotIdx] = true;
         this.slotBlurRegionEmpty[slotIdx] = true;
+        this.slotReadRegionEmpty[slotIdx] = true;
+        this.slotNeedsScene[slotIdx] = false;
+        for (int rect = 0; rect < 2; rect++) {
+            final int at = slotIdx * 8 + rect * 4;
+            this.slotFastRect[at] = 1f;
+            this.slotFastRect[at + 1] = 1f;
+            this.slotFastRect[at + 2] = 0f;
+            this.slotFastRect[at + 3] = 0f;
+        }
         if (slotWidgets.isEmpty()) {
             return;
         }
+        float tx0 = Float.MAX_VALUE;
+        float ty0 = Float.MAX_VALUE;
+        float tx1 = -Float.MAX_VALUE;
+        float ty1 = -Float.MAX_VALUE;
         float qx0 = Float.MAX_VALUE;
         float qy0 = Float.MAX_VALUE;
         float qx1 = -Float.MAX_VALUE;
         float qy1 = -Float.MAX_VALUE;
-        final float inflate = Math.max(0f, WLRenderSystem.glassAnim().hoverScalePx()) + Math.max(0f, WLRenderSystem.glassAnim().focusScalePx());
+        final List<Integer> slotRadii = this.blurRadiiForSlot(slotIdx);
+        final boolean litNeedsScene = slotRadii.isEmpty() || slotRadii.get(0) > LIT_FROM_BLUR_MAX_RADIUS;
+        final float hoverInflate = Math.max(0f, WLRenderSystem.glassAnim().hoverScalePx());
+        final float focusInflate = Math.max(0f, WLRenderSystem.glassAnim().focusScalePx());
         float kSum = 0f;
         int positives = 0;
         boolean repulsion = false;
@@ -662,7 +1064,7 @@ public final class LiquidGlassUniforms {
             }
         }
         final boolean ownNormals = !repulsion && (positives <= 1 || maxSmoothing == 0f);
-        final float smoothSlack = inflate + kSum * 0.25f * fbH + 2f;
+        final float smoothSlack = (positives > 1 ? kSum * 0.25f * fbH : 0f) + 2f;
         float bx0 = Float.MAX_VALUE;
         float by0 = Float.MAX_VALUE;
         float bx1 = -Float.MAX_VALUE;
@@ -680,6 +1082,10 @@ public final class LiquidGlassUniforms {
             float wy1 = -Float.MAX_VALUE;
             if (s.getOpacity() <= 0f) {
                 continue;
+            }
+            final int blurRadius = appearance.blurRadius(Math.max(0, s.getBlurRadius()), s.getLayer());
+            if (blurRadius <= 0 || s.hasBlurFalloff() || (litNeedsScene && s.getShadowExpand() < 0f && s.getShadowFactor() < 0f && s.getShadowColorAlpha() > 0f)) {
+                this.slotNeedsScene[slotIdx] = true;
             }
             final Matrix3x2f p = w.pose();
             final float sx1 = p.m00() * w.x1() + p.m10() * w.y1() + p.m20();
@@ -707,7 +1113,29 @@ public final class LiquidGlassUniforms {
             final long fadeKey = s.hasFadeKey() ? s.getFadeKey() : rectKey(w.x1(), w.y1(), w.x2(), w.y2());
             final FadeState fade = this.fades.get(fadeKey);
             final boolean ringed = w.focus() > 0f || (fade != null && fade.focus > 0f);
-            final float bodySlack = (ringed ? 0.01f : 0.001f) * fbH + smoothSlack;
+            final float hoverReach = Math.max(Math.max(0f, Math.min(1f, w.hover())), fade != null ? fade.hover : 0f);
+            final float focusReach = Math.max(Math.max(0f, Math.min(1f, w.focus())), fade != null ? fade.focus : 0f);
+            final float inflate = hoverInflate * hoverReach + focusInflate * focusReach;
+            final float bodySlack = (ringed ? 0.01f : 0.001f) * fbH + smoothSlack + inflate;
+            if (slotWidgets.size() == 1 && hoverReach <= 0f && focusReach <= 0f && stretchReach <= 0f && this.fastInteriorAllowed(s, blurRadius)) {
+                final float depth = fastInteriorDepth(s, scaleY, ry1 - ry0);
+                final float corner = Math.max(depth, w.cornerRadius() * scaleY + 2f);
+                for (int rect = 0; rect < 2; rect++) {
+                    final float insetX = rect == 0 ? corner : depth;
+                    final float insetY = rect == 0 ? depth : corner;
+                    final float fx0 = Math.max(rx0 + insetX, scX0 + 1f);
+                    final float fy0 = Math.max(ry0 + insetY, scY0 + 1f);
+                    final float fx1 = Math.min(rx1 - insetX, scX1 - 1f);
+                    final float fy1 = Math.min(ry1 - insetY, scY1 - 1f);
+                    if (fx1 > fx0 && fy1 > fy0) {
+                        final int at = slotIdx * 8 + rect * 4;
+                        this.slotFastRect[at] = fx0;
+                        this.slotFastRect[at + 1] = fy0;
+                        this.slotFastRect[at + 2] = fx1;
+                        this.slotFastRect[at + 3] = fy1;
+                    }
+                }
+            }
             final float bodyX0 = Math.max(rx0 - bodySlack, scX0);
             final float bodyY0 = Math.max(ry0 - bodySlack, scY0);
             final float bodyX1 = Math.min(rx1 + bodySlack, scX1);
@@ -722,8 +1150,13 @@ public final class LiquidGlassUniforms {
                 wx1 = Math.max(wx1, bodyX1);
                 wy1 = Math.max(wy1, bodyY1);
                 this.slotBoundsEmpty[slotIdx] = false;
-                if (appearance.blurRadius(Math.max(0, s.getBlurRadius()), s.getLayer()) > 0) {
-                    final float reach = maxBackdropReachPx(s, scaleY, rx1 - rx0, ry1 - ry0, fbH, ownNormals);
+                final float reach = maxBackdropReachPx(s, scaleY, rx1 - rx0, ry1 - ry0, fbH, ownNormals);
+                tx0 = Math.min(tx0, bodyX0 - reach);
+                ty0 = Math.min(ty0, bodyY0 - reach);
+                tx1 = Math.max(tx1, bodyX1 + reach);
+                ty1 = Math.max(ty1, bodyY1 + reach);
+                this.slotReadRegionEmpty[slotIdx] = false;
+                if (blurRadius > 0) {
                     qx0 = Math.min(qx0, bodyX0 - reach);
                     qy0 = Math.min(qy0, bodyY0 - reach);
                     qx1 = Math.max(qx1, bodyX1 + reach);
@@ -780,17 +1213,70 @@ public final class LiquidGlassUniforms {
         this.slotBlurRegion[base + 1] = qy0;
         this.slotBlurRegion[base + 2] = qx1;
         this.slotBlurRegion[base + 3] = qy1;
+        this.slotReadRegion[base] = tx0;
+        this.slotReadRegion[base + 1] = ty0;
+        this.slotReadRegion[base + 2] = tx1;
+        this.slotReadRegion[base + 3] = ty1;
+    }
+
+    private boolean fastInteriorAllowed(final GlassStyle s, final int blurRadius) {
+        if (blurRadius <= 0 || s.hasBlurFalloff() || s.getOpacity() < 1f || s.getSmoothing() < 0f || s.getRefractionShift() != 0f || LiquidGlassConstants.PIXELATED_GRID || WLRenderSystem.glassAnim().debugStep() <= 1.5f) {
+            return false;
+        }
+        if (this.textUsed && (s.getBakesText() || s.getLayer() > this.earlyTextBoundary)) {
+            return false;
+        }
+        if (this.contentUsed && s.getLayer() > CONTENT_LAYER) {
+            return false;
+        }
+        return !this.popoverUsed || s.getLayer() <= WLRenderSystem.contentStratum().popoverContentBoundary();
+    }
+
+    private static float fastInteriorDepth(final GlassStyle s, final float scaleY, final float heightPx) {
+        float depth = FAST_INTERIOR_EDGE_REACH;
+        depth = Math.max(depth, s.getRefThickness() * scaleY + 2f);
+        if (s.getInnerShadow() > 0.0001f) {
+            final float inset = Math.min(7f, 0.5f * heightPx * 0.45f);
+            final float width = Math.max(1f, inset * (4f / 7f));
+            depth = Math.max(depth, inset + 6f * width + 2f);
+        }
+        if (s.getBevelHeight() * scaleY <= 0.0001f) {
+            final float fresnelRange = s.getRefFresnelRange() * scaleY;
+            final float glareRange = s.getGlareRange() * scaleY;
+            depth = Math.max(depth, (1f + Math.max(0f, s.getRefFresnelHardness() / 100f)) * 0.006f * fresnelRange * fresnelRange + 2f);
+            depth = Math.max(depth, (1f + Math.max(0f, s.getGlareHardness() / 100f)) * 0.006f * glareRange * glareRange + 2f);
+        }
+        return depth;
+    }
+
+    public boolean slotBlendsOver(final int slot) {
+        if (slot < 0 || slot >= this.slotCount || this.slotNeedsScene[slot] || WLRenderSystem.glassAnim().debugStep() <= 1.5f || this.getBlurRadiiForSlot(slot).isEmpty()) {
+            return false;
+        }
+        return !this.slotHasStrata(slot);
+    }
+
+    private boolean slotHasStrata(final int slot) {
+        return this.textAtStart[slot] || this.textAtEnd[slot] || this.contentAtStart[slot] || this.contentAtEnd[slot] || this.popoverAtStart[slot] || this.popoverAtEnd[slot];
+    }
+
+    public int[] getReadRegion(final int slot, final int fbW, final int fbH) {
+        return this.regionOf(this.slotReadRegion, this.slotReadRegionEmpty, slot, fbW, fbH);
     }
 
     public int[] getBlurRegion(final int slot, final int fbW, final int fbH) {
-        if (slot < 0 || slot >= this.slotCount || this.slotBlurRegionEmpty[slot]) {
+        return this.regionOf(this.slotBlurRegion, this.slotBlurRegionEmpty, slot, fbW, fbH);
+    }
+
+    private int[] regionOf(final float[] regions, final boolean[] empty, final int slot, final int fbW, final int fbH) {
+        if (slot < 0 || slot >= this.slotCount || empty[slot]) {
             return new int[] {0, 0, 0, 0};
         }
         final int base = slot * 4;
-        final int ix0 = Math.max(0, (int) Math.floor(this.slotBlurRegion[base]));
-        final int iy0 = Math.max(0, (int) Math.floor(this.slotBlurRegion[base + 1]));
-        final int ix1 = Math.min(fbW, (int) Math.ceil(this.slotBlurRegion[base + 2]));
-        final int iy1 = Math.min(fbH, (int) Math.ceil(this.slotBlurRegion[base + 3]));
+        final int ix0 = Math.max(0, (int) Math.floor(regions[base]));
+        final int iy0 = Math.max(0, (int) Math.floor(regions[base + 1]));
+        final int ix1 = Math.min(fbW, (int) Math.ceil(regions[base + 2]));
+        final int iy1 = Math.min(fbH, (int) Math.ceil(regions[base + 3]));
         if (ix1 <= ix0 || iy1 <= iy0) {
             return new int[] {0, 0, 0, 0};
         }

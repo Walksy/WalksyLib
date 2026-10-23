@@ -1,6 +1,5 @@
 package main.walksy.lib.core.gui.widget.options;
 
-import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.render.Cursors;
 import main.walksy.lib.core.render.WLRenderSystem;
 import main.walksy.lib.core.render.texture.Icons;
@@ -316,10 +315,6 @@ public abstract class OptionRowWidget<T> extends WLWidget implements ScrollPanel
         }
         this.option.reset();
         this.option.runChange();
-        if (this.option.getHudSpace() != null) {
-            this.option.getHudSpace().reset();
-            WalksyLib.getInstance().getHudSpaces().save();
-        }
         return true;
     }
 

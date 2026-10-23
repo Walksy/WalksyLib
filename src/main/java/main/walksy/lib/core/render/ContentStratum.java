@@ -34,9 +34,12 @@ public final class ContentStratum {
     private static final WLPipelineSpec ROUNDED_TEXTURED = new WLPipelineSpec("content_tex_rounded", "core/msdf_text", "program/rounded_tex", WLVertexFormat.POSITION_TEX_COLOR, WLBlend.TRANSLUCENT, MATRICES, SAMPLER);
     private static final WLPipelineSpec CORNER = new WLPipelineSpec("content_corner", "core/rounded_corner", "program/rounded_corner", WLVertexFormat.POSITION_TEX_COLOR, WLBlend.TRANSLUCENT, MATRICES, List.of());
     private static final WLPipelineSpec CHECKER = new WLPipelineSpec("content_checker", "core/rounded_corner", "program/rounded_checker", WLVertexFormat.POSITION_TEX_COLOR, WLBlend.TRANSLUCENT, MATRICES, List.of());
+    private static final WLPipelineSpec BITMAP_TEXT = new WLPipelineSpec("content_bitmap_text", "core/msdf_text", "program/bitmap_text", WLVertexFormat.POSITION_TEX_COLOR, WLBlend.TRANSLUCENT, MATRICES, SAMPLER);
+    private static final WLPipelineSpec BITMAP_TEXT_PIXEL = new WLPipelineSpec("content_bitmap_text_pixel", "core/msdf_text", "program/bitmap_text_pixel", WLVertexFormat.POSITION_TEX_COLOR, WLBlend.TRANSLUCENT, MATRICES, SAMPLER);
     private static final Supplier<String> PASS_LABEL = () -> "walksylib content stratum";
     private WLUniformBuffer projectionUbo;
     private final Channel row = new Channel();
+    private final Channel early = new Channel();
     private final Channel popover = new Channel();
     private final Channel dev = new Channel();
     private final Channel top = new Channel();
@@ -178,7 +181,7 @@ public final class ContentStratum {
         if (element.texture() == null) {
             return WLElementKind.FLAT;
         }
-        if (kind == WLElementKind.PREMULTIPLIED || kind == WLElementKind.GRAYSCALE || kind == WLElementKind.ROUNDED_TEXTURED) {
+        if (kind == WLElementKind.PREMULTIPLIED || kind == WLElementKind.GRAYSCALE || kind == WLElementKind.ROUNDED_TEXTURED || kind == WLElementKind.BITMAP_TEXT || kind == WLElementKind.BITMAP_TEXT_PIXEL) {
             return kind;
         }
         return WLElementKind.TEXTURED;
@@ -193,6 +196,8 @@ public final class ContentStratum {
             case ROUNDED_TEXTURED -> ROUNDED_TEXTURED;
             case CORNER -> CORNER;
             case CHECKER -> CHECKER;
+            case BITMAP_TEXT -> BITMAP_TEXT;
+            case BITMAP_TEXT_PIXEL -> BITMAP_TEXT_PIXEL;
         });
     }
 
@@ -218,6 +223,18 @@ public final class ContentStratum {
 
     public boolean hasRowContent() {
         return this.row.hasQueued();
+    }
+
+    public void addEarly(final WLElement element) {
+        this.early.add(element);
+    }
+
+    public boolean hasEarlyContent() {
+        return this.early.hasQueued();
+    }
+
+    public void flushEarly(final WLTexture target) {
+        this.early.flush(new WLTexture[] {target}, WLRenderSystem.earlyTextBounds());
     }
 
     public boolean hasPopoverContent() {
@@ -308,6 +325,7 @@ public final class ContentStratum {
     public void discardStale() {
         this.popoverContentBoundary = DEFAULT_POPOVER_BOUNDARY;
         this.row.discardStale();
+        this.early.discardStale();
         this.popover.discardStale();
         this.dev.discardStale();
         this.top.discardStale();

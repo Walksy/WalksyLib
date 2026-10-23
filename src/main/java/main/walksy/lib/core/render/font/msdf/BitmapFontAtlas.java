@@ -4,6 +4,10 @@ import com.mojang.blaze3d.platform.NativeImage;
 import main.walksy.lib.core.render.ContentStretch;
 import main.walksy.lib.core.render.DevicePixels;
 import main.walksy.lib.core.render.OverlayBounds;
+import main.walksy.lib.core.render.WLRenderSystem;
+import main.walksy.lib.core.render.element.WLVertexSink;
+import main.walksy.lib.core.render.gpu.WLFilter;
+import main.walksy.lib.core.render.gpu.WLTexture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -25,17 +29,38 @@ final class BitmapFontAtlas {
     private static final int GLYPH_GUTTER = 2;
     private static final int MIN_ATLAS_SIZE = 256;
     private static final int MAX_ATLAS_SIZE = 4096;
+    private static final int ASCII = 128;
     private final AbstractTexture texture;
     private final Map<Integer, Glyph> glyphs;
     private final Map<Integer, Map<Integer, Float>> kernings;
+    private final Glyph[] asciiGlyphs = new Glyph[ASCII];
+    private final float[] asciiKerning = new float[ASCII * ASCII];
     private final float baselinePx;
     private final int physicalSize;
     private boolean pixelArt;
+    private @Nullable WLTexture linearTexture;
+    private @Nullable WLTexture nearestTexture;
 
     private BitmapFontAtlas(final AbstractTexture texture, final Map<Integer, Glyph> glyphs, final Map<Integer, Map<Integer, Float>> kernings, final float baselinePx, final int physicalSize) {
         this.texture = texture;
         this.glyphs = glyphs;
         this.kernings = kernings;
+        for (final Map.Entry<Integer, Glyph> entry : glyphs.entrySet()) {
+            if (entry.getKey() >= 0 && entry.getKey() < ASCII) {
+                this.asciiGlyphs[entry.getKey()] = entry.getValue();
+            }
+        }
+        for (final Map.Entry<Integer, Map<Integer, Float>> row : kernings.entrySet()) {
+            final int first = row.getKey();
+            if (first < 0 || first >= ASCII) {
+                continue;
+            }
+            for (final Map.Entry<Integer, Float> pair : row.getValue().entrySet()) {
+                if (pair.getKey() >= 0 && pair.getKey() < ASCII) {
+                    this.asciiKerning[first * ASCII + pair.getKey()] = pair.getValue();
+                }
+            }
+        }
         this.baselinePx = baselinePx;
         this.physicalSize = physicalSize;
     }
@@ -179,7 +204,7 @@ final class BitmapFontAtlas {
     int countRenderable(final String text) {
         int n = 0;
         for (int i = 0; i < text.length(); i++) {
-            final Glyph g = this.glyphs.get((int) text.charAt(i));
+            final Glyph g = this.glyph(text.charAt(i));
             if (g != null && g.renderable()) {
                 n++;
             }
@@ -204,14 +229,11 @@ final class BitmapFontAtlas {
         int prev = -1;
         for (int i = 0; i < text.length(); i++) {
             final int ch = text.charAt(i);
-            final Glyph g = this.glyphs.get(ch);
+            final Glyph g = this.glyph(ch);
             if (g == null) {
                 continue;
             }
-            final Map<Integer, Float> kern = this.kernings.get(prev);
-            if (kern != null) {
-                penXPx += kern.getOrDefault(ch, 0f) * layoutScale;
-            }
+            penXPx += this.kerning(prev, ch) * layoutScale;
             if (g.renderable()) {
                 final float glyphXPx = snap ? DevicePixels.snapX(penXPx / sx, pose) * sx : penXPx;
                 g.emitRaw(buf, pose, glyphXPx, baseYPx, sx, sy, color, bounds, layoutScale, stretch);
@@ -219,6 +241,65 @@ final class BitmapFontAtlas {
             penXPx += g.advance() * layoutScale;
             prev = ch;
         }
+    }
+
+    void emitVertices(final WLVertexSink sink, final Matrix3x2f pose, final String text, final float x, final float y, final int color, final float layoutScale, final boolean snap) {
+        final float sx = DevicePixels.perLogicalX();
+        final float sy = DevicePixels.perLogicalY();
+        float penXPx = x * sx;
+        final float rawBaseY = (y * sy + this.baselinePx * layoutScale) / sy;
+        final float baseYPx = (snap ? DevicePixels.snapY(rawBaseY, pose) : rawBaseY) * sy;
+        int prev = -1;
+        for (int i = 0; i < text.length(); i++) {
+            final int ch = text.charAt(i);
+            final Glyph g = this.glyph(ch);
+            if (g == null) {
+                continue;
+            }
+            penXPx += this.kerning(prev, ch) * layoutScale;
+            if (g.renderable()) {
+                final float glyphXPx = snap ? DevicePixels.snapX(penXPx / sx, pose) * sx : penXPx;
+                g.emitSink(sink, pose, glyphXPx, baseYPx, sx, sy, color, layoutScale);
+            }
+            penXPx += g.advance() * layoutScale;
+            prev = ch;
+        }
+    }
+
+    WLTexture filtered(final boolean linear) {
+        if (linear) {
+            if (this.linearTexture == null) {
+                this.linearTexture = WLRenderSystem.withFilter(WLRenderSystem.texture(this.texture), WLFilter.LINEAR);
+            }
+            return this.linearTexture;
+        }
+        if (this.nearestTexture == null) {
+            this.nearestTexture = WLRenderSystem.withFilter(WLRenderSystem.texture(this.texture), WLFilter.NEAREST);
+        }
+        return this.nearestTexture;
+    }
+
+    float lineExtent(final float layoutScale) {
+        return (this.physicalSize * 1.5f + this.baselinePx) * layoutScale / DevicePixels.perLogicalY();
+    }
+
+    float layoutWidth(final String text, final float layoutScale) {
+        return this.widthPx(text) * layoutScale / DevicePixels.perLogicalX();
+    }
+
+    private @Nullable Glyph glyph(final int ch) {
+        return ch < ASCII ? this.asciiGlyphs[ch] : this.glyphs.get(ch);
+    }
+
+    private float kerning(final int prev, final int ch) {
+        if (prev < 0) {
+            return 0f;
+        }
+        if (prev < ASCII && ch < ASCII) {
+            return this.asciiKerning[prev * ASCII + ch];
+        }
+        final Map<Integer, Float> kern = this.kernings.get(prev);
+        return kern == null ? 0f : kern.getOrDefault(ch, 0f);
     }
 
     float width(final String text) {
@@ -230,14 +311,11 @@ final class BitmapFontAtlas {
         int prev = -1;
         for (int i = 0; i < text.length(); i++) {
             final int ch = text.charAt(i);
-            final Glyph g = this.glyphs.get(ch);
+            final Glyph g = this.glyph(ch);
             if (g == null) {
                 continue;
             }
-            final Map<Integer, Float> kern = this.kernings.get(prev);
-            if (kern != null) {
-                w += kern.getOrDefault(ch, 0f);
-            }
+            w += this.kerning(prev, ch);
             w += g.advance();
             prev = ch;
         }
@@ -264,6 +342,17 @@ final class BitmapFontAtlas {
             MsdfGlyph.writeVertex(buf, pose, px0, py1, this.u0, this.v1, color, bounds, stretch);
             MsdfGlyph.writeVertex(buf, pose, px1, py1, this.u1, this.v1, color, bounds, stretch);
             MsdfGlyph.writeVertex(buf, pose, px1, py0, this.u1, this.v0, color, bounds, stretch);
+        }
+
+        void emitSink(final WLVertexSink sink, final Matrix3x2f pose, final float xPx, final float baselineYPx, final float sx, final float sy, final int color, final float layoutScale) {
+            final float px0 = (xPx + this.xoff * layoutScale) / sx;
+            final float py0 = (baselineYPx + this.yoff * layoutScale) / sy;
+            final float px1 = (xPx + (this.xoff + this.w) * layoutScale) / sx;
+            final float py1 = (baselineYPx + (this.yoff + this.h) * layoutScale) / sy;
+            sink.posed(pose, px0, py0).uv(this.u0, this.v0).color(color);
+            sink.posed(pose, px0, py1).uv(this.u0, this.v1).color(color);
+            sink.posed(pose, px1, py1).uv(this.u1, this.v1).color(color);
+            sink.posed(pose, px1, py0).uv(this.u1, this.v0).color(color);
         }
     }
 }

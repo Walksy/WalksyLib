@@ -34,6 +34,8 @@ public final class GuiContext {
     private static WLGraphics2D lastGraphics;
     private static RenderPipeline cornerPipeline;
     private static RenderPipeline checkerPipeline;
+    private static RenderPipeline bitmapTextPipeline;
+    private static RenderPipeline pixelTextPipeline;
     private final GuiGraphics extractor;
 
     private GuiContext(final GuiGraphics extractor) {
@@ -136,6 +138,13 @@ public final class GuiContext {
         minecraft.gui.render(this.extractor, minecraft.getDeltaTracker());
     }
 
+    public void flushHud() {
+    }
+
+    public static boolean vanillaBatching() {
+        return true;
+    }
+
     public void submit(final WLElement element) {
         this.extractor.guiRenderState.submitGuiElement(vanilla(element));
     }
@@ -163,6 +172,8 @@ public final class GuiContext {
             case GRAYSCALE -> RenderPipelines.GUI_TEXT_INTENSITY;
             case CORNER -> cornerPipeline();
             case CHECKER -> checkerPipeline();
+            case BITMAP_TEXT -> bitmapTextPipeline();
+            case BITMAP_TEXT_PIXEL -> pixelTextPipeline();
         };
     }
 
@@ -178,6 +189,37 @@ public final class GuiContext {
             checkerPipeline = matricesPipeline("pipeline/rounded_checker", "program/rounded_checker");
         }
         return checkerPipeline;
+    }
+
+    private static RenderPipeline bitmapTextPipeline() {
+        if (bitmapTextPipeline == null) {
+            bitmapTextPipeline = textPipeline("pipeline/gui_bitmap_text", "program/bitmap_text");
+        }
+        return bitmapTextPipeline;
+    }
+
+    private static RenderPipeline pixelTextPipeline() {
+        if (pixelTextPipeline == null) {
+            pixelTextPipeline = textPipeline("pipeline/gui_bitmap_text_pixel", "program/bitmap_text_pixel");
+        }
+        return pixelTextPipeline;
+    }
+
+    private static RenderPipeline textPipeline(final String location, final String fragment) {
+        final RenderPipeline pipeline = RenderPipeline.builder()
+            .withLocation(Identifier.fromNamespaceAndPath("walksylib", location))
+            .withVertexShader(Identifier.fromNamespaceAndPath("walksylib", "core/msdf_text"))
+            .withFragmentShader(Identifier.fromNamespaceAndPath("walksylib", fragment))
+            .withSampler("Sampler0")
+            .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+            .withUniform("Projection", UniformType.UNIFORM_BUFFER)
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
+            .withBlend(BlendFunction.TRANSLUCENT)
+            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withDepthWrite(false)
+            .build();
+        RenderSystem.getDevice().precompilePipeline(pipeline);
+        return pipeline;
     }
 
     private static RenderPipeline matricesPipeline(final String location, final String fragment) {

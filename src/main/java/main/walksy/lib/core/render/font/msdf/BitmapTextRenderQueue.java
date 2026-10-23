@@ -4,6 +4,7 @@ import main.walksy.lib.core.WalksyLibConstants;
 import main.walksy.lib.core.render.ContentStretch;
 import main.walksy.lib.core.render.DevicePixels;
 import main.walksy.lib.core.render.OverlayBounds;
+import main.walksy.lib.core.render.WLGraphics2D;
 import main.walksy.lib.core.render.WLRenderSystem;
 import main.walksy.lib.core.render.element.WLRect;
 import main.walksy.lib.core.render.gpu.WLFilter;
@@ -51,9 +52,25 @@ public final class BitmapTextRenderQueue {
     private BitmapTextRenderQueue() {
     }
 
-    static void enqueue(final BitmapFontAtlas atlas, final float layoutScale, final String text, final Matrix3x2f pose, final float x, final float y, final int color, @Nullable final WLRect scissor) {
+    static void enqueue(final WLGraphics2D graphics, final BitmapFontAtlas atlas, final float layoutScale, final String text, final Matrix3x2f pose, final float x, final float y, final int color, @Nullable final WLRect scissor) {
         final boolean snap = atlas.pixelArt() ? DevicePixels.isAxisAligned(pose) : !WLRenderSystem.inMotion() && DevicePixels.isUnscaled(pose);
-        QUEUE.add(new Item(atlas, layoutScale, text, pose, x, y, color, scissor, ContentStretch.current(), snap));
+        final ContentStretch stretch = ContentStretch.current();
+        if (stretch == null && WLRenderSystem.inHud() && WLRenderSystem.hudBatching()) {
+            WLRenderSystem.deferHudText(graphics.context(), BitmapTextElement.of(atlas, layoutScale, text, pose, x, y, color, snap, scissor));
+            return;
+        }
+        QUEUE.add(new Item(atlas, layoutScale, text, pose, x, y, color, scissor, stretch, snap));
+    }
+
+    static void enqueueShadowed(final WLGraphics2D graphics, final BitmapFontAtlas atlas, final float layoutScale, final String text, final Matrix3x2f pose, final float x, final float y, final int color, final float shadowX, final float shadowY, final int shadowColor, @Nullable final WLRect scissor) {
+        final boolean snap = atlas.pixelArt() ? DevicePixels.isAxisAligned(pose) : !WLRenderSystem.inMotion() && DevicePixels.isUnscaled(pose);
+        final ContentStretch stretch = ContentStretch.current();
+        if (stretch == null && WLRenderSystem.inHud() && WLRenderSystem.hudBatching()) {
+            WLRenderSystem.deferHudText(graphics.context(), BitmapTextElement.shadowed(atlas, layoutScale, text, pose, x, y, color, shadowX, shadowY, shadowColor, snap, scissor));
+            return;
+        }
+        QUEUE.add(new Item(atlas, layoutScale, text, pose, x + shadowX, y + shadowY, shadowColor, scissor, stretch, snap));
+        QUEUE.add(new Item(atlas, layoutScale, text, pose, x, y, color, scissor, stretch, snap));
     }
 
     public static void markEarlySince(final int mark) {

@@ -2,44 +2,47 @@ package main.walksy.lib.core.hud;
 import com.mojang.blaze3d.platform.InputConstants;
 import main.walksy.lib.core.render.TextQueueMark;
 import main.walksy.lib.core.render.WLRenderSystem;
+import main.walksy.lib.core.render.element.WLElement;
+import main.walksy.lib.core.render.glass.LiquidGlassUniforms;
 import main.walksy.lib.core.WalksyLib;
 import main.walksy.lib.core.render.glass.api.GlassStyle;
 
+import main.walksy.lib.core.gui.WalksyLibPanelScreen;
+import main.walksy.lib.core.gui.modal.PopoverHost;
 import main.walksy.lib.core.gui.style.Theme;
 import main.walksy.lib.core.gui.style.Type;
 import main.walksy.lib.core.gui.WLScreen;
+import main.walksy.lib.core.gui.widget.ResetButton;
+import main.walksy.lib.core.mods.Mod;
 import main.walksy.lib.core.render.Cursors;
 import main.walksy.lib.core.render.DevicePixels;
-import main.walksy.lib.api.config.option.Category;
-import main.walksy.lib.api.config.option.OptionGroup;
-import main.walksy.lib.api.config.option.Options;
 import main.walksy.lib.core.gui.widget.ScrollPanel;
-import main.walksy.lib.core.gui.widget.options.OptionGroupHeaderWidget;
-import main.walksy.lib.core.gui.widget.options.OptionRowWidget;
+import main.walksy.lib.core.gui.widget.options.EmptyStateWidget;
 import main.walksy.lib.core.gui.widget.options.OptionWidgetFactory;
 import main.walksy.lib.core.gui.widget.options.RowContext;
 import main.walksy.lib.core.gui.widget.options.control.LiquidKnob;
+import main.walksy.lib.core.gui.widget.options.types.KeybindOptionWidget;
 import main.walksy.lib.core.render.WLGraphics2D;
 import main.walksy.lib.core.render.font.Fonts;
-import main.walksy.lib.core.render.font.msdf.MsdfFont;
 import main.walksy.lib.core.utils.ColorUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import main.walksy.lib.core.platform.WLClient;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public final class HudEditScreen extends WLScreen {
     private static final float HINT_SIZE = 11f;
     private static final float OUTLINE_PAD = 2f;
     private static final float MIN_GRAB = 14f;
+    private static final float HANDLE_SIZE = 5f;
+    private static final float HANDLE_GRAB = 11f;
     private static final Identifier HOTBAR = Identifier.withDefaultNamespace("hud/hotbar");
     private static final Identifier HOTBAR_SELECTION = Identifier.withDefaultNamespace("hud/hotbar_selection");
     private static final Identifier HOTBAR_OFFHAND = Identifier.withDefaultNamespace("hud/hotbar_offhand_left");
@@ -51,132 +54,73 @@ public final class HudEditScreen extends WLScreen {
     private static final float NUDGE_FAST = 5f;
     private static final float CHIP_PAD_X = 8f;
     private static final float CHIP_PAD_Y = 4f;
-    private static final float CHIP_GAP = 4f;
-    private static final int GLASS_BLUR = 2;
+    private static final int CHIP_BLUR = 2;
+    private static final float CHIP_TINT = 0.20f;
+    private static final int CHIP_TEXT_DIM = ColorUtils.withAlpha(0xFFFFFFFF, 0.85f);
+    private static final int BACKDROP = ColorUtils.withAlpha(0xFF000000, 0.15f);
+    private static final int BLUR_KEEPER = 0x00000000;
+    private static final int PANEL_LAYER = 4;
+    private static final float PANEL_MARGIN = 14f;
+    private static final float PANEL_WIDTH = 236f;
+    private static final float PANEL_PADDING = 12f;
+    private static final float PANEL_RADIUS = 18f;
+    private static final float PANEL_MAX_HEIGHT_RATIO = 0.8f;
+    private static final float TITLE_GAP = 2f;
+    private static final float HEADER_GAP = 10f;
+    private static final float RESET_HEIGHT = 18f;
+    private static final float RESET_GAP = 8f;
+    private static final String RESET_LABEL = "Reset Position";
+    private static final String EMPTY_TITLE = "No settings";
+    private static final String EMPTY_DETAIL = "Drag it to move it, or drag its corner to resize it";
+    private static float panelPosX = Float.NaN;
+    private static float panelPosY = Float.NaN;
     private final float uiScale = WLScreen.uiScaleFactor();
-    private final @Nullable HudSpace focus;
-    private @Nullable HudSpace dragging;
-    private @Nullable HudSpace selected;
-    private float grabOffsetX;
-    private float grabOffsetY;
     private final GlassStyle chipStyle = LiquidKnob.bevelKnobStyle(LiquidKnob.knobLayer())
-        .blurRadius(GLASS_BLUR)
+        .blurRadius(CHIP_BLUR)
         .tint(0xFFFFFFFF, CHIP_TINT)
         .toneRange(Theme.get().toneFloor(), Theme.get().toneCeiling())
         .chroma(Theme.get().chroma())
         .innerShadow(Theme.get().innerShadow());
-    private static final float CHIP_TINT = 0.20f;
-    private static final int CHIP_TEXT = 0xFFFFFFFF;
-    private static final int CHIP_TEXT_DIM = ColorUtils.withAlpha(0xFFFFFFFF, 0.85f);
-    private static final Set<String> HIDDEN_IN_EDITOR = new LinkedHashSet<>();
-    private static final float PANEL_MARGIN = 14f;
-    private static final float PANEL_GLASS_PAD = 6f;
-    private static final float PANEL_RADIUS = 10f;
-    private static final float PANEL_WIDTH = 210f;
-    private static final float PANEL_MAX_HEIGHT_RATIO = 0.6f;
-    private static final float HEADER_HEIGHT = 20f;
-    private static final float HEADER_TEXT_INSET = 8f;
-    private static final float GRIP_DOT = 1.6f;
-    private static final float GRIP_SPACING = 3.2f;
-    private static final float MINIMISE_SIZE = 13f;
-    private static final float RESET_INSET = 8f + 30f + 6f;
-    private static final String HEADER_TITLE = "HUD Elements";
-    private static final int WINDOW_LAYER = 4;
-    private static final int WINDOW_BLUR = 6;
-    private static final float WINDOW_TINT = 1.1f;
-    private static final float FOOTER_LINE_SPACING = 1.5f;
-    private static final String RESET_LABEL = "Reset Position";
-    private static float panelPosX = Float.NaN;
-    private static float panelPosY = Float.NaN;
-    private static boolean panelMinimised;
-    private float minimiseX0, minimiseY0, minimiseX1, minimiseY1;
+    private final PopoverHost popover = new PopoverHost();
+    private @Nullable HudSpace dragging;
+    private @Nullable HudSpace selected;
+    private float grabOffsetX;
+    private float grabOffsetY;
+    private @Nullable HudSpace resizing;
+    private float resizeLeft;
+    private float resizeTop;
+    private float resizeStartScale;
+    private float resizeStartReach;
+    private @Nullable ScrollPanel content;
+    private @Nullable ResetButton resetButton;
+    private String owner = "";
+    private boolean panelOnRight;
+    private int panelX;
+    private int panelY;
+    private int panelW;
+    private int panelH;
     private boolean draggingPanel;
-    private float lastFooterHeight;
-    private int lastMouseX;
-    private int lastMouseY;
     private float panelGrabX;
     private float panelGrabY;
-    private @Nullable ScrollPanel editorPanel;
+    private PressTarget pressTarget = PressTarget.NONE;
 
     public HudEditScreen(final Screen parent) {
         this(parent, null);
     }
 
-    public HudEditScreen(final Screen parent, final @Nullable HudSpace focus) {
-        super(parent, focus == null ? "Edit HUD" : "Place " + focus.name());
-        this.focus = focus != null && focus.isBound() ? focus : null;
-        this.selected = this.focus;
+    public HudEditScreen(final Screen parent, final @Nullable HudSpace selected) {
+        super(parent, "Edit HUD");
+        this.selected = selected != null && selected.isBound() ? selected : null;
     }
 
     @Override
     protected void init() {
         super.init();
-        this.editorPanel = null;
-        if (this.focus != null) {
-            return;
+        this.content = null;
+        this.resetButton = null;
+        if (this.selected != null) {
+            this.buildPanel(this.selected);
         }
-        final List<HudSpace> spaces = WalksyLib.getInstance().getHudSpaces().all();
-        if (spaces.isEmpty()) {
-            return;
-        }
-        final OptionGroup.Builder group = OptionGroup.builder("");
-        for (final HudSpace space : spaces) {
-            group.option(Options.ofBoolean(space.name(), () -> !hiddenInEditor(space), true, shown -> setHiddenInEditor(space, !shown)).build());
-        }
-        final Category category = Category.builder("").group(group.build()).build();
-        final int margin = Math.round(PANEL_MARGIN * this.uiScale);
-        final int width = Math.round(PANEL_WIDTH * this.uiScale);
-        final ScrollPanel panel = new ScrollPanel(margin, margin + this.headerHeight(), width, Math.max(1, Math.round(this.height * PANEL_MAX_HEIGHT_RATIO)));
-        OptionWidgetFactory.populate(panel, category, new RowContext(option -> { }, (anchor, content) -> { }, (anchor, content) -> { }, (anchor, x, y, content) -> { }, () -> { }));
-        int index = 0;
-        for (final AbstractWidget child : panel.children()) {
-            if (child instanceof final OptionRowWidget<?> row) {
-                if (index < spaces.size()) {
-                    final HudSpace space = spaces.get(index);
-                    row.setResetButton(RESET_LABEL, RESET_INSET, () -> !space.isDefault(), space::reset);
-                }
-                index++;
-            } else if (child instanceof OptionGroupHeaderWidget) {
-                child.setHeight(0);
-            }
-        }
-        panel.relayout();
-        panel.setHeight(Math.max(1, Math.min(panel.getHeight(), panel.contentHeight())));
-        this.editorPanel = panel;
-        if (!panelMinimised) {
-            this.addRenderableWidget(panel);
-        }
-        if (!Float.isNaN(panelPosX)) {
-            this.placePanel(panelPosX, panelPosY);
-        }
-    }
-
-    private static boolean hiddenInEditor(final HudSpace space) {
-        return HIDDEN_IN_EDITOR.contains(space.name());
-    }
-
-    private static void setHiddenInEditor(final HudSpace space, final boolean hidden) {
-        if (hidden) {
-            HIDDEN_IN_EDITOR.add(space.name());
-        } else {
-            HIDDEN_IN_EDITOR.remove(space.name());
-        }
-    }
-
-    private float chipText(final WLGraphics2D graphics, final String text, final float cx, final float top, final float size, final int color) {
-        final float padX = CHIP_PAD_X * this.uiScale;
-        final float padY = CHIP_PAD_Y * this.uiScale;
-        final float textWidth = Fonts.SFPRO_DISPLAY.width(text, size);
-        final float chipW = textWidth + padX * 2f;
-        final float chipH = size + padY * 2f;
-        final float x0 = cx - chipW / 2f;
-        graphics.glass()
-            .dimensions(x0, top, chipW, chipH)
-            .cornerRadius(chipH / 2f)
-            .style(this.chipStyle.scaled(this.uiScale))
-            .extract();
-        Fonts.SFPRO_DISPLAY.extract(graphics, text, x0 + padX, top + padY, size, color);
-        return chipH;
     }
 
     public static boolean hasAnything() {
@@ -189,8 +133,105 @@ public final class HudEditScreen extends WLScreen {
 
     @Override
     public void removed() {
+        KeybindOptionWidget.cancelCapture();
+        this.popover.closeInstant();
         WalksyLib.getInstance().getHudSpaces().save();
+        for (final Mod mod : WalksyLib.getInstance().getModEntryPointList().getMods()) {
+            if (mod.hasConfig()) {
+                mod.getConfig().saveAndNotify();
+            }
+        }
         super.removed();
+    }
+
+    private void select(final @Nullable HudSpace space) {
+        if (space == this.selected) {
+            return;
+        }
+        this.selected = space;
+        this.popover.closeInstant();
+        if (this.content != null) {
+            this.removeWidget(this.content);
+            this.content = null;
+        }
+        if (this.resetButton != null) {
+            this.removeWidget(this.resetButton);
+            this.resetButton = null;
+        }
+        if (space != null) {
+            this.buildPanel(space);
+        }
+    }
+
+    private void buildPanel(final HudSpace space) {
+        final HudOptions options = HudOptions.of(space);
+        this.owner = options.owner();
+        this.panelOnRight = space.screenX() + space.width() / 2f < this.width / 2f;
+        this.panelW = Math.round(PANEL_WIDTH * this.uiScale);
+        final int pad = Math.round(PANEL_PADDING * this.uiScale);
+        final ScrollPanel scroll = new ScrollPanel(0, 0, this.panelW - pad * 2, 1);
+        scroll.setContentInsetBottom(pad);
+        scroll.setScrollbarInsets(PANEL_PADDING / 2f, 0f);
+        OptionWidgetFactory.populateGroups(scroll, options.groups(), this.rowContext(), (x, y, w) -> new EmptyStateWidget(EMPTY_TITLE, EMPTY_DETAIL, x, y, w, EmptyStateWidget.preferredHeight()));
+        this.content = scroll;
+        this.addRenderableWidget(scroll);
+        final int resetH = Math.round(RESET_HEIGHT * this.uiScale);
+        final ResetButton reset = new ResetButton(0, 0, ResetButton.preferredWidth(RESET_LABEL, resetH), resetH, RESET_LABEL, () -> {
+            if (this.selected != null) {
+                this.selected.reset();
+            }
+        });
+        this.resetButton = reset;
+        this.addRenderableWidget(reset);
+        this.layoutPanel();
+    }
+
+    private RowContext rowContext() {
+        return new RowContext(option -> { }, (anchor, content) -> this.popover.open(anchor, this.width, this.height, content), (anchor, content) -> this.popover.openCentered(anchor, this.panelX, this.panelY, this.panelW, this.panelH, this.width, this.height, content), (anchor, x, y, content) -> this.popover.openAt(anchor, x, y, this.width, this.height, content), this.popover::close);
+    }
+
+    private int headerHeight() {
+        final float s = this.uiScale;
+        return Math.round((PANEL_PADDING + TITLE_GAP + HEADER_GAP) * s + Type.TITLE3.size() * s + Type.SUBHEADLINE.size() * s);
+    }
+
+    private void layoutPanel() {
+        final ScrollPanel scroll = this.content;
+        final ResetButton reset = this.resetButton;
+        if (scroll == null || reset == null || this.selected == null) {
+            return;
+        }
+        final int pad = Math.round(PANEL_PADDING * this.uiScale);
+        final int header = this.headerHeight();
+        final int maxContent = Math.max(1, Math.round(this.height * PANEL_MAX_HEIGHT_RATIO) - header);
+        final int contentHeight = Math.max(1, Math.min(scroll.contentHeight() + pad, maxContent));
+        if (scroll.getHeight() != contentHeight) {
+            scroll.setHeight(contentHeight);
+        }
+        this.panelH = header + contentHeight;
+        final int margin = Math.round(PANEL_MARGIN * this.uiScale);
+        final float wantedX = Float.isNaN(panelPosX) ? (this.panelOnRight ? this.width - margin - this.panelW : margin) : panelPosX;
+        final float wantedY = Float.isNaN(panelPosY) ? margin : panelPosY;
+        this.panelX = Math.round(Math.max(margin, Math.min(Math.max(margin, this.width - margin - this.panelW), wantedX)));
+        this.panelY = Math.round(Math.max(margin, Math.min(Math.max(margin, this.height - margin - this.panelH), wantedY)));
+        if (scroll.getX() != this.panelX + pad || scroll.getY() != this.panelY + header) {
+            scroll.moveTo(this.panelX + pad, this.panelY + header);
+        }
+        reset.setX(this.panelX + this.panelW - pad - reset.getWidth());
+        reset.setY(this.panelY + pad);
+        reset.active = !this.selected.isDefault();
+    }
+
+    private boolean panelShown() {
+        return this.selected != null && this.content != null;
+    }
+
+    private boolean inPanel(final double x, final double y) {
+        return this.panelShown() && x >= this.panelX && x < this.panelX + this.panelW && y >= this.panelY && y < this.panelY + this.panelH;
+    }
+
+    private boolean inPanelHeader(final double x, final double y) {
+        return this.inPanel(x, y) && y < this.panelY + this.headerHeight() && (this.resetButton == null || !this.resetButton.isMouseOver(x, y));
     }
 
     private void extractGameHud(final WLGraphics2D graphics) {
@@ -221,211 +262,117 @@ public final class HudEditScreen extends WLScreen {
     }
 
     @Override
+    protected void extractBackground(final WLGraphics2D graphics, final int mouseX, final int mouseY, final float delta) {
+        if (Minecraft.getInstance().level == null) {
+            this.extractPanorama(graphics, delta);
+        }
+    }
+
+    @Override
     public void extract(final WLGraphics2D graphics, final int mouseX, final int mouseY, final float delta) {
+        graphics.fill(0, 0, this.width, this.height, BACKDROP, null);
         this.extractGameHud(graphics);
+        graphics.nextStratum();
+        this.layoutPanel();
         final List<HudSpace> spaces = WalksyLib.getInstance().getHudSpaces().all();
+        final LiquidGlassUniforms glass = WLRenderSystem.glassUniforms();
+        glass.holdGlassPass();
+        try {
+            this.extractSpaces(graphics, spaces, mouseX, mouseY);
+        } finally {
+            glass.releaseGlassPass();
+        }
+        glass.lowerEarlyTextBoundary(PANEL_LAYER - 1);
+        graphics.nextStratum();
+        glass.requestGlassPass(graphics);
+        graphics.fill(0, 0, 1, 1, BLUR_KEEPER, null);
+        if (this.panelShown()) {
+            this.extractPanel(graphics, mouseX, mouseY);
+        } else if (spaces.isEmpty()) {
+            this.chipText(graphics, "No mod has registered anything to place here yet.", this.width / 2f, this.height / 2f, HINT_SIZE * this.uiScale);
+        }
+        this.popover.extract(graphics, mouseX, mouseY, delta);
+    }
+
+    private void extractSpaces(final WLGraphics2D graphics, final List<HudSpace> spaces, final int mouseX, final int mouseY) {
+        final boolean idle = this.dragging == null && this.resizing == null && !this.draggingPanel && !this.inPanel(mouseX, mouseY) && !this.popover.isOpen();
+        final HudSpace handle = idle ? this.handleAt(mouseX, mouseY) : this.resizing;
+        final HudSpace pointed = idle ? (handle != null ? handle : this.at(mouseX, mouseY)) : (this.dragging != null ? this.dragging : this.resizing);
         for (final HudSpace space : spaces) {
-            final boolean editable = this.focus == null || this.focus == space;
-            final boolean live = space.element().visible();
-            if (!editable && !live) {
-                continue;
-            }
-            if (hiddenInEditor(space)) {
-                continue;
-            }
             final float x = space.screenX();
             final float y = space.screenY();
-            final float w = space.width();
-            final float h = space.height();
-            final boolean hovered = this.dragging == space || (this.dragging == null && this.at(mouseX, mouseY) == space);
-            WLRenderSystem.cursors().requestIf(hovered && editable, Cursors.Cursor.MOVE);
-            if (editable) {
-                this.extractBox(graphics, x, y, w, h, hovered, this.selected == space, live);
+            final boolean hovered = pointed == space;
+            if (hovered) {
+                WLRenderSystem.cursors().request(handle == space ? Cursors.Cursor.RESIZE_DIAGONAL : Cursors.Cursor.MOVE);
             }
-            space.render(graphics, editable);
-            if (editable) {
-                this.extractLabel(graphics, space, x, y, w, hovered);
+            this.extractBox(graphics, x, y, space.width(), space.height(), hovered, this.selected == space, space.element().visible());
+            this.extractElement(graphics, space);
+            if (hovered || this.selected == space) {
+                this.extractHandle(graphics, space, handle == space);
             }
         }
         this.extractAlignmentGuides(graphics);
-        this.lastMouseX = mouseX;
-        this.lastMouseY = mouseY;
-        this.extractEditorPanelGlass(graphics);
-        WLRenderSystem.cursors().requestIf(this.draggingPanel || (this.dragging == null && this.inPanelHeader(mouseX, mouseY) && !this.onMinimise(mouseX, mouseY)), Cursors.Cursor.MOVE);
-        if (spaces.isEmpty() && this.focus == null) {
-            final float size = HINT_SIZE * this.uiScale;
-            this.chipText(graphics, "No mod has registered anything to place here yet.", this.width / 2f, this.height / 2f, size, CHIP_TEXT);
+    }
+
+    private void extractElement(final WLGraphics2D graphics, final HudSpace space) {
+        final LiquidGlassUniforms glass = WLRenderSystem.glassUniforms();
+        final int glassBefore = glass.getCount();
+        final TextQueueMark text = WLRenderSystem.textMark();
+        final List<WLElement> shapes = new ArrayList<>();
+        WLGraphics2D.capture(shapes, () -> space.render(graphics, true));
+        final boolean overGlass = glass.getCount() > glassBefore;
+        for (final WLElement shape : shapes) {
+            if (overGlass) {
+                WLRenderSystem.contentStratum().addEarly(shape);
+            } else {
+                graphics.context().submit(shape);
+            }
         }
-        this.extractHint(graphics);
+        WLRenderSystem.markEarlyText(text);
     }
 
-    private int headerHeight() {
-        return Math.round(HEADER_HEIGHT * this.uiScale);
-    }
-
-    private void placePanel(final float x, final float y) {
-        final ScrollPanel panel = this.editorPanel;
-        if (panel == null) {
+    private void extractPanel(final WLGraphics2D graphics, final int mouseX, final int mouseY) {
+        final HudSpace space = this.selected;
+        if (space == null) {
             return;
         }
-        final float pad = PANEL_GLASS_PAD * this.uiScale;
-        final int header = this.headerHeight();
-        final float maxX = Math.max(pad, this.width - panel.getWidth() - pad);
-        final float maxY = Math.max(pad + header, this.height - panel.getHeight() - pad - (panelMinimised ? 0f : this.lastFooterHeight));
-        final int nx = Math.round(Math.max(pad, Math.min(maxX, x)));
-        final int ny = Math.round(Math.max(pad + header, Math.min(maxY, y)));
-        panel.moveTo(nx, ny);
-        panelPosX = nx;
-        panelPosY = ny;
-    }
-
-    private boolean inPanelHeader(final double x, final double y) {
-        final ScrollPanel panel = this.editorPanel;
-        if (panel == null) {
-            return false;
-        }
-        final float pad = PANEL_GLASS_PAD * this.uiScale;
-        return x >= panel.getX() - pad && x < panel.getX() + panel.getWidth() + pad && y >= panel.getY() - this.headerHeight() - pad && y < panel.getY();
-    }
-
-    private boolean onMinimise(final double x, final double y) {
-        return x >= this.minimiseX0 && x < this.minimiseX1 && y >= this.minimiseY0 && y < this.minimiseY1;
-    }
-
-    private void toggleMinimised() {
-        final ScrollPanel panel = this.editorPanel;
-        if (panel == null) {
-            return;
-        }
-        panelMinimised = !panelMinimised;
-        if (panelMinimised) {
-            this.removeWidget(panel);
-        } else {
-            this.addRenderableWidget(panel);
-        }
-    }
-
-    private static int ink(final float alpha) {
-        return (Math.round(Math.max(0f, Math.min(1f, alpha)) * 255f) << 24) | (Theme.get().isDark() ? 0xFFFFFF : 0x000000);
-    }
-
-    private GlassStyle windowStyle() {
-        final Theme theme = Theme.get();
-        final float edgeWidth = Math.max(1f, Math.round(0.75f * this.uiScale * DevicePixels.perLogicalY())) * 2f;
-        return new GlassStyle().flat()
-            .layer(WINDOW_LAYER)
-            .blurRadius(WINDOW_BLUR)
-            .smoothing(0f)
-            .tint(theme.flatSurface(), WINDOW_TINT)
-            .outline(edgeWidth, theme.isDark() ? 0xFFFFFF : 0x000000, theme.isDark() ? 0.22f : 0.18f)
-            .nativePixels();
-    }
-
-    private List<String> footerLines(final float width) {
-        final float size = Type.CAPTION1.size() * this.uiScale;
-        final String hint = this.selected == null ? "Drag to move (snaps to centre and edges), scroll to resize, Esc to finish" : "Drag, or arrow keys for half a pixel (Shift for 5), scroll to resize, Esc to finish";
-        return Fonts.SFPRO_DISPLAY.wrap(hint, size, width);
-    }
-
-    private String selectionLine() {
-        if (this.selected == null) {
-            return "Click an element to select it";
-        }
-        return this.selected.name() + "   " + Math.round(this.selected.width()) + " x " + Math.round(this.selected.height());
-    }
-
-    private float footerHeight(final ScrollPanel panel) {
-        if (panelMinimised) {
-            return 0f;
-        }
-        final float lineH = Type.CAPTION1.size() * this.uiScale * FOOTER_LINE_SPACING;
-        return PANEL_GLASS_PAD * this.uiScale + lineH * (1 + this.footerLines(panel.getWidth()).size());
-    }
-
-    private void extractEditorPanelGlass(final WLGraphics2D graphics) {
-        final ScrollPanel panel = this.editorPanel;
-        if (panel == null) {
-            return;
-        }
-        final Theme theme = Theme.get();
         final float s = this.uiScale;
-        final float pad = PANEL_GLASS_PAD * s;
-        final float header = this.headerHeight();
-        final float footer = this.footerHeight(panel);
-        this.lastFooterHeight = footer;
-        final float x0 = panel.getX() - pad;
-        final float y0 = panel.getY() - header - pad;
-        final float x1 = panel.getX() + panel.getWidth() + pad;
-        final float y1 = panelMinimised ? panel.getY() : panel.getY() + panel.getHeight() + pad + footer;
         graphics.glass()
-            .dimensions(x0, y0, x1 - x0, y1 - y0)
+            .dimensions(this.panelX, this.panelY, this.panelW, this.panelH)
             .cornerRadius(PANEL_RADIUS * s)
-            .style(this.windowStyle())
+            .style(WalksyLibPanelScreen.panelStyle().layer(PANEL_LAYER).scaled(s))
             .extract();
+        WLRenderSystem.cursors().requestIf(this.draggingPanel || (this.dragging == null && this.resizing == null && this.inPanelHeader(mouseX, mouseY)), Cursors.Cursor.MOVE);
+        final Theme theme = Theme.get();
+        final float pad = PANEL_PADDING * s;
+        final float left = this.panelX + pad;
+        final float titleSize = Type.TITLE3.size() * s;
+        final float subtitleSize = Type.SUBHEADLINE.size() * s;
+        final float titleRoom = (this.resetButton == null ? this.panelX + this.panelW - pad : this.resetButton.getX() - RESET_GAP * s) - left;
+        final String subtitle = (this.owner.isEmpty() ? "" : this.owner + "  ·  ") + Math.round(space.scale() * 100f) + "%";
         final TextQueueMark textMark = WLRenderSystem.textMark();
         WLRenderSystem.contentStratum().begin();
         try {
-            this.extractTitleBar(graphics, panel, theme, y0 + (header + pad) / 2f);
-            if (!panelMinimised) {
-                final float hair = WLScreen.hairlinePx();
-                graphics.fill(panel.getX(), panel.getY() - hair, panel.getX() + panel.getWidth(), panel.getY(), theme.separator(), null);
-                this.extractFooter(graphics, panel, theme, panel.getY() + panel.getHeight() + pad);
-            }
+            Fonts.SFPRO_DISPLAY_BOLD.extract(graphics, Fonts.SFPRO_DISPLAY_BOLD.truncate(space.name(), titleSize, titleRoom), left, this.panelY + pad, titleSize, theme.label());
+            Fonts.SFPRO_DISPLAY.extract(graphics, Fonts.SFPRO_DISPLAY.truncate(subtitle, subtitleSize, this.panelW - pad * 2f), left, this.panelY + pad + titleSize + TITLE_GAP * s, subtitleSize, theme.secondaryLabel());
         } finally {
             WLRenderSystem.contentStratum().end();
             WLRenderSystem.markContentText(textMark);
         }
     }
 
-    private void extractTitleBar(final WLGraphics2D graphics, final ScrollPanel panel, final Theme theme, final float centerY) {
-        final float s = this.uiScale;
-        final float dot = GRIP_DOT * s;
-        final float spacing = GRIP_SPACING * s;
-        final float gripX = panel.getX() + dot;
-        final int gripColor = theme.tertiaryLabel();
-        for (int col = 0; col < 2; col++) {
-            for (int row = -1; row <= 1; row++) {
-                final float dx = gripX + col * spacing;
-                final float dy = centerY + row * spacing;
-                graphics.fillRoundedGradient(dx - dot / 2f, dy - dot / 2f, dx + dot / 2f, dy + dot / 2f, gripColor, gripColor, gripColor, gripColor, dot / 2f);
-            }
-        }
-        final float size = Type.SUBHEADLINE.size() * s;
-        drawCentered(graphics, Fonts.SFPRO_DISPLAY_BOLD, HEADER_TITLE, gripX + spacing + HEADER_TEXT_INSET * s, centerY, size, theme.label());
-        final float button = MINIMISE_SIZE * s;
-        this.minimiseX1 = panel.getX() + panel.getWidth();
-        this.minimiseX0 = this.minimiseX1 - button;
-        this.minimiseY0 = centerY - button / 2f;
-        this.minimiseY1 = centerY + button / 2f;
-        final boolean overMinimise = this.onMinimise(this.lastMouseX, this.lastMouseY);
-        WLRenderSystem.cursors().requestIf(overMinimise, Cursors.Cursor.POINTER);
-        final int chipFill = ink(overMinimise ? 0.22f : 0.10f);
-        graphics.fillRoundedGradient(this.minimiseX0, this.minimiseY0, this.minimiseX1, this.minimiseY1, chipFill, chipFill, chipFill, chipFill, button * 0.34f);
-        final String mark = panelMinimised ? "+" : "-";
-        final float markSize = Type.CAPTION1.size() * s;
-        drawCentered(graphics, Fonts.SFPRO_DISPLAY_BOLD, mark, this.minimiseX0 + (button - Fonts.SFPRO_DISPLAY_BOLD.width(mark, markSize)) / 2f, centerY, markSize, theme.label());
-    }
-
-    private void extractFooter(final WLGraphics2D graphics, final ScrollPanel panel, final Theme theme, final float top) {
-        final float size = Type.CAPTION1.size() * this.uiScale;
-        final float lineH = size * FOOTER_LINE_SPACING;
-        final float hair = WLScreen.hairlinePx();
-        graphics.fill(panel.getX(), top - hair, panel.getX() + panel.getWidth(), top, theme.separator(), null);
-        float center = top + PANEL_GLASS_PAD * this.uiScale * 0.5f + lineH / 2f;
-        drawCentered(graphics, Fonts.SFPRO_DISPLAY_BOLD, Fonts.SFPRO_DISPLAY_BOLD.truncate(this.selectionLine(), size, panel.getWidth()), panel.getX(), center, size, this.selected == null ? theme.secondaryLabel() : theme.label());
-        for (final String line : this.footerLines(panel.getWidth())) {
-            center += lineH;
-            drawCentered(graphics, Fonts.SFPRO_DISPLAY, line, panel.getX(), center, size, theme.secondaryLabel());
-        }
-    }
-
-    private static void drawCentered(final WLGraphics2D graphics, final MsdfFont font, final String text, final float x, final float centerY, final float size, final int color) {
-        font.extract(graphics, text, x, font.topForBaseline(centerY + size * 0.59043f * 0.5f, size), size, color);
-    }
-
-    private boolean inEditorPanel(final double x, final double y) {
-        final ScrollPanel panel = this.editorPanel;
-        return panel != null && !panelMinimised && x >= panel.getX() && x < panel.getX() + panel.getWidth() && y >= panel.getY() && y < panel.getY() + panel.getHeight();
+    private void chipText(final WLGraphics2D graphics, final String text, final float cx, final float top, final float size) {
+        final float padX = CHIP_PAD_X * this.uiScale;
+        final float padY = CHIP_PAD_Y * this.uiScale;
+        final float chipW = Fonts.SFPRO_DISPLAY.width(text, size) + padX * 2f;
+        final float chipH = size + padY * 2f;
+        final float x0 = cx - chipW / 2f;
+        graphics.glass()
+            .dimensions(x0, top, chipW, chipH)
+            .cornerRadius(chipH / 2f)
+            .style(this.chipStyle.scaled(this.uiScale))
+            .extract();
+        Fonts.SFPRO_DISPLAY.extract(graphics, text, x0 + padX, top + padY, size, CHIP_TEXT_DIM);
     }
 
     private void extractAlignmentGuides(final WLGraphics2D graphics) {
@@ -459,43 +406,46 @@ public final class HudEditScreen extends WLScreen {
         graphics.fill(x1 - line, y0, x1, y1, edge, null);
     }
 
-    private void extractLabel(final WLGraphics2D graphics, final HudSpace space, final float x, final float y, final float w, final boolean hovered) {
-        final float size = Type.CAPTION1.size() * this.uiScale;
-        final String name = space.element().visible() ? space.name() : space.name() + " (hidden)";
-        final float chipH = size + CHIP_PAD_Y * 2f * this.uiScale;
-        final float gap = OUTLINE_PAD * this.uiScale + CHIP_GAP * this.uiScale;
-        final float above = y - gap - chipH;
-        final float top = above >= 0f ? above : y + space.height() + gap;
-        this.chipText(graphics, name, x + w / 2f, top, size, hovered || this.selected == space ? CHIP_TEXT : CHIP_TEXT_DIM);
+    private void extractHandle(final WLGraphics2D graphics, final HudSpace space, final boolean active) {
+        final float size = HANDLE_SIZE * this.uiScale;
+        final float line = DevicePixels.snapSizeY(WLScreen.hairlinePx());
+        final float x0 = DevicePixels.snapX(this.handleX(space) - size / 2f);
+        final float y0 = DevicePixels.snapY(this.handleY(space) - size / 2f);
+        final float x1 = x0 + DevicePixels.snapSizeX(size);
+        final float y1 = y0 + DevicePixels.snapSizeY(size);
+        final int accent = Theme.get().accent();
+        final int edge = active ? accent : 0xFFFFFFFF;
+        final int fill = active ? 0xFFFFFFFF : accent;
+        final float radius = size * 0.25f;
+        graphics.fillRoundedGradient(x0, y0, x1, y1, edge, edge, edge, edge, radius);
+        graphics.fillRoundedGradient(x0 + line, y0 + line, x1 - line, y1 - line, fill, fill, fill, fill, Math.max(0f, radius - line));
     }
 
-    private void extractHint(final WLGraphics2D graphics) {
-        if (this.editorPanel != null) {
-            return;
-        }
-        final float size = HINT_SIZE * this.uiScale;
-        final String hint = this.selected == null ? "Drag to move (snaps to centre and edges)  ·  scroll to resize  ·  Esc to finish" : "Drag, or arrow keys for half a pixel (Shift for 5)" + "  ·  scroll to resize  ·  Esc to finish";
-        float top = CHIP_GAP * 2f * this.uiScale;
-        if (this.selected != null) {
-            final String title = (this.focus != null ? "Placing " : "") + this.selected.name() + "   " + Math.round(this.selected.width()) + " x " + Math.round(this.selected.height());
-            top += this.chipText(graphics, title, this.width / 2f, top, Type.CAPTION1.size() * this.uiScale, CHIP_TEXT) + CHIP_GAP * this.uiScale;
-        }
-        this.chipText(graphics, hint, this.width / 2f, top, size, CHIP_TEXT_DIM);
+    private float handleX(final HudSpace space) {
+        return space.screenX() + space.width() + OUTLINE_PAD * this.uiScale;
     }
 
-    @Override
-    protected void extractMenuBackground(final WLGraphics2D graphics, final int x, final int y, final int width, final int height) {
-        graphics.fill(x, y, x + width, y + height, ColorUtils.withAlpha(0xFF000000, 0.15f), null);
+    private float handleY(final HudSpace space) {
+        return space.screenY() + space.height() + OUTLINE_PAD * this.uiScale;
+    }
+
+    private @Nullable HudSpace handleAt(final double x, final double y) {
+        final List<HudSpace> spaces = WalksyLib.getInstance().getHudSpaces().all();
+        final float reach = HANDLE_GRAB * this.uiScale / 2f;
+        for (int i = spaces.size() - 1; i >= 0; i--) {
+            final HudSpace space = spaces.get(i);
+            if (Math.abs(x - this.handleX(space)) <= reach && Math.abs(y - this.handleY(space)) <= reach) {
+                return space;
+            }
+        }
+        return null;
     }
 
     private @Nullable HudSpace at(final double x, final double y) {
-        final List<HudSpace> spaces = this.focus == null ? WalksyLib.getInstance().getHudSpaces().all() : List.of(this.focus);
+        final List<HudSpace> spaces = WalksyLib.getInstance().getHudSpaces().all();
         final float minimum = MIN_GRAB * this.uiScale;
         for (int i = spaces.size() - 1; i >= 0; i--) {
             final HudSpace space = spaces.get(i);
-            if (hiddenInEditor(space)) {
-                continue;
-            }
             final float w = Math.max(minimum, space.width());
             final float h = Math.max(minimum, space.height());
             final float left = space.screenX() - (w - space.width()) / 2f;
@@ -509,53 +459,86 @@ public final class HudEditScreen extends WLScreen {
 
     @Override
     public boolean mouseClicked(final MouseButtonEvent event, final boolean doubleClick) {
-        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && this.editorPanel != null && this.onMinimise(event.x(), event.y())) {
-            this.toggleMinimised();
+        if (this.popover.isOpen()) {
+            if (this.popover.mouseClicked(event, doubleClick)) {
+                this.pressTarget = PressTarget.POPOVER;
+                return true;
+            }
+            this.pressTarget = PressTarget.NONE;
             return true;
         }
-        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && this.editorPanel != null && this.inPanelHeader(event.x(), event.y())) {
-            this.draggingPanel = true;
-            this.panelGrabX = (float) event.x() - this.editorPanel.getX();
-            this.panelGrabY = (float) event.y() - this.editorPanel.getY();
+        this.pressTarget = PressTarget.NONE;
+        final boolean left = event.button() == InputConstants.MOUSE_BUTTON_LEFT;
+        if (this.inPanel(event.x(), event.y())) {
+            if (left && this.inPanelHeader(event.x(), event.y())) {
+                this.draggingPanel = true;
+                this.panelGrabX = (float) event.x() - this.panelX;
+                this.panelGrabY = (float) event.y() - this.panelY;
+                return true;
+            }
+            this.pressTarget = PressTarget.WIDGETS;
+            super.mouseClicked(event, doubleClick);
             return true;
         }
-        if (this.inEditorPanel(event.x(), event.y())) {
-            return super.mouseClicked(event, doubleClick);
-        }
-        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
+        if (left) {
+            final HudSpace handle = this.handleAt(event.x(), event.y());
+            if (handle != null) {
+                this.select(handle);
+                this.resizing = handle;
+                this.resizeLeft = handle.screenX();
+                this.resizeTop = handle.screenY();
+                this.resizeStartScale = handle.scale();
+                this.resizeStartReach = Math.max(1f, (float) (event.x() - this.resizeLeft + event.y() - this.resizeTop));
+                return true;
+            }
             final HudSpace hit = this.at(event.x(), event.y());
             if (hit != null) {
+                this.select(hit);
                 this.dragging = hit;
-                this.selected = hit;
                 this.grabOffsetX = Math.max(0f, Math.min(hit.width(), (float) event.x() - hit.screenX()));
                 this.grabOffsetY = Math.max(0f, Math.min(hit.height(), (float) event.y() - hit.screenY()));
                 return true;
             }
+            this.select(null);
         }
         return super.mouseClicked(event, doubleClick);
     }
 
     @Override
     public boolean mouseDragged(final MouseButtonEvent event, final double dragX, final double dragY) {
+        if (this.pressTarget == PressTarget.POPOVER) {
+            return this.popover.mouseDragged(event, dragX, dragY);
+        }
         if (this.draggingPanel) {
-            this.placePanel((float) event.x() - this.panelGrabX, (float) event.y() - this.panelGrabY);
+            panelPosX = (float) event.x() - this.panelGrabX;
+            panelPosY = (float) event.y() - this.panelGrabY;
+            this.layoutPanel();
             return true;
         }
-        if (this.dragging == null) {
-            return super.mouseDragged(event, dragX, dragY);
+        if (this.resizing != null) {
+            final float reach = (float) (event.x() - this.resizeLeft + event.y() - this.resizeTop);
+            this.resizing.resize(this.resizeStartScale * Math.max(0f, reach) / this.resizeStartReach);
+            this.resizing.setScreenPosition(this.resizeLeft, this.resizeTop);
+            return true;
         }
-        this.dragging.setScreenPosition((float) event.x() - this.grabOffsetX, (float) event.y() - this.grabOffsetY);
-        return true;
+        if (this.dragging != null) {
+            this.dragging.setScreenPosition((float) event.x() - this.grabOffsetX, (float) event.y() - this.grabOffsetY);
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override
     public boolean mouseReleased(final MouseButtonEvent event) {
-        if (this.draggingPanel) {
-            this.draggingPanel = false;
-            return true;
+        final PressTarget target = this.pressTarget;
+        this.pressTarget = PressTarget.NONE;
+        if (target == PressTarget.POPOVER) {
+            return this.popover.mouseReleased(event);
         }
-        if (this.dragging != null) {
+        if (this.draggingPanel || this.dragging != null || this.resizing != null) {
+            this.draggingPanel = false;
             this.dragging = null;
+            this.resizing = null;
             return true;
         }
         return super.mouseReleased(event);
@@ -563,12 +546,16 @@ public final class HudEditScreen extends WLScreen {
 
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX, final double scrollY) {
-        if (this.inEditorPanel(mouseX, mouseY)) {
+        if (this.popover.isOpen()) {
+            this.popover.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+            return true;
+        }
+        if (this.inPanel(mouseX, mouseY)) {
             return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
         }
         final HudSpace hit = this.at(mouseX, mouseY);
         if (hit != null) {
-            this.selected = hit;
+            this.select(hit);
             hit.setScale(hit.scale() + (float) scrollY * hit.element().scaleStep());
             return true;
         }
@@ -577,6 +564,13 @@ public final class HudEditScreen extends WLScreen {
 
     @Override
     public boolean keyPressed(final KeyEvent event) {
+        final KeybindOptionWidget capturing = KeybindOptionWidget.capturing();
+        if (capturing != null) {
+            return capturing.keyPressed(event);
+        }
+        if (this.popover.isOpen()) {
+            return this.popover.keyPressed(event);
+        }
         if (this.selected != null) {
             final float step = event.hasShiftDown() ? NUDGE_FAST : NUDGE;
             switch (event.key()) {
@@ -601,5 +595,19 @@ public final class HudEditScreen extends WLScreen {
             }
         }
         return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(final CharacterEvent event) {
+        if (this.popover.isOpen()) {
+            return this.popover.charTyped(event);
+        }
+        return super.charTyped(event);
+    }
+
+    private enum PressTarget {
+        NONE,
+        POPOVER,
+        WIDGETS
     }
 }

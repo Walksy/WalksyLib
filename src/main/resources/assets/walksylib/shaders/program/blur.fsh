@@ -28,6 +28,23 @@ void main() {
     int taps = int(Params.z + 0.5);
     taps = clamp(taps, 0, 256);
 
+    if (Params.w > 0.5) {
+        vec2 texel = 1.0 / OutSize;
+        vec4 grid = vec4(0.0);
+        for (int j = -taps; j <= taps; ++j) {
+            int aj = abs(j);
+            float wy = Weights[aj].x;
+            float oy = (j < 0 ? -Weights[aj].y : Weights[aj].y) * texel.y;
+            for (int i = -taps; i <= taps; ++i) {
+                int ai = abs(i);
+                float ox = (i < 0 ? -Weights[ai].y : Weights[ai].y) * texel.x;
+                grid += texture(DiffuseSampler, texCoord + vec2(ox, oy)) * (Weights[ai].x * wy);
+            }
+        }
+        fragColor = grid;
+        return;
+    }
+
     vec2 delta = Params.xy / OutSize;
 
     vec4 sum = texture(DiffuseSampler, texCoord) * Weights[0].x;

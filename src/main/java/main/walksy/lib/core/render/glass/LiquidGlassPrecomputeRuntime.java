@@ -39,6 +39,10 @@ public final class LiquidGlassPrecomputeRuntime {
     private final WLUniformBuffer[] samplerInfoByLevel = new WLUniformBuffer[MAX_DOWNSAMPLE_LEVEL + 1];
     private final HashMap<Integer, WLUniformBuffer> blurConfigX = new HashMap<>();
     private final HashMap<Integer, WLUniformBuffer> blurConfigY = new HashMap<>();
+    private final HashMap<Integer, WLUniformBuffer> blurConfig2D = new HashMap<>();
+    private static final int SINGLE_PASS_TAPS = 1;
+    private WLTexture layer;
+    private WLTexture layerSampled;
     private WLUniformBuffer downsampleConfig;
     private static final int MAX_RADIUS = LiquidGlassConstants.MAX_BLUR_RADIUS;
     private static final int SHADER_WEIGHTS = 257;
@@ -79,7 +83,7 @@ public final class LiquidGlassPrecomputeRuntime {
         }
         if (this.downsampleConfig == null) {
             this.downsampleConfig = createBlurConfigBuffer("walksylib blur downsample");
-            this.uploadBlur(this.downsampleConfig, 0f, 0f, 0);
+            this.uploadBlur(this.downsampleConfig, 0f, 0f, 0, false);
         }
     }
 
@@ -187,38 +191,53 @@ public final class LiquidGlassPrecomputeRuntime {
         return this.prepareOverlay(2, willDraw);
     }
 
-    public WLTexture captureScene() {
+    public WLTexture layerTarget() {
+        final int w = WLRenderSystem.targetWidth();
+        final int h = WLRenderSystem.targetHeight();
+        if (this.layer == null || this.layer.width() != w || this.layer.height() != h) {
+            if (this.layer != null) {
+                this.layer.close();
+            }
+            this.layer = WLRenderSystem.colorTexture("walksylib glass layer", w, h);
+            this.layerSampled = WLRenderSystem.withFilter(this.layer, WLFilter.NEAREST);
+        }
+        return this.layer;
+    }
+
+    public WLTexture layerTexture() {
+        this.layerTarget();
+        return this.layerSampled;
+    }
+
+    public void beginComposite() {
+        this.markSceneDirtyAll();
+    }
+
+    public void markTargetWritten(@Nullable final int[] rect) {
+        if (rect == null) {
+            this.markSceneDirtyAll();
+        } else {
+            this.markSceneDirty(rect[0], rect[1], rect[2], rect[3]);
+        }
+    }
+
+    public WLTexture captureSceneRegion(@Nullable final int[] region) {
         final int w = WLRenderSystem.targetWidth();
         final int h = WLRenderSystem.targetHeight();
         this.ensureScene(w, h);
-        this.copyMainToScene(w, h);
-        this.markSceneDirtyAll();
-        return this.scene;
-    }
-
-    public WLTexture lastSceneView() {
-        return this.scene;
-    }
-
-    public WLTexture captureSceneRegion(final int x, final int y, final int rw, final int rh) {
-        final int w = WLRenderSystem.targetWidth();
-        final int h = WLRenderSystem.targetHeight();
-        if (this.ensureScene(w, h) || rw <= 0 || rh <= 0 || (x == 0 && y == 0 && rw == w && rh == h)) {
-            this.copyMainToScene(w, h);
-            this.markSceneDirtyAll();
+        if (region != null && (region[2] <= 0 || region[3] <= 0)) {
             return this.scene;
         }
-        this.markSceneDirty(x, y, rw, rh);
-        this.drawMainToScene(w, h, new int[] { x, y, rw, rh });
+        final boolean full = region == null || (region[0] <= 0 && region[1] <= 0 && region[0] + region[2] >= w && region[1] + region[3] >= h);
+        this.drawMainToScene(w, h, full ? null : region);
         return this.scene;
     }
 
-    private void copyMainToScene(final int w, final int h) {
-        if (WLRenderSystem.supportsTextureCopy()) {
-            WLRenderSystem.copyMainTo(this.scene);
-            return;
+    public int[] blurSourceRegion(@Nullable final int[] readRegionPx, final Collection<Integer> radii) {
+        if (readRegionPx == null || readRegionPx[2] <= 0 || readRegionPx[3] <= 0) {
+            return readRegionPx;
         }
-        this.drawMainToScene(w, h, null);
+        return paddedRegion(readRegionPx, radii, WLRenderSystem.targetWidth(), WLRenderSystem.targetHeight());
     }
 
     private void drawMainToScene(final int w, final int h, final int[] scissorPx) {
@@ -346,7 +365,7 @@ public final class LiquidGlassPrecomputeRuntime {
         return (Math.max(0, effectiveRadius) + 1) / 2;
     }
 
-    private void uploadBlur(final WLUniformBuffer ubo, final float dx, final float dy, int radius) {
+    private void uploadBlur(final WLUniformBuffer ubo, final float dx, final float dy, int radius, final boolean twoD) {
         radius = Math.max(0, Math.min(radius, MAX_RADIUS));
         final float[] kernel = gaussian(radius);
         final int taps = Math.min(sideTaps(radius), SHADER_WEIGHTS - 1);
@@ -364,7 +383,7 @@ public final class LiquidGlassPrecomputeRuntime {
         }
         try (final WLMapping map = ubo.map()) {
             final Std140Writer b = map.writer();
-            b.putVec4(dx, dy, (float) taps, 0f);
+            b.putVec4(dx, dy, (float) taps, twoD ? 1f : 0f);
             for (int i = 0; i < SHADER_WEIGHTS; i++) {
                 b.putFloat(i <= taps ? tapWeight[i] : 0f);
                 b.putFloat(i <= taps ? tapOffset[i] : 0f);
@@ -379,8 +398,39 @@ public final class LiquidGlassPrecomputeRuntime {
         if (ubo == null) {
             final int effective = Math.max(0, Math.min(radius, MAX_RADIUS)) >> levelForRadius(radius);
             ubo = createBlurConfigBuffer("walksylib blur " + (vertical ? "Y" : "X") + " r=" + radius);
-            this.uploadBlur(ubo, vertical ? 0f : 1f, vertical ? 1f : 0f, effective);
+            this.uploadBlur(ubo, vertical ? 0f : 1f, vertical ? 1f : 0f, effective, false);
             cache.put(radius, ubo);
+        }
+        return ubo;
+    }
+
+    static float @Nullable [] inlineBlur(final int radius) {
+        final int r = Math.max(0, Math.min(radius, MAX_RADIUS));
+        if (r <= 0 || levelForRadius(r) != 0 || sideTaps(r) > SINGLE_PASS_TAPS) {
+            return null;
+        }
+        final float[] kernel = gaussian(r);
+        if (sideTaps(r) == 0) {
+            return new float[] {kernel[0], 0f, 0f};
+        }
+        final float wa = kernel[1];
+        final float wb = 2 <= r ? kernel[2] : 0f;
+        final float w = wa + wb;
+        return new float[] {kernel[0], w, w > 0f ? (wa + 2f * wb) / w : 1f};
+    }
+
+    private static boolean singlePass(final int radius) {
+        final int r = Math.max(0, Math.min(radius, MAX_RADIUS));
+        return sideTaps(r >> levelForRadius(r)) <= SINGLE_PASS_TAPS;
+    }
+
+    private WLUniformBuffer config2DFor(final int radius) {
+        WLUniformBuffer ubo = this.blurConfig2D.get(radius);
+        if (ubo == null) {
+            final int effective = Math.max(0, Math.min(radius, MAX_RADIUS)) >> levelForRadius(radius);
+            ubo = createBlurConfigBuffer("walksylib blur 2D r=" + radius);
+            this.uploadBlur(ubo, 0f, 0f, effective, true);
+            this.blurConfig2D.put(radius, ubo);
         }
         return ubo;
     }
@@ -489,8 +539,12 @@ public final class LiquidGlassPrecomputeRuntime {
                 final long area = lvlScissor != null ? (long) lvlScissor[2] * lvlScissor[3] : (long) lw * lh;
                 UiProfiler.count(UiProfiler.Counter.BLUR_TAPS, 2L * area * (2L * sideTaps(r >> level) + 1L));
             }
-            this.blit(() -> "walksylib blur X r=" + r, src, this.temp[level], this.configFor(radius, false), level, lvlScissor);
-            this.blit(() -> "walksylib blur Y r=" + r, this.temp[level], this.blurredByRadius.get(radius), this.configFor(radius, true), level, lvlScissor);
+            if (singlePass(radius)) {
+                this.blit(() -> "walksylib blur 2D r=" + r, src, this.blurredByRadius.get(radius), this.config2DFor(radius), level, lvlScissor);
+            } else {
+                this.blit(() -> "walksylib blur X r=" + r, src, this.temp[level], this.configFor(radius, false), level, lvlScissor);
+                this.blit(() -> "walksylib blur Y r=" + r, this.temp[level], this.blurredByRadius.get(radius), this.configFor(radius, true), level, lvlScissor);
+            }
             this.markBlurBuilt(radius, padded);
         }
     }
@@ -578,8 +632,12 @@ public final class LiquidGlassPrecomputeRuntime {
         }
         final WLTexture src = (level == 0) ? source : this.chain[level];
         final int[] levelArea = regionAtLevel(area, level, lw, lh);
-        this.blit(() -> "walksylib " + name + " X", src, this.temp[level], this.configFor(radius, false), level, levelArea);
-        this.blit(() -> "walksylib " + name + " Y", this.temp[level], this.overlayBlur[index], this.configFor(radius, true), level, levelArea);
+        if (singlePass(radius)) {
+            this.blit(() -> "walksylib " + name + " 2D", src, this.overlayBlur[index], this.config2DFor(radius), level, levelArea);
+        } else {
+            this.blit(() -> "walksylib " + name + " X", src, this.temp[level], this.configFor(radius, false), level, levelArea);
+            this.blit(() -> "walksylib " + name + " Y", this.temp[level], this.overlayBlur[index], this.configFor(radius, true), level, levelArea);
+        }
         this.overlayBlurHasInk[index] = true;
         return this.overlayBlur[index];
     }

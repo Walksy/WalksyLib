@@ -591,7 +591,7 @@ public class PopoverHost {
         final LiquidRect live = this.content.liveAnchor();
         if (live != null) {
             this.anchor = live;
-            this.morph.reanchor(live);
+            this.morph.followAnchor(live);
         }
     }
 
@@ -648,9 +648,7 @@ public class PopoverHost {
                 this.closeClock = Math.max(this.closeClock, HANDOFF_TICKS);
             }
         }
-        if (!this.morph.isClosing()) {
-            this.reanchorLive();
-        }
+        this.reanchorLive();
         this.morph.update(delta);
         final float fadeIn = this.fadeAlpha();
         final boolean retireAfterFrame = this.fading ? this.morph.isClosing() && fadeIn <= 0f : this.morph.isDone() && (!this.content.hasTriggerHandoff() || !this.content.handoffRides() || this.closeClock >= HANDOFF_TICKS);

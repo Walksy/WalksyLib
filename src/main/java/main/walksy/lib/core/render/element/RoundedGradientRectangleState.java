@@ -10,6 +10,7 @@ import org.joml.Matrix3x2fc;
 public record RoundedGradientRectangleState(Matrix3x2fc pose, float x0, float y0, float x1, float y1, int colTL, int colTR, int colBR, int colBL, float radius, @Nullable WLRect scissorArea, @Nullable WLRect bounds) implements WLElement {
 
     private static final float GRID_CELL = 10f;
+    private static final float PILL_EPSILON = 0.01f;
 
     public RoundedGradientRectangleState(final Matrix3x2fc pose, final float x0, final float y0, final float x1, final float y1, final int colTL, final int colTR, final int colBR, final int colBL, final float radius, final @Nullable WLRect scissorArea) {
         this(pose, x0, y0, x1, y1, colTL, colTR, colBR, colBL, radius, scissorArea, getBounds(Mth.floor(x0) - 1, Mth.floor(y0) - 1, Mth.ceil(x1) + 1, Mth.ceil(y1) + 1, pose, scissorArea));
@@ -29,6 +30,10 @@ public record RoundedGradientRectangleState(Matrix3x2fc pose, float x0, float y0
             this.band(sink, this.x0, this.y0, this.x1, this.y1);
             return;
         }
+        if (this.uniformColor() && (halfH - r < PILL_EPSILON || halfW - r < PILL_EPSILON)) {
+            this.pill(sink, halfH - r < PILL_EPSILON, r);
+            return;
+        }
         this.band(sink, this.x0, this.y0 + r, this.x1, this.y1 - r);
         this.band(sink, this.x0 + r, this.y0, this.x1 - r, this.y0 + r);
         this.band(sink, this.x0 + r, this.y1 - r, this.x1 - r, this.y1);
@@ -36,6 +41,43 @@ public record RoundedGradientRectangleState(Matrix3x2fc pose, float x0, float y0
         this.corner(sink, this.x1 - r, this.y0 + r, r, +1f, -1f);
         this.corner(sink, this.x1 - r, this.y1 - r, r, +1f, +1f);
         this.corner(sink, this.x0 + r, this.y1 - r, r, -1f, +1f);
+    }
+
+    private void pill(final WLVertexSink sink, final boolean horizontal, final float r) {
+        final int color = this.colTL;
+        final float left = Math.min(this.x0, this.x1);
+        final float right = Math.max(this.x0, this.x1);
+        final float top = Math.min(this.y0, this.y1);
+        final float bottom = Math.max(this.y0, this.y1);
+        if (horizontal) {
+            final float h = (bottom - top) * 0.5f / r;
+            this.cap(sink, left, top, left + r, bottom, -1f, -h, 0f, h, color);
+            if (right - r > left + r) {
+                this.flatQuad(sink, left + r, top, right - r, bottom, color);
+            }
+            this.cap(sink, right - r, top, right, bottom, 0f, -h, 1f, h, color);
+            return;
+        }
+        final float w = (right - left) * 0.5f / r;
+        this.cap(sink, left, top, right, top + r, -w, -1f, w, 0f, color);
+        if (bottom - r > top + r) {
+            this.flatQuad(sink, left, top + r, right, bottom - r, color);
+        }
+        this.cap(sink, left, bottom - r, right, bottom, -w, 0f, w, 1f, color);
+    }
+
+    private void cap(final WLVertexSink sink, final float ax, final float ay, final float bx, final float by, final float u0, final float v0, final float u1, final float v1, final int color) {
+        sink.posed(this.pose, ax, ay).uv(u0, v0).color(color);
+        sink.posed(this.pose, ax, by).uv(u0, v1).color(color);
+        sink.posed(this.pose, bx, by).uv(u1, v1).color(color);
+        sink.posed(this.pose, bx, ay).uv(u1, v0).color(color);
+    }
+
+    private void flatQuad(final WLVertexSink sink, final float ax, final float ay, final float bx, final float by, final int color) {
+        sink.posed(this.pose, ax, ay).uv(0f, 0f).color(color);
+        sink.posed(this.pose, ax, by).uv(0f, 0f).color(color);
+        sink.posed(this.pose, bx, by).uv(0f, 0f).color(color);
+        sink.posed(this.pose, bx, ay).uv(0f, 0f).color(color);
     }
 
     private void band(final WLVertexSink sink, final float ax, final float ay, final float bx, final float by) {
@@ -93,6 +135,9 @@ public record RoundedGradientRectangleState(Matrix3x2fc pose, float x0, float y0
     }
 
     private int colorAt(final float x, final float y) {
+        if (this.uniformColor()) {
+            return this.colTL;
+        }
         return GradientColor.at(x, y, this.x0, this.y0, this.x1, this.y1, this.colTL, this.colTR, this.colBR, this.colBL);
     }
 

@@ -9,6 +9,7 @@ import main.walksy.lib.api.config.Config;
 import main.walksy.lib.api.config.option.Option;
 import main.walksy.lib.core.config.serialization.JsonFiles;
 import main.walksy.lib.core.render.WLGraphics2D;
+import main.walksy.lib.core.render.WLRenderSystem;
 import main.walksy.lib.api.config.PathUtils;
 
 import java.nio.file.Path;
@@ -51,10 +52,16 @@ public final class HudSpaces {
             return;
         }
         this.ensureLoaded();
-        for (final HudSpace space : this.spaces.values()) {
-            if (space.element().visible() && !WalksyLib.getInstance().getServerOptOuts().isModDisabled(ownerOf(space.id()))) {
-                space.render(graphics, false);
+        WLRenderSystem.beginHud();
+        try {
+            for (final HudSpace space : this.spaces.values()) {
+                if (space.element().visible() && !WalksyLib.getInstance().getServerOptOuts().isModDisabled(ownerOf(space.id()))) {
+                    space.render(graphics, false);
+                }
             }
+        } finally {
+            WLRenderSystem.endHud();
+            graphics.context().flushHud();
         }
     }
 

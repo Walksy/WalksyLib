@@ -60,6 +60,13 @@ layout(std140) uniform CustomUniforms {
     float TextInCapture;
     float ContentInCapture;
     float PopoverInCapture;
+
+    float BlendOut;
+    float TextLive;
+    float LitFromBlur;
+    vec4 FastRect;
+    vec4 FastRectCross;
+    vec4 InlineBlur;
 };
 
 #define MAX_WIDGETS 64
@@ -227,10 +234,22 @@ bool ramping() { return gFrostRamp < 0.999; }
 
 float contentSurvival() { return 1.0 - gFrostRamp; }
 
+vec4 inlineBlur(vec2 uv) {
+    float w0 = InlineBlur.x;
+    float w1 = InlineBlur.y;
+    vec4 c = wlSample(Sampler0, uv) * (w0 * w0);
+    if (w1 > 0.0) {
+        vec2 o = InlineBlur.z / OutSize;
+        c += (wlSample(Sampler0, uv + vec2(o.x, 0.0)) + wlSample(Sampler0, uv - vec2(o.x, 0.0)) + wlSample(Sampler0, uv + vec2(0.0, o.y)) + wlSample(Sampler0, uv - vec2(0.0, o.y))) * (w0 * w1);
+        c += (wlSample(Sampler0, uv + o) + wlSample(Sampler0, uv - o) + wlSample(Sampler0, uv + vec2(o.x, -o.y)) + wlSample(Sampler0, uv + vec2(-o.x, o.y))) * (w1 * w1);
+    }
+    return c;
+}
+
 vec4 sampleBlur(int idx, vec2 uv) {
     if (idx < 0) return wlSample(Sampler0, uv);
     vec4 b;
-    if (idx <= 0) b = wlSample(Sampler2, uv);
+    if (idx <= 0) b = InlineBlur.w > 0.5 ? inlineBlur(uv) : wlSample(Sampler2, uv);
     else if (idx == 1) b = wlSample(Sampler3, uv);
     else if (idx == 2) b = wlSample(Sampler4, uv);
     else b = wlSample(Sampler5, uv);
@@ -390,7 +409,39 @@ void main() {
 
     vec2 coord = WL_FRAG_COORD(OutSize.y > 0.0 ? OutSize.y : inSize.y);
     vec2 uv = coord / inSize;
-    vec3 base = (ScreenWantsBlur > 0.5 ? wlSample(Sampler1, uv) : wlSample(Sampler0, uv)).rgb;
+    if ((coord.x >= FastRect.x && coord.y >= FastRect.y && coord.x <= FastRect.z && coord.y <= FastRect.w) || (coord.x >= FastRectCross.x && coord.y >= FastRectCross.y && coord.x <= FastRectCross.z && coord.y <= FastRectCross.w)) {
+        int fi = int(LayerRanges[int(ActiveSlot + 0.5)].x + 0.5);
+        vec4 fTint = Tints[fi];
+        vec4 fO1 = Optics1[fi];
+        vec4 fEx4 = Extra4[fi];
+        float fChroma = Smoothings[fi].z;
+        vec4 fOut = mix(vec4(sampleBlur(int(floor(Extra0[fi].x + 0.5)), uv).rgb, 1.0), vec4(fTint.rgb, 1.0), fTint.a * 0.8);
+        if (fEx4.w > fEx4.z || fChroma < 0.999) {
+            float fLuma = dot(fOut.rgb, vec3(0.2126, 0.7152, 0.0722));
+            float fToned = fLuma;
+            if (fEx4.w > fEx4.z) {
+                float fKnee = max(0.02, (fEx4.w - fEx4.z) * 0.22);
+                fToned = softCeil(softFloor(fLuma, fEx4.z, fKnee), fEx4.w, fKnee);
+            }
+            fOut.rgb = clamp(vec3(fToned) + (fOut.rgb - vec3(fLuma)) * fChroma, 0.0, 1.0);
+        }
+        if (Extra3[fi].x > 0.0001) {
+            float fHeadroom = clamp(1.0 - dot(fOut.rgb, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.0);
+            vec3 fLw = normalize(vec3(-0.18, 0.62, 0.76));
+            vec3 fLfill = normalize(vec3(fLw.x, -fLw.y, fLw.z));
+            float fShin = max(fO1.x / 100.0 * 100.0, 1.0);
+            float fFac = fO1.y / 100.0;
+            float fSpec = pow(max(fLw.z, 0.0), fShin) * fFac;
+            fSpec += pow(max(fLfill.z, 0.0), fShin) * fFac * 0.7;
+            vec3 fSpecTint = mix(vec3(1.0), fTint.rgb, fTint.a * 0.5);
+            fOut.rgb = clamp(fOut.rgb + fSpecTint * (fSpec * fHeadroom), 0.0, 1.0);
+        }
+        fragColor = vec4(fOut.rgb, 1.0);
+        return;
+    }
+    bool blendOut = BlendOut > 0.5;
+    vec3 base = blendOut ? vec3(0.0) : (ScreenWantsBlur > 0.5 ? wlSample(Sampler1, uv) : wlSample(Sampler0, uv)).rgb;
+    float transmit = 1.0;
 
     vec3 currentColor = base;
     int n = int(Count + 0.5);
@@ -418,19 +469,30 @@ void main() {
     if (CompositeTextStart > 0.5) {
         vec4 earlyText = wlSample(Sampler6, uv);
         currentColor = currentColor * (1.0 - earlyText.a) + earlyText.rgb;
+        transmit *= 1.0 - earlyText.a;
     }
     if (CompositeContentStart > 0.5) {
         vec4 rowContent = wlSample(Sampler7, uv);
         currentColor = currentColor * (1.0 - rowContent.a) + rowContent.rgb;
+        transmit *= 1.0 - rowContent.a;
     }
     if (CompositePopoverStart > 0.5) {
         vec4 popoverContent = wlSample(Sampler9, uv);
         currentColor = currentColor * (1.0 - popoverContent.a) + popoverContent.rgb;
+        transmit *= 1.0 - popoverContent.a;
     }
 
     if (count > 0) {
 
-        if ((int(layerRange.w + 0.5) & SLOT_HAS_SHADOW) != 0) {
+        vec2 p = screenToUV(coord, inSize);
+        SDFResult f = fieldWidgets(p, inSize, coord, fl);
+        float merged = f.dist;
+
+        float focusHere = Extra0[max(f.index, 0)].z;
+        float bodyGate = focusHere > 0.0001 ? 0.01 : 0.001;
+        bool bodyCovers = f.index >= 0 && merged < bodyGate && merged * inSize.y <= -0.5 && Smoothings[f.index].w >= 1.0;
+
+        if (!bodyCovers && (int(layerRange.w + 0.5) & SLOT_HAS_SHADOW) != 0) {
             for (int i = 0; i < MAX_WIDGETS; i++) {
                 if (i >= count) break;
                 int wi = start + i;
@@ -481,7 +543,7 @@ void main() {
 
                         float litReach = min(OUTLINE_LIT_REACH_PX, OUTLINE_LIT_REACH_FRAC * min(rc.z, rc.w));
                         vec2 litUv = (coord - nOutline * litReach) / inSize;
-                        vec3 litSrc = (ScreenWantsBlur > 0.5 ? wlSample(Sampler1, litUv) : wlSample(Sampler0, litUv)).rgb;
+                        vec3 litSrc = (LitFromBlur > 0.5 ? wlSample(Sampler2, litUv) : ScreenWantsBlur > 0.5 ? wlSample(Sampler1, litUv) : wlSample(Sampler0, litUv)).rgb;
 
                         float litMax = max(max(litSrc.r, litSrc.g), litSrc.b);
                         vec3 litExposed = clamp(litSrc + (min(1.0, litMax + OUTLINE_LIT_EXPOSURE) - litMax), 0.0, 1.0);
@@ -501,15 +563,9 @@ void main() {
                 float opaShadow = clamp(Smoothings[wi].w, 0.0, 1.0);
                 float sa = clamp(ShadowColor[wi].a * sh, 0.0, 1.0) * opaShadow;
                 currentColor = mix(currentColor, scol, sa);
+                transmit *= 1.0 - sa;
             }
             }
-
-        vec2 p = screenToUV(coord, inSize);
-        SDFResult f = fieldWidgets(p, inSize, coord, fl);
-        float merged = f.dist;
-
-        float focusHere = Extra0[max(f.index, 0)].z;
-        float bodyGate = focusHere > 0.0001 ? 0.01 : 0.001;
 
         if (merged < bodyGate && f.index >= 0) {
             vec2 coordPix = coord;
@@ -525,6 +581,14 @@ void main() {
             vec4 o2 = Optics2[idx];
             vec4 tint = Tints[idx];
             vec4 extra = Extra0[idx];
+            vec4 rcW = Rects[idx];
+            vec4 smW = Smoothings[idx];
+            vec4 shcW = ShadowColor[idx];
+            vec4 ex1 = Extra1[idx];
+            vec4 ex2 = Extra2[idx];
+            vec4 ex3 = Extra3[idx];
+            vec4 ex4 = Extra4[idx];
+            vec4 ex5 = Extra5[idx];
 
             float refThickness = o0.x;
             float refFactor = o0.y;
@@ -547,7 +611,7 @@ void main() {
 
             gFrostRamp = 1.0;
             if (frostFalloff) {
-                vec4 rcF = Rects[idx];
+                vec4 rcF = rcW;
                 float tTop = clamp((coord.y - rcF.y) / max(rcF.w, 1.0), 0.0, 1.0);
 
                 gFrostRamp = smoothstep(0.0, 1.0, tTop);
@@ -573,24 +637,24 @@ void main() {
 
             vec2 refrOffset = -normal * edgeFactor * 0.08 * vec2(inSize.y / inSize.x, 1.0);
 
-            float bevelHint = Extra3[idx].x;
-            float reachFrac = Extra3[idx].y;
+            float bevelHint = ex3.x;
+            float reachFrac = ex3.y;
             bool lensMode = abs(reachFrac) > 0.0001;
 
-            float foldRaw = Extra4[idx].y;
+            float foldRaw = ex4.y;
             bool bakesTextAllowed = foldRaw >= 0.0;
             float lensFoldAmount = bakesTextAllowed ? foldRaw : (-foldRaw - 1.0);
             bool softLens = lensFoldAmount > 1.5;
             if (softLens) lensFoldAmount -= 2.0;
 
-            float textScale = Extra5[idx].x;
+            float textScale = ex5.x;
             bool scalesText = textScale > 0.0 && abs(textScale - 1.0) > 0.0001;
 
-            bool lensBakesText = ((lensMode && reachFrac > 0.0) || bevelHint > 0.0001 || scalesText) && bakesTextAllowed;
+            bool lensBakesText = ((lensMode && reachFrac > 0.0) || bevelHint > 0.0001 || scalesText) && bakesTextAllowed && TextLive > 0.5;
 
             float lensTextFade = 0.0;
             if (lensMode) {
-                vec4 rcR = Rects[idx];
+                vec4 rcR = rcW;
                 float bandPx = max(refThickness, 1e-4);
 
                 float peakCap = mix(0.75, 3.0, clamp(lensFoldAmount, 0.0, 1.0));
@@ -604,7 +668,7 @@ void main() {
                 lensTextFade = clamp(peakPx / max(0.3 * bandPx, 1e-4), 0.0, 1.0);
             }
 
-            float bevelH = Extra3[idx].x;
+            float bevelH = ex3.x;
             bool bevelMode = bevelH > 0.0001;
             float bevelSpec = 0.0;
             if (bevelMode) {
@@ -617,7 +681,7 @@ void main() {
                 float bsn = sqrt(bslope * bslope + 1.0);
                 vec3 Nw = vec3(bslope * normal / bsn, 1.0 / bsn);
 
-                float bevelOptic = clamp(Smoothings[idx].y, 0.0, 4.0);
+                float bevelOptic = clamp(smW.y, 0.0, 4.0);
 
                 float rimBite = clamp(glareHard, 0.0, 1.0);
                 float localH = mix(bevelH * broot, bevelH, rimBite) * bevelOptic;
@@ -670,7 +734,7 @@ void main() {
                     const float SLIDE_RAMP_PER_SHIFT = 1.55;
                     float slideRamp = clamp(nmerged / max(SLIDE_RAMP_PER_SHIFT * abs(wedgePx), 1e-4), 0.0, 1.0);
 
-                    vec4 rcS = Rects[idx];
+                    vec4 rcS = rcW;
                     float halfMinS = max(0.5 * min(rcS.z, rcS.w), 1.0);
                     float slideFade = 1.0 - smoothstep(0.45 * halfMinS, 0.85 * halfMinS, nmerged);
                     refrOffset += normal * (wedgePx * slideRamp * slideFade) * vec2(1.0 / inSize.x, 1.0 / inSize.y);                } else {
@@ -715,14 +779,14 @@ void main() {
 
                 vec2 textUv = uvPix;
                 if (scalesText) {
-                    vec4 rcT = Rects[idx];
+                    vec4 rcT = rcW;
                     vec2 centerPx = vec2(rcT.x + 0.5 * rcT.z, rcT.y + 0.5 * rcT.w);
                     textUv = (centerPx + (coordPix - centerPx) / textScale) / inSize;
                 }
 
                 float textFade = scalesText ? 1.0 : lensTextFade;
 
-                float textRefract = clamp(Extra5[idx].y, 0.0, 1.0);
+                float textRefract = clamp(ex5.y, 0.0, 1.0);
                 vec2 textOffset = rimOffset * textRefract;
                 vec2 textDisp = dispDelta * textRefract;
 
@@ -741,9 +805,9 @@ void main() {
 
             vec4 outColor = mix(dispPixel, vec4(tint.rgb, 1.0), tint.a * 0.8);
 
-            float toneLo = Extra4[idx].z;
-            float toneHi = Extra4[idx].w;
-            float chromaK = Smoothings[idx].z;
+            float toneLo = ex4.z;
+            float toneHi = ex4.w;
+            float chromaK = smW.z;
             if (toneHi > toneLo || chromaK < 0.999) {
                 float bodyLuma = dot(outColor.rgb, vec3(0.2126, 0.7152, 0.0722));
                 float toned = bodyLuma;
@@ -776,7 +840,7 @@ void main() {
                 float glareBase2 = glareBase * glareBase;
                 glareGeo = clamp(glareBase2 * glareBase2 * glareBase, 0.0, 1.0);
 
-                vec4 e2 = Extra2[idx];
+                vec4 e2 = ex2;
                 float dirGlareFactor = clamp(e2.w / 100.0, 0.0, 1.0);
                 if (dirGlareFactor > 0.0001) {
                     vec2 glareDir = vec2(cos(e2.x), sin(e2.x));
@@ -795,13 +859,13 @@ void main() {
 
             float mergedPxAbs = abs(merged) * inSize.y;
 
-            float innerSh = Extra4[idx].x;
+            float innerSh = ex4.x;
             if (innerSh > 0.0001) {
 
-                vec3 innerCol = ShadowColor[idx].rgb;
-                float innerOpa = clamp(Smoothings[idx].w, 0.0, 1.0);
+                vec3 innerCol = shcW.rgb;
+                float innerOpa = clamp(smW.w, 0.0, 1.0);
 
-                float halfH = 0.5 * Rects[idx].w;
+                float halfH = 0.5 * rcW.w;
                 float inset = min(INNER_INSET, halfH * INNER_INSET_FRAC);
                 float width = max(1.0, inset * (INNER_WIDTH / INNER_INSET));
                 float upFace = clamp(normal.y, 0.0, 1.0);
@@ -824,15 +888,15 @@ void main() {
 
             float edgeLuma = dot(backdropHere.rgb, vec3(0.2126, 0.7152, 0.0722));
             float lumaGate = mix(BRIGHT_EDGE_FLOOR, 1.0, smoothstep(BRIGHT_EDGE_LUMA_LO, BRIGHT_EDGE_LUMA_HI, edgeLuma));
-            float brightEdge = lumaGate * clamp(Extra3[idx].z, 0.0, 1.0);
+            float brightEdge = lumaGate * clamp(ex3.z, 0.0, 1.0);
             if (brightEdge > 0.0001 && mergedPxAbs < EDGE_REACH) {
 
-                vec4 rcE = Rects[idx];
+                vec4 rcE = rcW;
                 float sizeScale = clamp(max(min(rcE.z, rcE.w), 1.0) / BRIGHT_EDGE_REF_PX, BRIGHT_EDGE_MIN_SCALE, 1.0);
 
                 float vertFace = normal.y * normal.y;
                 float horizFace = 1.0 - vertFace;
-                float edgeWidth = max(BRIGHT_EDGE_WIDTH, Extra3[idx].w);
+                float edgeWidth = max(BRIGHT_EDGE_WIDTH, ex3.w);
                 float litLine = lineGaussAA(merged * inSize.y, edgeWidth * sizeScale);
                 vec3 litEdge = clamp(backdropHere.rgb * BRIGHT_EDGE_GAIN + BRIGHT_EDGE_LIFT * sizeScale, 0.0, 1.0);
 
@@ -862,7 +926,7 @@ void main() {
 
             vec3 focusRing = vec3(0.0);
             if (focusK > 0.0001) {
-                vec4 rcF = Rects[idx];
+                vec4 rcF = rcW;
                 vec2 centerPx = vec2(rcF.x + 0.5 * rcF.z, rcF.y + 0.5 * rcF.w);
                 vec2 v = (coord - centerPx) / inSize.y;
 
@@ -883,9 +947,9 @@ void main() {
             }
 
             vec3 rimGlow = vec3(0.0);
-            float rimIntensity = Extra1[idx].w;
+            float rimIntensity = ex1.w;
             if (rimIntensity > 0.0001 && mergedPxAbs < EDGE_REACH) {
-                vec3 rimColor = Extra1[idx].xyz;
+                vec3 rimColor = ex1.xyz;
                 float mergedPx = merged * inSize.y;
                 float rimLine = lineGaussAA(mergedPx, 0.9);
 
@@ -901,9 +965,10 @@ void main() {
 
             outColor.rgb = outColor.rgb * (1.0 - heldTextA) + heldTextRgb;
 
-            float opaBody = clamp(Smoothings[idx].w, 0.0, 1.0);
+            float opaBody = clamp(smW.w, 0.0, 1.0);
             float aa = clamp(0.5 - merged * inSize.y, 0.0, 1.0) * opaBody;
             currentColor = mix(currentColor, outColor.rgb, aa);
+            transmit *= 1.0 - aa;
 
             if (lensBakesText) earlyTextConsumed = max(earlyTextConsumed, aa * (scalesText ? 1.0 : lensTextFade));
 
@@ -916,15 +981,18 @@ void main() {
     if (CompositeTextEnd > 0.5) {
         vec4 earlyText = wlSample(Sampler6, uv) * (1.0 - earlyTextConsumed);
         currentColor = currentColor * (1.0 - earlyText.a) + earlyText.rgb;
+        transmit *= 1.0 - earlyText.a;
     }
     if (CompositeContentEnd > 0.5) {
         vec4 rowContent = wlSample(Sampler7, uv);
         currentColor = currentColor * (1.0 - rowContent.a) + rowContent.rgb;
+        transmit *= 1.0 - rowContent.a;
     }
     if (CompositePopoverEnd > 0.5) {
         vec4 popoverContent = wlSample(Sampler9, uv);
         currentColor = currentColor * (1.0 - popoverContent.a) + popoverContent.rgb;
+        transmit *= 1.0 - popoverContent.a;
     }
 
-    fragColor = vec4(currentColor, 1.0);
+    fragColor = vec4(currentColor, blendOut ? 1.0 - transmit : 1.0);
 }

@@ -56,6 +56,7 @@ public class ScrollPanel extends WLWidget {
     private BooleanSupplier staleWhen;
     private Runnable staleRebuild;
     private int contentInsetTop;
+    private int contentInsetBottom;
     private float scrollbarEndInset;
     private float scrollbarRightShift;
 
@@ -104,6 +105,11 @@ public class ScrollPanel extends WLWidget {
     public void setContentInsetTop(final int px) {
         this.contentInsetTop = Math.max(0, px);
         this.relayout();
+    }
+
+    public void setContentInsetBottom(final int px) {
+        this.contentInsetBottom = Math.max(0, px);
+        this.scrollY = this.clampScroll(this.scrollY);
     }
 
     public void setScrollbarInsets(final float endInset, final float rightShift) {
@@ -316,7 +322,7 @@ public class ScrollPanel extends WLWidget {
     }
 
     private float maxScroll() {
-        return Math.max(0f, this.contentHeight - this.getHeight());
+        return Math.max(0f, this.contentHeight + this.contentInsetBottom - this.getHeight());
     }
 
     private boolean atBottom() {

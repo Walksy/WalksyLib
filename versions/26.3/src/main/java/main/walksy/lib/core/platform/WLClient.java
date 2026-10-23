@@ -1,5 +1,6 @@
 package main.walksy.lib.core.platform;
 
+import com.mojang.blaze3d.platform.VideoMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Overlay;
 import net.minecraft.client.gui.screens.Screen;
@@ -25,6 +26,11 @@ public final class WLClient {
 
     public static @Nullable Overlay overlay() {
         return Minecraft.getInstance().gui.overlay();
+    }
+
+    public static int refreshRate() {
+        final VideoMode mode = Minecraft.getInstance().getWindow().getActiveVideoMode();
+        return mode != null && mode.getRefreshRate() > 0f ? Math.round(mode.getRefreshRate()) : 60;
     }
 
     public static void schedule(final Runnable task) {

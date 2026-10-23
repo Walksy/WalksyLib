@@ -205,9 +205,13 @@ public final class LiquidMorph {
         this.radius.target = r.cornerRadius();
     }
 
-    public LiquidMorph reanchor(final LiquidRect anchor) {
-        if (anchor != null && !this.closing) {
-            this.anchor = anchor;
+    public LiquidMorph followAnchor(final LiquidRect anchor) {
+        if (anchor == null || anchor.equals(this.anchor)) {
+            return this;
+        }
+        this.anchor = anchor;
+        if (this.closing) {
+            this.targetRect(this.contracting ? this.anchorRect() : this.swollenAnchor());
         }
         return this;
     }

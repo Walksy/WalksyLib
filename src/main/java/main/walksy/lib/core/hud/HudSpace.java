@@ -27,6 +27,8 @@ public final class HudSpace implements HudPlacement {
         this.id = id;
         this.name = name;
         this.element = element;
+        this.anchorX = snapAnchor(element.defaultAnchorX());
+        this.anchorY = snapAnchor(element.defaultAnchorY());
         this.offsetX = element.defaultOffsetX();
         this.offsetY = element.defaultOffsetY();
     }
@@ -71,6 +73,15 @@ public final class HudSpace implements HudPlacement {
         WalksyLib.getInstance().getHudSpaces().markDirty();
     }
 
+    public void resize(final float scale) {
+        if (this.element.snapScale()) {
+            this.setScale(scale);
+            return;
+        }
+        this.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+        WalksyLib.getInstance().getHudSpaces().markDirty();
+    }
+
     public float anchorX() {
         this.resolveLegacy();
         return this.anchorX;
@@ -93,15 +104,15 @@ public final class HudSpace implements HudPlacement {
 
     public boolean isDefault() {
         this.resolveLegacy();
-        return this.anchorX == 0.5f && this.anchorY == 0.5f && this.offsetX == this.element.defaultOffsetX() && this.offsetY == this.element.defaultOffsetY() && this.scale == 1f;
+        return this.anchorX == snapAnchor(this.element.defaultAnchorX()) && this.anchorY == snapAnchor(this.element.defaultAnchorY()) && this.offsetX == this.element.defaultOffsetX() && this.offsetY == this.element.defaultOffsetY() && this.scale == 1f;
     }
 
     public void reset() {
         this.legacy = false;
         this.legacyX = 0f;
         this.legacyY = 0f;
-        this.anchorX = 0.5f;
-        this.anchorY = 0.5f;
+        this.anchorX = snapAnchor(this.element.defaultAnchorX());
+        this.anchorY = snapAnchor(this.element.defaultAnchorY());
         this.offsetX = this.element.defaultOffsetX();
         this.offsetY = this.element.defaultOffsetY();
         this.scale = 1f;

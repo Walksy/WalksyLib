@@ -364,7 +364,7 @@ public class PixelGridAnimationOptionWidget extends OptionRowWidget<PixelGridAni
     }
 
     private boolean hasHudSpace() {
-        return this.option.getHudElement() != null;
+        return this.option.getHudElement() != null && !HudEditScreen.isOpen();
     }
 
     private boolean isOverHudPill(final double mouseX, final double mouseY) {

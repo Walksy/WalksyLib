@@ -12,6 +12,7 @@ public final class Cursors {
         POINTER(CursorTypes.POINTING_HAND),
         TEXT(CursorTypes.IBEAM),
         RESIZE_NS(CursorTypes.RESIZE_NS),
+        RESIZE_DIAGONAL(CursorTypes.RESIZE_ALL),
         MOVE(CursorTypes.RESIZE_ALL),
         NOT_ALLOWED(CursorTypes.NOT_ALLOWED);
 

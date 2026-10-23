@@ -1,6 +1,7 @@
 package main.walksy.lib.core.render;
 
 import main.walksy.lib.core.WalksyLibConstants;
+import main.walksy.lib.core.render.element.WLElement;
 import main.walksy.lib.core.render.font.msdf.BitmapTextRenderQueue;
 import main.walksy.lib.core.render.font.msdf.MsdfRenderQueue;
 import main.walksy.lib.core.render.glass.LiquidGlassComposite;
@@ -22,6 +23,8 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public final class WLRenderSystem {
@@ -40,6 +43,9 @@ public final class WLRenderSystem {
     private static float frameDeltaSeconds;
     private static long lastFrameNanos = -1L;
     private static int motionDepth;
+    private static int hudDepth;
+    private static final List<WLElement> HUD_TEXT = new ArrayList<>();
+    private static GuiContext hudTextContext;
     private static long frameId;
     private static boolean presentHookSeen;
     private static boolean frameEndHookSeen;
@@ -59,6 +65,8 @@ public final class WLRenderSystem {
         glassUniforms().beginFrame(deltaSeconds);
         GLASS_ANIM.update(deltaSeconds);
         motionDepth = 0;
+        HUD_TEXT.clear();
+        hudTextContext = null;
         frameId++;
         CONTENT_STRATUM.discardStale();
         EARLY_TEXT_BOUNDS.reset();
@@ -70,6 +78,30 @@ public final class WLRenderSystem {
         return frameId;
     }
 
+    public static void beginHud() {
+        hudDepth++;
+    }
+
+    public static void endHud() {
+        hudDepth = Math.max(0, hudDepth - 1);
+        if (hudDepth == 0 && !HUD_TEXT.isEmpty()) {
+            final GuiContext context = hudTextContext;
+            for (final WLElement element : HUD_TEXT) {
+                context.submit(element);
+            }
+            HUD_TEXT.clear();
+            hudTextContext = null;
+        }
+    }
+
+    public static void deferHudText(final GuiContext context, final WLElement element) {
+        hudTextContext = context;
+        HUD_TEXT.add(element);
+    }
+
+    public static boolean inHud() {
+        return hudDepth > 0;
+    }
     public static void beginMotion() {
         motionDepth++;
     }
@@ -178,7 +210,7 @@ public final class WLRenderSystem {
     }
 
     public static boolean hasEarlyText() {
-        return MsdfRenderQueue.hasEarly() || BitmapTextRenderQueue.hasEarly();
+        return CONTENT_STRATUM.hasEarlyContent() || MsdfRenderQueue.hasEarly() || BitmapTextRenderQueue.hasEarly();
     }
 
     public static boolean hasContentText() {
@@ -190,6 +222,7 @@ public final class WLRenderSystem {
     }
 
     public static void flushEarlyText(final WLTexture target) {
+        CONTENT_STRATUM.flushEarly(target);
         MsdfRenderQueue.flushEarly(target);
         BitmapTextRenderQueue.flushEarly(target);
     }
@@ -313,6 +346,10 @@ public final class WLRenderSystem {
 
     public static boolean vulkanMod() {
         return VULKANMOD;
+    }
+
+    public static boolean hudBatching() {
+        return !VULKANMOD && GuiContext.vanillaBatching();
     }
 
     public static boolean renderTargetsBottomUp() {

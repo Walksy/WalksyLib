@@ -155,25 +155,25 @@ public final class MsdfFont {
                 final float tx = x + WLRenderSystem.contentDefocus().tapDx(i);
                 final float ty = y + WLRenderSystem.contentDefocus().tapDy(i);
                 if (bitmap != null) {
-                    BitmapTextRenderQueue.enqueue(bitmap.atlas(), bitmap.layoutScale(), text, pose, tx, ty, c, scissor);
+                    BitmapTextRenderQueue.enqueue(graphics, bitmap.atlas(), bitmap.layoutScale(), text, pose, tx, ty, c, scissor);
                 } else {
                     MsdfRenderQueue.enqueue(this, text, pose, tx, ty, size, c, scissor);
                 }
             }
             return;
         }
+        if (bitmap != null) {
+            if (Theme.get().isDark()) {
+                final float offset = PixelFont.shadowOffset(size);
+                BitmapTextRenderQueue.enqueueShadowed(graphics, bitmap.atlas(), bitmap.layoutScale(), text, pose, x, y, color, offset, offset, PixelFont.shadowColor(color), scissor);
+            } else {
+                BitmapTextRenderQueue.enqueue(graphics, bitmap.atlas(), bitmap.layoutScale(), text, pose, x, y, color, scissor);
+            }
+            return;
+        }
         if (Theme.get().isDark()) {
             final float offset = PixelFont.shadowOffset(size);
-            final int shadow = PixelFont.shadowColor(color);
-            if (bitmap != null) {
-                BitmapTextRenderQueue.enqueue(bitmap.atlas(), bitmap.layoutScale(), text, pose, x + offset, y + offset, shadow, scissor);
-            } else {
-                MsdfRenderQueue.enqueue(this, text, pose, x + offset, y + offset, size, shadow, scissor);
-            }
-        }
-        if (bitmap != null) {
-            BitmapTextRenderQueue.enqueue(bitmap.atlas(), bitmap.layoutScale(), text, pose, x, y, color, scissor);
-            return;
+            MsdfRenderQueue.enqueue(this, text, pose, x + offset, y + offset, size, PixelFont.shadowColor(color), scissor);
         }
         MsdfRenderQueue.enqueue(this, text, pose, x, y, size, color, scissor);
     }
@@ -194,8 +194,7 @@ public final class MsdfFont {
         final WLRect scissor = graphics.scissor();
         final BitmapChoice bitmap = this.bitmapFor(size, pose);
         if (bitmap != null) {
-            BitmapTextRenderQueue.enqueue(bitmap.atlas(), bitmap.layoutScale(), text, pose, x + shadowOffsetX, y + shadowOffsetY, shadowColor, scissor);
-            BitmapTextRenderQueue.enqueue(bitmap.atlas(), bitmap.layoutScale(), text, pose, x, y, color, scissor);
+            BitmapTextRenderQueue.enqueueShadowed(graphics, bitmap.atlas(), bitmap.layoutScale(), text, pose, x, y, color, shadowOffsetX, shadowOffsetY, shadowColor, scissor);
             return;
         }
         MsdfRenderQueue.enqueue(this, text, pose, x + shadowOffsetX, y + shadowOffsetY, size, shadowColor, scissor);
@@ -295,9 +294,10 @@ public final class MsdfFont {
         final float layoutScale = PixelFont.layoutScale(size);
         if (Theme.get().isDark()) {
             final float shadow = PixelFont.unit(size);
-            BitmapTextRenderQueue.enqueue(atlas, layoutScale, text, pose, x + shadow, y + shadow, PixelFont.shadowColor(color), scissor);
+            BitmapTextRenderQueue.enqueueShadowed(graphics, atlas, layoutScale, text, pose, x, y, color, shadow, shadow, PixelFont.shadowColor(color), scissor);
+            return true;
         }
-        BitmapTextRenderQueue.enqueue(atlas, layoutScale, text, pose, x, y, color, scissor);
+        BitmapTextRenderQueue.enqueue(graphics, atlas, layoutScale, text, pose, x, y, color, scissor);
         return true;
     }
 
