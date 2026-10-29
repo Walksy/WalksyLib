@@ -1,6 +1,7 @@
 package main.walksy.lib.core.mods.remote;
 
 import main.walksy.lib.core.WalksyLib;
+import main.walksy.lib.core.platform.WLClient;
 import com.google.gson.JsonObject;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
@@ -193,7 +194,7 @@ public final class ModUpdate {
 
     public @Nullable String blockedReason() {
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
-            return "This is a development run, so the loaded mod does not come from your mods folder.";
+            return "This is a development run.";
         }
         if (this.downloadUrl == null) {
             return "Modrinth did not publish a downloadable file for that version.";
@@ -207,6 +208,7 @@ public final class ModUpdate {
         }
         this.install = Install.DOWNLOADING;
         this.installError = "";
+        WLClient.openUri(this.pageUrl);
         final Thread thread = new Thread(() -> {
             try {
                 this.swapIn();
