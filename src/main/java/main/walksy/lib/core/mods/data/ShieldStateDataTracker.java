@@ -78,7 +78,7 @@ public final class ShieldStateDataTracker implements ShieldState {
         for (final Player player : level.players()) {
             final UUID uuid = player.getUUID();
             present.add(uuid);
-            if (this.isHoldingUsableShield(player) && player.isUsingItem()) {
+            if (this.isUsingShieldItem(player)) {
                 this.shieldUseTicks.merge(uuid, 1, Integer::sum);
             } else {
                 this.shieldUseTicks.remove(uuid);
@@ -164,7 +164,7 @@ public final class ShieldStateDataTracker implements ShieldState {
     @Override
     public boolean isUsingShield(final Player player, final boolean factorDelay) {
         if (!factorDelay) {
-            return player.isUsingItem() && this.isHoldingUsableShield(player);
+            return this.isUsingShieldItem(player);
         }
         return this.shieldUseTicks(player) >= USING_TICKS;
     }
@@ -172,6 +172,13 @@ public final class ShieldStateDataTracker implements ShieldState {
     @Override
     public int shieldUseTicks(final Player player) {
         return this.shieldUseTicks.getOrDefault(player.getUUID(), 0);
+    }
+
+    // The used-hand flag comes in the same synced byte as isUsingItem, so it's reliable on modern servers.
+    // ViaVersion on 1.8 backends always reports the main hand for sword blocking, which isHoldingUsableShield covers.
+    private boolean isUsingShieldItem(final Player player) {
+        return player.isUsingItem()
+            && (player.getItemInHand(player.getUsedItemHand()).is(Items.SHIELD) || this.isHoldingUsableShield(player));
     }
 
     @Override
